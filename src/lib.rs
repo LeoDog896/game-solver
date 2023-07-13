@@ -47,9 +47,8 @@ pub trait Game {
 ///
 /// Transposition tables should optimally be O(1) for get, has, and insert.
 /// The best structure for this is a `HashMap`.
-///
-/// The default trait implementation uses rust's native hashmap,
-/// but most likely your simulation won't be under a hashmap attack
+/// 
+/// all `HashMap`s already implement TranspositionTable.
 pub trait TranspositionTable<T: Eq + Hash + Game> {
     fn get(&self, board: &T) -> Option<i32>;
     fn insert(&mut self, board: T, score: i32);
@@ -80,7 +79,7 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
 ) -> i32 {
     for m in game.possible_moves() {
         if game.is_winning_move(m) {
-            return game.size() as i32 - game.n_moves() as i32;
+            return game.size() as i32 - game.n_moves() as i32 - 1;
         }
     }
 
