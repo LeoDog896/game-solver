@@ -97,8 +97,8 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
         board.make_move(m);
 
         // we cache scores inside the transposition table
-        let score = if transposition_table.has(&board) {
-            transposition_table.get(&board).unwrap()
+        let score = if let Some(score) = transposition_table.get(&board) {
+            score
         } else {
             let score = -negamax(&board, transposition_table, -beta, -alpha);
             transposition_table.insert(board, score);
