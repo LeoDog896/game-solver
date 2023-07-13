@@ -13,19 +13,20 @@ use std::{
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Chomp {
-    n: u32,
-    m: u32,
+    width: u32,
+    height: u32,
+    /// True represents a square that has not been eaten
     board: Vec<Vec<bool>>,
     n_moves: u32,
 }
 
 impl Chomp {
-    fn new(n: u32, m: u32) -> Self {
+    fn new(width: u32, height: u32) -> Self {
         let mut board = Vec::new();
-        for i in 0..n {
+        for i in 0..height {
             let mut row = Vec::new();
-            for j in 0..m {
-                if i == 0 && j == m - 1 {
+            for j in 0..width {
+                if i == height - 1 && j == 0 {
                     row.push(false);
                     continue;
                 }
@@ -36,8 +37,8 @@ impl Chomp {
         }
 
         Self {
-            n,
-            m,
+            width,
+            height,
             board,
             n_moves: 0,
         }
@@ -60,14 +61,14 @@ impl Game for Chomp {
     }
 
     fn size(&self) -> u32 {
-        self.n * self.m
+        self.width * self.height
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
-        if self.board[m.0 as usize][m.1 as usize] {
-            for i in m.0..self.n {
+        if self.board[m.1 as usize][m.0 as usize] {
+            for i in m.0..self.width {
                 for j in 0..=m.1 {
-                    self.board[i as usize][j as usize] = false;
+                    self.board[j as usize][i as usize] = false;
                 }
             }
             self.n_moves += 1;
@@ -79,9 +80,9 @@ impl Game for Chomp {
 
     fn possible_moves(&self) -> Vec<Self::Move> {
         let mut moves = Vec::new();
-        for i in 0..self.n {
-            for j in 0..self.m {
-                if self.board[i as usize][j as usize] {
+        for i in 0..self.width {
+            for j in 0..self.height {
+                if self.board[j as usize][i as usize] {
                     moves.push((i, j));
                 }
             }
@@ -97,8 +98,8 @@ impl Game for Chomp {
 
 impl Display for Chomp {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
-        for j in 0..self.m {
-            for i in 0..self.n {
+        for i in 0..self.height {
+            for j in 0..self.width {
                 if self.board[i as usize][j as usize] {
                     write!(f, "X")?;
                 } else {
