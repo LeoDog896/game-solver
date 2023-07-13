@@ -1,7 +1,7 @@
 //! Domineering (aka stop-gate) is a two-player game played on a rectangular grid of squares. The
 //! players take turns placing dominoes on the board. The first player to be unable to make a move
 //! loses.
-//! 
+//!
 //! Player one places dominoes horizontally, and player two places dominoes vertically.
 
 use combinatorial_game::{negamax, Game, Player, TranspositionTable};
@@ -56,7 +56,7 @@ impl Game for Domineering {
     }
 
     fn size(&self) -> u32 {
-        self.width * self.height 
+        self.width * self.height
     }
 
     fn possible_moves(&self) -> Vec<Self::Move> {

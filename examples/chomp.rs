@@ -1,14 +1,16 @@
 //! Chomp is a two-player game played on a rectangular grid of squares.
 //! The bottom right square is poisoned, and the players take turns eating squares.
 //! Every square they eat, every square to the right and above it is also eaten (inclusively)
-//! 
+//!
 //! This is a flipped version of the traiditional [Chomp](https://en.wikipedia.org/wiki/Chomp) game.
 
 use combinatorial_game::{negamax, Game, Player};
 
 use std::{
+    collections::HashMap,
+    env::args,
     fmt::{Display, Formatter},
-    hash::Hash, env::args, collections::HashMap,
+    hash::Hash,
 };
 
 #[derive(Clone, Hash, Eq, PartialEq)]
@@ -123,11 +125,17 @@ fn main() {
     let mut game = Chomp::new(8, 5);
 
     // parse every move in args, e.g. 0-0 1-1 in args
-    let moves: Vec<(u32, u32)> = args().skip(1).map(|arg| {
-        let numbers: Vec<u32> = arg.split("-").map(|num| num.parse::<u32>().unwrap()).collect();
+    let moves: Vec<(u32, u32)> = args()
+        .skip(1)
+        .map(|arg| {
+            let numbers: Vec<u32> = arg
+                .split("-")
+                .map(|num| num.parse::<u32>().unwrap())
+                .collect();
 
-        (numbers[0], numbers[1])
-    }).collect();
+            (numbers[0], numbers[1])
+        })
+        .collect();
 
     for game_move in moves {
         game.make_move(game_move);
@@ -137,16 +145,22 @@ fn main() {
 
     let possible_moves = game.possible_moves();
 
-    let best_move_iter = possible_moves
-        .iter()
-        .map(|m| {
-            let mut board = game.clone();
-            board.make_move(*m);
-            (*m, negamax(&board, &mut transposition_table, -(game.size() as i32), game.size() as i32))
-        });
+    let best_move_iter = possible_moves.iter().map(|m| {
+        let mut board = game.clone();
+        board.make_move(*m);
+        (
+            *m,
+            negamax(
+                &board,
+                &mut transposition_table,
+                -(game.size() as i32),
+                game.size() as i32,
+            ),
+        )
+    });
 
     let best_move: Option<((u32, u32), i32)> = if game.player() == Player::P1 {
-        best_move_iter.min_by_key(|(_, score)| *score)
+        best_move_iter.max_by_key(|(_, score)| *score)
     } else {
         best_move_iter.min_by_key(|(_, score)| *score)
     };

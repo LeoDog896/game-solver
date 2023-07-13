@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::HashMap, hash::{Hash, BuildHasher}};
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum Player {
@@ -7,10 +7,11 @@ pub enum Player {
 }
 
 impl Player {
+    #[must_use]
     pub fn opposite(&self) -> Player {
         match self {
             Player::P1 => Player::P2,
-            Player::P2 => Player::P1
+            Player::P2 => Player::P1,
         }
     }
 }
@@ -43,20 +44,21 @@ pub trait Game {
 
 /// A transposition table for a game.
 /// Transposition tables implement caching for minimax algorithms.
+///
+/// Transposition tables should optimally be O(1) for get, has, and insert.
+/// The best structure for this is a `HashMap`.
+///
+/// The default trait implementation uses rust's native hashmap,
+/// but most likely your simulation won't be under a hashmap attack
 pub trait TranspositionTable<T: Eq + Hash + Game> {
-    fn new() -> Self where Self: Sized;
     fn get(&self, board: &T) -> Option<i32>;
     fn insert(&mut self, board: T, score: i32);
     fn has(&self, board: &T) -> bool;
 }
 
-impl<K: Eq + Hash + Game> TranspositionTable<K> for HashMap<K, i32> {
-    fn new() -> Self where Self: Sized {
-        HashMap::new()
-    }
-
+impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for HashMap<K, i32, S> {
     fn get(&self, board: &K) -> Option<i32> {
-        self.get(&board).copied()
+        self.get(board).copied()
     }
 
     fn insert(&mut self, board: K, score: i32) {
@@ -64,7 +66,7 @@ impl<K: Eq + Hash + Game> TranspositionTable<K> for HashMap<K, i32> {
     }
 
     fn has(&self, board: &K) -> bool {
-        self.contains_key(&board)
+        self.contains_key(board)
     }
 }
 
@@ -93,6 +95,8 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
     for m in game.possible_moves() {
         let mut board = game.clone();
         board.make_move(m);
+
+        // we cache scores inside the transposition table
         let score = if transposition_table.has(&board) {
             transposition_table.get(&board).unwrap()
         } else {
