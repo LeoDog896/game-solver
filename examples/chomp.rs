@@ -1,6 +1,4 @@
-mod solve;
-
-use solve::{negamax, Game, Player, TranspositionTable};
+use combinatorial_game::{negamax, Game, Player, TranspositionTable};
 
 use std::{
     fmt::{Display, Formatter},
