@@ -1,4 +1,9 @@
-use std::fmt::{Debug, Formatter, Display};
+use std::{
+    collections::HashMap,
+    fmt::{Debug, Display, Formatter},
+    hash::Hash,
+    marker::PhantomData,
+};
 
 enum Player {
     P1,
@@ -15,7 +20,21 @@ trait Game<T> {
     fn is_winning_move(&self, m: T) -> bool;
 }
 
-#[derive(Clone)]
+struct TranspositionTable<T: Eq + Hash + Game<U>, U> {
+    table: HashMap<T, i32>,
+    _t: PhantomData<U>,
+}
+
+impl<T: Game<U> + Clone + Eq + Hash, U: Debug> TranspositionTable<T, U> {
+    fn new() -> Self {
+        Self {
+            table: HashMap::new(),
+            _t: PhantomData,
+        }
+    }
+}
+
+#[derive(Clone, Hash, Eq, PartialEq)]
 struct Chomp {
     n: u32,
     m: u32,
@@ -38,8 +57,13 @@ impl Chomp {
             }
             board.push(row);
         }
-        
-        Self { n, m, board, n_moves: 0 }
+
+        Self {
+            n,
+            m,
+            board,
+            n_moves: 0,
+        }
     }
 }
 
@@ -114,7 +138,12 @@ impl Display for Chomp {
     }
 }
 
-fn negamax<T: Game<U> + Clone, U: Debug>(game: &T, mut alpha: i32, mut beta: i32) -> i32 {
+fn negamax<T: Game<U> + Clone + Eq + Hash, U: Debug>(
+    game: &T,
+    transposition_table: &mut TranspositionTable<T, U>,
+    mut alpha: i32,
+    mut beta: i32
+) -> i32 {
     for m in game.possible_moves() {
         if game.is_winning_move(m) {
             return game.size() as i32 - game.n_moves() as i32;
@@ -132,7 +161,15 @@ fn negamax<T: Game<U> + Clone, U: Debug>(game: &T, mut alpha: i32, mut beta: i32
     for m in game.possible_moves() {
         let mut board = game.clone();
         board.make_move(m);
-        let score = -negamax(&board, -beta, -alpha);
+        let score = if transposition_table.table.contains_key(&board) {
+            transposition_table.table[&board]
+        } else {
+            let score = -negamax(&board, transposition_table, -beta, -alpha);
+
+            transposition_table.table.insert(board.clone(), score);
+
+            score
+        };
         if score >= beta {
             return beta;
         }
@@ -140,17 +177,17 @@ fn negamax<T: Game<U> + Clone, U: Debug>(game: &T, mut alpha: i32, mut beta: i32
             alpha = score;
         }
     }
-    
+
     alpha
 }
 
 fn main() {
-    let mut game = Chomp::new(8, 5);
-    game.make_move((1, 1));
+    let mut transposition_table: TranspositionTable<Chomp, (u32, u32)> = TranspositionTable::new();
+    let game = Chomp::new(8, 5);
     println!("{}", game);
     for m in game.possible_moves() {
         let mut board = game.clone();
         board.make_move(m);
-        println!("{m:?} {:?}", negamax(&board, -100, 100));
+        println!("{m:?} {:?}", negamax(&board, &mut transposition_table, -100, 100));
     }
 }
