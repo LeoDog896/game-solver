@@ -125,27 +125,22 @@ fn main() {
     let mut game = Chomp::new(8, 5);
 
     // parse every move in args, e.g. 0-0 1-1 in args
-    let moves: Vec<(u32, u32)> = args()
+    args()
         .skip(1)
-        .map(|arg| {
+        .for_each(|arg| {
             let numbers: Vec<u32> = arg
                 .split("-")
-                .map(|num| num.parse::<u32>().unwrap())
+                .map(|num| num.parse::<u32>().expect("Not a number!"))
                 .collect();
 
-            (numbers[0], numbers[1])
-        })
-        .collect();
-
-    for game_move in moves {
-        game.make_move(game_move);
-    }
+            game.make_move((numbers[0], numbers[1]));
+        });
 
     println!("{}", game);
 
     let possible_moves = game.possible_moves();
 
-    let move_scores = possible_moves.iter().map(|m| {
+    let mut move_scores = possible_moves.iter().map(|m| {
         let mut board = game.clone();
         board.make_move(*m);
         (
@@ -159,14 +154,22 @@ fn main() {
         )
     }).collect::<Vec<_>>();
 
-    let best_move = move_scores.iter().min_by_key(|(_, score)| *score).copied();
+    if !move_scores.is_empty() {
 
-    if let Some((_, score)) = best_move {
-        let matching_moves = move_scores.iter().filter(|m| m.1 == score);
-        println!("Best moves @ score {}: ", score);
-        for game_move in matching_moves {
-            println!("\t{:?}", game_move.0);
+        move_scores.sort_by_key(|m| m.1);
+        if game.player() == Player::P1 {
+            move_scores.reverse();
         }
+
+        let mut current_move_score = None;
+        for (game_move, score) in move_scores {
+            if current_move_score != Some(score) {
+                print!("\nBest moves @ score {}: \n- ", score);
+                current_move_score = Some(score);
+            }
+            print!("({}, {}), ", game_move.0, game_move.1);
+        }
+        println!();
     } else {
         println!("Player {:?} won!", game.player().opposite());
     }

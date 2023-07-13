@@ -1,5 +1,6 @@
 use std::{collections::HashMap, hash::{Hash, BuildHasher}};
 
+/// Represents a player in a two-player combinatorial game.
 #[derive(PartialEq, Eq, Debug)]
 pub enum Player {
     P1,
@@ -16,8 +17,7 @@ impl Player {
     }
 }
 
-// TODO: probably drop some of these requirements later. More games exist!
-/// Represents a perfect-information, deterministic, finite two-person game.
+/// Represents a combinatorial game.
 pub trait Game {
     /// The type of move this game uses.
     type Move;
@@ -81,7 +81,10 @@ impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for Ha
 }
 
 /// Runs the two-player minimax variant on a game.
-/// It uses alpha beta pruning (e.g. you can specify [-1, 1] to get only win/loss/draw moves).
+/// It uses alpha beta pruning (e.g. you can specify \[-1, 1\] to get only win/loss/draw moves).
+/// 
+/// This function requires a transposition table. If you only plan on running this function once,
+/// you can use a the in-built `HashMap`.
 pub fn negamax<T: Game + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
@@ -108,13 +111,12 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
         let mut board = game.clone();
         board.make_move(m);
 
-        // we cache scores inside the transposition table
-        let score = transposition_table.get(&board).map_or_else(|| {
+        let score = transposition_table.get(&board).unwrap_or_else(|| {
             let score = -negamax(&board, transposition_table, -beta, -alpha);
             transposition_table.insert(board, score);
 
             score
-        }, |score| score);
+        });
 
         if score >= beta {
             return beta;
