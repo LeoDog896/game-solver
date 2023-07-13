@@ -40,7 +40,9 @@ impl Chomp {
     }
 }
 
-impl Game<(u32, u32)> for Chomp {
+impl Game for Chomp {
+    type Move = (u32, u32);
+
     fn player(&self) -> Player {
         if self.n_moves % 2 == 0 {
             Player::P1
@@ -112,7 +114,7 @@ impl Display for Chomp {
 }
 
 fn main() {
-    let mut transposition_table: TranspositionTable<Chomp, (u32, u32)> = TranspositionTable::new();
+    let mut transposition_table = TranspositionTable::<Chomp>::new();
     let game = Chomp::new(8, 5);
     println!("{}", game);
 

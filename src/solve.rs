@@ -1,11 +1,14 @@
-use std::{collections::HashMap, fmt::Debug, hash::Hash, marker::PhantomData};
+use std::{collections::HashMap, hash::Hash};
 
 pub enum Player {
     P1,
     P2,
 }
 
-pub trait Game<T> {
+pub trait Game {
+    /// The type of move this game uses.
+    type Move;
+
     /// Returns the player whose turn it is.
     fn player(&self) -> Player;
     /// Returns the number of moves that have been made.
@@ -15,34 +18,32 @@ pub trait Game<T> {
     /// Returns true if the game is over.
     fn is_over(&self) -> bool;
     /// Returns true if the move was valid, and makes the move if it was.
-    fn make_move(&mut self, m: T) -> bool;
+    fn make_move(&mut self, m: Self::Move) -> bool;
     /// Returns a vector of all possible moves.
-    fn possible_moves(&self) -> Vec<T>;
+    fn possible_moves(&self) -> Vec<Self::Move>;
     /// Returns true if the move is a winning move.
-    fn is_winning_move(&self, m: T) -> bool;
+    fn is_winning_move(&self, m: Self::Move) -> bool;
 }
 
 /// A transposition table for a game.
 /// Transposition tables implement caching for minimax algorithms.
-pub struct TranspositionTable<T: Eq + Hash + Game<U>, U> {
+pub struct TranspositionTable<T: Eq + Hash + Game> {
     table: HashMap<T, i32>,
-    _t: PhantomData<U>,
 }
 
-impl<T: Game<U> + Clone + Eq + Hash, U: Debug> TranspositionTable<T, U> {
+impl<T: Game + Clone + Eq + Hash> TranspositionTable<T> {
     pub fn new() -> Self {
         Self {
             table: HashMap::new(),
-            _t: PhantomData,
         }
     }
 }
 
 /// Runs the two-player minimax variant on a game.
 /// It uses alpha beta pruning (e.g. you can specify [-1, 1])
-pub fn negamax<T: Game<U> + Clone + Eq + Hash, U: Debug>(
+pub fn negamax<T: Game + Clone + Eq + Hash>(
     game: &T,
-    transposition_table: &mut TranspositionTable<T, U>,
+    transposition_table: &mut TranspositionTable<T>,
     mut alpha: i32,
     mut beta: i32,
 ) -> i32 {
