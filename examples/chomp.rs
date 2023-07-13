@@ -4,11 +4,11 @@
 //! 
 //! This is a flipped version of the traiditional [Chomp](https://en.wikipedia.org/wiki/Chomp) game.
 
-use combinatorial_game::{negamax, Game, Player, TranspositionTable};
+use combinatorial_game::{negamax, Game, Player};
 
 use std::{
     fmt::{Display, Formatter},
-    hash::Hash, env::args,
+    hash::Hash, env::args, collections::HashMap,
 };
 
 #[derive(Clone, Hash, Eq, PartialEq)]
@@ -119,7 +119,7 @@ impl Display for Chomp {
 }
 
 fn main() {
-    let mut transposition_table = TranspositionTable::<Chomp>::new();
+    let mut transposition_table = HashMap::<Chomp, i32>::new();
     let mut game = Chomp::new(8, 5);
 
     // parse every move in args, e.g. 0-0 1-1 in args

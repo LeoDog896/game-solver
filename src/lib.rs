@@ -43,15 +43,28 @@ pub trait Game {
 
 /// A transposition table for a game.
 /// Transposition tables implement caching for minimax algorithms.
-pub struct TranspositionTable<T: Eq + Hash + Game> {
-    table: HashMap<T, i32>,
+pub trait TranspositionTable<T: Eq + Hash + Game> {
+    fn new() -> Self where Self: Sized;
+    fn get(&self, board: &T) -> Option<i32>;
+    fn insert(&mut self, board: T, score: i32);
+    fn has(&self, board: &T) -> bool;
 }
 
-impl<T: Game + Clone + Eq + Hash> TranspositionTable<T> {
-    pub fn new() -> Self {
-        Self {
-            table: HashMap::new(),
-        }
+impl<K: Eq + Hash + Game> TranspositionTable<K> for HashMap<K, i32> {
+    fn new() -> Self where Self: Sized {
+        HashMap::new()
+    }
+
+    fn get(&self, board: &K) -> Option<i32> {
+        self.get(&board).copied()
+    }
+
+    fn insert(&mut self, board: K, score: i32) {
+        self.insert(board, score);
+    }
+
+    fn has(&self, board: &K) -> bool {
+        self.contains_key(&board)
     }
 }
 
@@ -59,7 +72,7 @@ impl<T: Game + Clone + Eq + Hash> TranspositionTable<T> {
 /// It uses alpha beta pruning (e.g. you can specify [-1, 1] to get only win/loss/draw moves).
 pub fn negamax<T: Game + Clone + Eq + Hash>(
     game: &T,
-    transposition_table: &mut TranspositionTable<T>,
+    transposition_table: &mut dyn TranspositionTable<T>,
     mut alpha: i32,
     mut beta: i32,
 ) -> i32 {
@@ -80,11 +93,11 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
     for m in game.possible_moves() {
         let mut board = game.clone();
         board.make_move(m);
-        let score = if transposition_table.table.contains_key(&board) {
-            transposition_table.table[&board]
+        let score = if transposition_table.has(&board) {
+            transposition_table.get(&board).unwrap()
         } else {
             let score = -negamax(&board, transposition_table, -beta, -alpha);
-            transposition_table.table.insert(board, score);
+            transposition_table.insert(board, score);
 
             score
         };
