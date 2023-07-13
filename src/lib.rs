@@ -8,14 +8,16 @@ pub enum Player {
 
 impl Player {
     #[must_use]
-    pub fn opposite(&self) -> Player {
+    pub const fn opposite(&self) -> Self {
         match self {
-            Player::P1 => Player::P2,
-            Player::P2 => Player::P1,
+            Self::P1 => Self::P2,
+            Self::P2 => Self::P1,
         }
     }
 }
 
+// TODO: probably drop some of these requirements later. More games exist!
+/// Represents a perfect-information, deterministic, finite two-person game.
 pub trait Game {
     /// The type of move this game uses.
     type Move;
@@ -25,6 +27,11 @@ pub trait Game {
 
     /// Returns the number of moves that have been made.
     fn n_moves(&self) -> u32;
+
+    /// Scores a position. The default implementation uses the size minus the number of moves (for finite games)
+    fn score(&self) -> u32 {
+        self.size() - self.n_moves()
+    }
 
     /// Returns the size of the board (used to calculate the score)
     fn size(&self) -> u32;
@@ -36,6 +43,10 @@ pub trait Game {
     fn make_move(&mut self, m: Self::Move) -> bool;
 
     /// Returns a vector of all possible moves.
+    /// 
+    /// If possible, this function should "guess" what the best moves are first.
+    /// For example, if this is for tic tac toe, it should give the middle move first.
+    /// This allows alpha-beta pruning to move faster.
     fn possible_moves(&self) -> Vec<Self::Move>;
 
     /// Returns true if the move is a winning move.
@@ -48,7 +59,7 @@ pub trait Game {
 /// Transposition tables should optimally be O(1) for get, has, and insert.
 /// The best structure for this is a `HashMap`.
 /// 
-/// all `HashMap`s already implement TranspositionTable.
+/// all `HashMap`s already implement `TranspositionTable`.
 pub trait TranspositionTable<T: Eq + Hash + Game> {
     fn get(&self, board: &T) -> Option<i32>;
     fn insert(&mut self, board: T, score: i32);
@@ -79,15 +90,17 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
 ) -> i32 {
     for m in game.possible_moves() {
         if game.is_winning_move(m) {
-            return game.size() as i32 - game.n_moves() as i32 - 1;
+            return game.score() as i32 - 1;
         }
     }
 
-    let max = game.size() - game.n_moves();
-    if beta > max as i32 {
-        beta = max as i32;
-        if alpha >= beta {
-            return beta;
+    {
+        let max = game.score() as i32;
+        if beta > max {
+            beta = max;
+            if alpha >= beta {
+                return beta;
+            }
         }
     }
 
@@ -96,14 +109,12 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
         board.make_move(m);
 
         // we cache scores inside the transposition table
-        let score = if let Some(score) = transposition_table.get(&board) {
-            score
-        } else {
+        let score = transposition_table.get(&board).map_or_else(|| {
             let score = -negamax(&board, transposition_table, -beta, -alpha);
             transposition_table.insert(board, score);
 
             score
-        };
+        }, |score| score);
 
         if score >= beta {
             return beta;

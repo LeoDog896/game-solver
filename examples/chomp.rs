@@ -145,7 +145,7 @@ fn main() {
 
     let possible_moves = game.possible_moves();
 
-    let best_move_iter = possible_moves.iter().map(|m| {
+    let move_scores = possible_moves.iter().map(|m| {
         let mut board = game.clone();
         board.make_move(*m);
         (
@@ -157,16 +157,16 @@ fn main() {
                 game.size() as i32,
             ),
         )
-    });
+    }).collect::<Vec<_>>();
 
-    let best_move: Option<((u32, u32), i32)> = if game.player() == Player::P1 {
-        best_move_iter.max_by_key(|(_, score)| *score)
-    } else {
-        best_move_iter.min_by_key(|(_, score)| *score)
-    };
+    let best_move = move_scores.iter().min_by_key(|(_, score)| *score).copied();
 
-    if let Some((game_move, score)) = best_move {
-        println!("Best move: {:?} with score {}", game_move, score);
+    if let Some((_, score)) = best_move {
+        let matching_moves = move_scores.iter().filter(|m| m.1 == score);
+        println!("Best moves @ score {}: ", score);
+        for game_move in matching_moves {
+            println!("\t{:?}", game_move.0);
+        }
     } else {
         println!("Player {:?} won!", game.player().opposite());
     }
