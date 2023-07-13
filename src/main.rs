@@ -1,38 +1,11 @@
+mod solve;
+
+use solve::{negamax, Game, Player, TranspositionTable};
+
 use std::{
-    collections::HashMap,
-    fmt::{Debug, Display, Formatter},
+    fmt::{Display, Formatter},
     hash::Hash,
-    marker::PhantomData,
 };
-
-enum Player {
-    P1,
-    P2,
-}
-
-trait Game<T> {
-    fn player(&self) -> Player;
-    fn n_moves(&self) -> u32;
-    fn size(&self) -> u32;
-    fn is_over(&self) -> bool;
-    fn make_move(&mut self, m: T) -> bool;
-    fn possible_moves(&self) -> Vec<T>;
-    fn is_winning_move(&self, m: T) -> bool;
-}
-
-struct TranspositionTable<T: Eq + Hash + Game<U>, U> {
-    table: HashMap<T, i32>,
-    _t: PhantomData<U>,
-}
-
-impl<T: Game<U> + Clone + Eq + Hash, U: Debug> TranspositionTable<T, U> {
-    fn new() -> Self {
-        Self {
-            table: HashMap::new(),
-            _t: PhantomData,
-        }
-    }
-}
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Chomp {
@@ -138,49 +111,6 @@ impl Display for Chomp {
     }
 }
 
-fn negamax<T: Game<U> + Clone + Eq + Hash, U: Debug>(
-    game: &T,
-    transposition_table: &mut TranspositionTable<T, U>,
-    mut alpha: i32,
-    mut beta: i32
-) -> i32 {
-    for m in game.possible_moves() {
-        if game.is_winning_move(m) {
-            return game.size() as i32 - game.n_moves() as i32;
-        }
-    }
-
-    let max = game.size() - game.n_moves();
-    if beta > max as i32 {
-        beta = max as i32;
-        if alpha >= beta {
-            return beta;
-        }
-    }
-
-    for m in game.possible_moves() {
-        let mut board = game.clone();
-        board.make_move(m);
-        let score = if transposition_table.table.contains_key(&board) {
-            transposition_table.table[&board]
-        } else {
-            let score = -negamax(&board, transposition_table, -beta, -alpha);
-
-            transposition_table.table.insert(board.clone(), score);
-
-            score
-        };
-        if score >= beta {
-            return beta;
-        }
-        if score > alpha {
-            alpha = score;
-        }
-    }
-
-    alpha
-}
-
 fn main() {
     let mut transposition_table: TranspositionTable<Chomp, (u32, u32)> = TranspositionTable::new();
     let game = Chomp::new(8, 5);
@@ -196,6 +126,6 @@ fn main() {
         })
         .max_by_key(|(_, score)| *score)
         .unwrap();
-    
+
     println!("Best move: {:?} with score {}", best_move.0, best_move.1);
 }
