@@ -1,8 +1,18 @@
 use std::{collections::HashMap, hash::Hash};
 
+#[derive(PartialEq, Eq, Debug)]
 pub enum Player {
     P1,
     P2,
+}
+
+impl Player {
+    pub fn opposite(&self) -> Player {
+        match self {
+            Player::P1 => Player::P2,
+            Player::P2 => Player::P1
+        }
+    }
 }
 
 pub trait Game {
@@ -28,11 +38,7 @@ pub trait Game {
     fn possible_moves(&self) -> Vec<Self::Move>;
 
     /// Returns true if the move is a winning move.
-    fn is_winning_move(&self, m: Self::Move) -> bool where Self: Clone {
-        let mut board = self.clone();
-        board.make_move(m);
-        board.is_over()
-    }
+    fn is_winning_move(&self, m: Self::Move) -> bool;
 }
 
 /// A transposition table for a game.
@@ -78,7 +84,6 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
             transposition_table.table[&board]
         } else {
             let score = -negamax(&board, transposition_table, -beta, -alpha);
-
             transposition_table.table.insert(board, score);
 
             score

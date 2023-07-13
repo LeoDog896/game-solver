@@ -8,7 +8,7 @@ use combinatorial_game::{negamax, Game, Player, TranspositionTable};
 
 use std::{
     fmt::{Display, Formatter},
-    hash::Hash,
+    hash::Hash, env::args,
 };
 
 #[derive(Clone, Hash, Eq, PartialEq)]
@@ -94,6 +94,12 @@ impl Game for Chomp {
         // the game is over when there are no longer any moves
         self.possible_moves().is_empty()
     }
+
+    fn is_winning_move(&self, m: Self::Move) -> bool {
+        let mut board = self.clone();
+        board.make_move(m);
+        board.is_over()
+    }
 }
 
 impl Display for Chomp {
@@ -114,19 +120,40 @@ impl Display for Chomp {
 
 fn main() {
     let mut transposition_table = TranspositionTable::<Chomp>::new();
-    let game = Chomp::new(8, 5);
+    let mut game = Chomp::new(8, 5);
+
+    // parse every move in args, e.g. 0-0 1-1 in args
+    let moves: Vec<(u32, u32)> = args().skip(1).map(|arg| {
+        let numbers: Vec<u32> = arg.split("-").map(|num| num.parse::<u32>().unwrap()).collect();
+
+        (numbers[0], numbers[1])
+    }).collect();
+
+    for game_move in moves {
+        game.make_move(game_move);
+    }
+
     println!("{}", game);
 
-    let best_move = game
-        .possible_moves()
+    let possible_moves = game.possible_moves();
+
+    let best_move_iter = possible_moves
         .iter()
         .map(|m| {
             let mut board = game.clone();
             board.make_move(*m);
-            (*m, -negamax(&board, &mut transposition_table, -100, 100))
-        })
-        .max_by_key(|(_, score)| *score)
-        .unwrap();
+            (*m, negamax(&board, &mut transposition_table, -(game.size() as i32), game.size() as i32))
+        });
 
-    println!("Best move: {:?} with score {}", best_move.0, best_move.1);
+    let best_move: Option<((u32, u32), i32)> = if game.player() == Player::P1 {
+        best_move_iter.min_by_key(|(_, score)| *score)
+    } else {
+        best_move_iter.min_by_key(|(_, score)| *score)
+    };
+
+    if let Some((game_move, score)) = best_move {
+        println!("Best move: {:?} with score {}", game_move, score);
+    } else {
+        println!("Player {:?} won!", game.player().opposite());
+    }
 }
