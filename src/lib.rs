@@ -11,18 +11,28 @@ pub trait Game {
 
     /// Returns the player whose turn it is.
     fn player(&self) -> Player;
+
     /// Returns the number of moves that have been made.
     fn n_moves(&self) -> u32;
+
     /// Returns the size of the board (used to calculate the score)
     fn size(&self) -> u32;
+
     /// Returns true if the game is over.
     fn is_over(&self) -> bool;
+
     /// Returns true if the move was valid, and makes the move if it was.
     fn make_move(&mut self, m: Self::Move) -> bool;
+
     /// Returns a vector of all possible moves.
     fn possible_moves(&self) -> Vec<Self::Move>;
+
     /// Returns true if the move is a winning move.
-    fn is_winning_move(&self, m: Self::Move) -> bool;
+    fn is_winning_move(&self, m: Self::Move) -> bool where Self: Clone {
+        let mut board = self.clone();
+        board.make_move(m);
+        board.is_over()
+    }
 }
 
 /// A transposition table for a game.
@@ -40,7 +50,7 @@ impl<T: Game + Clone + Eq + Hash> TranspositionTable<T> {
 }
 
 /// Runs the two-player minimax variant on a game.
-/// It uses alpha beta pruning (e.g. you can specify [-1, 1])
+/// It uses alpha beta pruning (e.g. you can specify [-1, 1] to get only win/loss/draw moves).
 pub fn negamax<T: Game + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut TranspositionTable<T>,
@@ -69,10 +79,11 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
         } else {
             let score = -negamax(&board, transposition_table, -beta, -alpha);
 
-            transposition_table.table.insert(board.clone(), score);
+            transposition_table.table.insert(board, score);
 
             score
         };
+
         if score >= beta {
             return beta;
         }

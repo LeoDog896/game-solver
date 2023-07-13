@@ -57,7 +57,7 @@ impl Game for Chomp {
         self.n * self.m
     }
 
-    fn make_move(&mut self, m: (u32, u32)) -> bool {
+    fn make_move(&mut self, m: Self::Move) -> bool {
         if self.board[m.0 as usize][m.1 as usize] {
             for i in m.0..self.n {
                 for j in 0..=m.1 {
@@ -71,7 +71,7 @@ impl Game for Chomp {
         }
     }
 
-    fn possible_moves(&self) -> Vec<(u32, u32)> {
+    fn possible_moves(&self) -> Vec<Self::Move> {
         let mut moves = Vec::new();
         for i in 0..self.n {
             for j in 0..self.m {
@@ -86,12 +86,6 @@ impl Game for Chomp {
     fn is_over(&self) -> bool {
         // the game is over when there are no longer any moves
         self.possible_moves().is_empty()
-    }
-
-    fn is_winning_move(&self, m: (u32, u32)) -> bool {
-        let mut board = self.clone();
-        board.make_move(m);
-        board.is_over()
     }
 }
 
