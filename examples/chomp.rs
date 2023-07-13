@@ -1,3 +1,9 @@
+//! Chomp is a two-player game played on a rectangular grid of squares.
+//! The bottom right square is poisoned, and the players take turns eating squares.
+//! Every square they eat, every square to the right and above it is also eaten (inclusively)
+//! 
+//! This is a flipped version of the traiditional [Chomp](https://en.wikipedia.org/wiki/Chomp) game.
+
 use combinatorial_game::{negamax, Game, Player, TranspositionTable};
 
 use std::{
