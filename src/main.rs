@@ -183,10 +183,10 @@ fn negamax<T: Game<U> + Clone + Eq + Hash, U: Debug>(
 
 fn main() {
     let mut transposition_table: TranspositionTable<Chomp, (u32, u32)> = TranspositionTable::new();
-    let mut game = Chomp::new(8, 5);
+    let game = Chomp::new(8, 5);
     println!("{}", game);
 
-    let best_move: ((u32, u32), i32) = game
+    let best_move = game
         .possible_moves()
         .iter()
         .map(|m| {
