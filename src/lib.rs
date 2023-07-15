@@ -98,7 +98,7 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
     }
 
     {
-        let max = game.score() as i32;
+        let max = transposition_table.get(game).unwrap_or(game.score() as i32);
         if beta > max {
             beta = max;
             if alpha >= beta {
@@ -111,12 +111,7 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
         let mut board = game.clone();
         board.make_move(m);
 
-        let score = transposition_table.get(&board).unwrap_or_else(|| {
-            let score = -negamax(&board, transposition_table, -beta, -alpha);
-            transposition_table.insert(board, score);
-
-            score
-        });
+        let score = -negamax(&board, transposition_table, -beta, -alpha);
 
         if score >= beta {
             return beta;
@@ -125,6 +120,8 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
             alpha = score;
         }
     }
+
+    transposition_table.insert(game.clone(), alpha - game.score() as i32 + 1);
 
     alpha
 }

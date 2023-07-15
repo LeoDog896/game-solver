@@ -150,7 +150,7 @@ fn main() {
                 &mut transposition_table,
                 -(game.size() as i32),
                 game.size() as i32,
-            ),
+            ) * if game.player() == Player::P1 { 1 } else { -1 },
         )
     }).collect::<Vec<_>>();
 
@@ -164,7 +164,7 @@ fn main() {
         let mut current_move_score = None;
         for (game_move, score) in move_scores {
             if current_move_score != Some(score) {
-                print!("\nBest moves @ score {}: \n- ", score);
+                println!("\n\nBest moves @ score {}:", score);
                 current_move_score = Some(score);
             }
             print!("({}, {}), ", game_move.0, game_move.1);
