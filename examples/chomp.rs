@@ -134,7 +134,8 @@ fn main() {
         game.make_move((numbers[0], numbers[1]));
     });
 
-    println!("{}", game);
+    print!("{}", game);
+    println!("Player {:?} to move", game.player());
 
     let possible_moves = game.possible_moves();
 
@@ -145,12 +146,12 @@ fn main() {
             board.make_move(*m);
             (
                 *m,
-                negamax(
+                -negamax(
                     &board,
                     &mut transposition_table,
                     -(game.size() as i32),
                     game.size() as i32,
-                ) * if game.player() == Player::P1 { 1 } else { -1 },
+                ),
             )
         })
         .collect::<Vec<_>>();
