@@ -125,37 +125,37 @@ fn main() {
     let mut game = Chomp::new(8, 5);
 
     // parse every move in args, e.g. 0-0 1-1 in args
-    args()
-        .skip(1)
-        .for_each(|arg| {
-            let numbers: Vec<u32> = arg
-                .split("-")
-                .map(|num| num.parse::<u32>().expect("Not a number!"))
-                .collect();
+    args().skip(1).for_each(|arg| {
+        let numbers: Vec<u32> = arg
+            .split("-")
+            .map(|num| num.parse::<u32>().expect("Not a number!"))
+            .collect();
 
-            game.make_move((numbers[0], numbers[1]));
-        });
+        game.make_move((numbers[0], numbers[1]));
+    });
 
     println!("{}", game);
 
     let possible_moves = game.possible_moves();
 
-    let mut move_scores = possible_moves.iter().map(|m| {
-        let mut board = game.clone();
-        board.make_move(*m);
-        (
-            *m,
-            negamax(
-                &board,
-                &mut transposition_table,
-                -(game.size() as i32),
-                game.size() as i32,
-            ) * if game.player() == Player::P1 { 1 } else { -1 },
-        )
-    }).collect::<Vec<_>>();
+    let mut move_scores = possible_moves
+        .iter()
+        .map(|m| {
+            let mut board = game.clone();
+            board.make_move(*m);
+            (
+                *m,
+                negamax(
+                    &board,
+                    &mut transposition_table,
+                    -(game.size() as i32),
+                    game.size() as i32,
+                ) * if game.player() == Player::P1 { 1 } else { -1 },
+            )
+        })
+        .collect::<Vec<_>>();
 
     if !move_scores.is_empty() {
-
         move_scores.sort_by_key(|m| m.1);
         if game.player() == Player::P1 {
             move_scores.reverse();

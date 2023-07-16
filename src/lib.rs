@@ -1,4 +1,7 @@
-use std::{collections::HashMap, hash::{Hash, BuildHasher}};
+use std::{
+    collections::HashMap,
+    hash::{BuildHasher, Hash},
+};
 
 /// Represents a player in a two-player combinatorial game.
 #[derive(PartialEq, Eq, Debug)]
@@ -43,7 +46,7 @@ pub trait Game {
     fn make_move(&mut self, m: Self::Move) -> bool;
 
     /// Returns a vector of all possible moves.
-    /// 
+    ///
     /// If possible, this function should "guess" what the best moves are first.
     /// For example, if this is for tic tac toe, it should give the middle move first.
     /// This allows alpha-beta pruning to move faster.
@@ -58,7 +61,7 @@ pub trait Game {
 ///
 /// Transposition tables should optimally be O(1) for get, has, and insert.
 /// The best structure for this is a `HashMap`.
-/// 
+///
 /// all `HashMap`s already implement `TranspositionTable`.
 pub trait TranspositionTable<T: Eq + Hash + Game> {
     fn get(&self, board: &T) -> Option<i32>;
@@ -82,7 +85,7 @@ impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for Ha
 
 /// Runs the two-player minimax variant on a game.
 /// It uses alpha beta pruning (e.g. you can specify \[-1, 1\] to get only win/loss/draw moves).
-/// 
+///
 /// This function requires a transposition table. If you only plan on running this function once,
 /// you can use a the in-built `HashMap`.
 pub fn negamax<T: Game + Clone + Eq + Hash>(
