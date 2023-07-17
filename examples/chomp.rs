@@ -4,7 +4,7 @@
 //!
 //! This is a flipped version of the traiditional [Chomp](https://en.wikipedia.org/wiki/Chomp) game.
 
-use combinatorial_game::{negamax, Game, Player};
+use combinatorial_game::{move_scores, Game, Player};
 
 use std::{
     collections::HashMap,
@@ -137,24 +137,12 @@ fn main() {
     print!("{}", game);
     println!("Player {:?} to move", game.player());
 
-    let possible_moves = game.possible_moves();
-
-    let mut move_scores = possible_moves
-        .iter()
-        .map(|m| {
-            let mut board = game.clone();
-            board.make_move(*m);
-            (
-                *m,
-                -negamax(
-                    &board,
-                    &mut transposition_table,
-                    -(game.size() as i32),
-                    game.size() as i32,
-                ),
-            )
-        })
-        .collect::<Vec<_>>();
+    let mut move_scores = move_scores(
+        &game,
+        &mut transposition_table,
+        -(game.size() as i32),
+        game.size() as i32,
+    );
 
     if !move_scores.is_empty() {
         move_scores.sort_by_key(|m| m.1);
@@ -173,5 +161,60 @@ fn main() {
         println!();
     } else {
         println!("Player {:?} won!", game.player().opposite());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_add() {
+        let mut game = Chomp::new(8, 5);
+        assert_eq!(game.make_move((0, 0)), true);
+        assert_eq!(game.possible_moves().len(), 31);
+        let move_scores = move_scores(
+            &game,
+            &mut HashMap::new(),
+            -(game.size() as i32),
+            game.size() as i32,
+        );
+        assert_eq!(move_scores.len(), game.possible_moves().len());
+        assert_eq!(
+            move_scores,
+            vec![
+                ((0, 1), -2),
+                ((0, 2), -10),
+                ((0, 3), -37),
+                ((1, 1), -38),
+                ((1, 2), -38),
+                ((1, 3), -2),
+                ((1, 4), -37),
+                ((2, 1), -38),
+                ((2, 2), -38),
+                ((2, 3), -2),
+                ((2, 4), -35),
+                ((3, 1), -38),
+                ((3, 2), -38),
+                ((3, 3), -32),
+                ((3, 4), -1),
+                ((4, 1), -38),
+                ((4, 2), -38),
+                ((4, 3), -8),
+                ((4, 4), -38),
+                ((5, 1), -38),
+                ((5, 2), -38),
+                ((5, 3), -30),
+                ((5, 4), -38),
+                ((6, 1), -38),
+                ((6, 2), -38),
+                ((6, 3), -30),
+                ((6, 4), -38),
+                ((7, 1), -38),
+                ((7, 2), -38),
+                ((7, 3), -30),
+                ((7, 4), -38)
+            ]
+        );
     }
 }

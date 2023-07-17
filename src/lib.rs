@@ -23,7 +23,7 @@ impl Player {
 /// Represents a combinatorial game.
 pub trait Game {
     /// The type of move this game uses.
-    type Move;
+    type Move: Copy;
 
     /// Returns the player whose turn it is.
     fn player(&self) -> Player;
@@ -127,4 +127,24 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
     transposition_table.insert(game.clone(), alpha - game.score() as i32 + 1);
 
     alpha
+}
+
+/// Utility function to get a list of the move scores of a certain game.
+///
+/// This is useful if you're making a visual interface to display the various scores
+/// for each move.
+pub fn move_scores<T: Game + Clone + Eq + Hash>(
+    game: &T,
+    transposition_table: &mut dyn TranspositionTable<T>,
+    alpha: i32,
+    beta: i32,
+) -> Vec<(T::Move, i32)> {
+    game.possible_moves()
+        .iter()
+        .map(|m| {
+            let mut board = game.clone();
+            board.make_move(*m);
+            (*m, -negamax(&board, transposition_table, alpha, beta))
+        })
+        .collect::<Vec<_>>()
 }
