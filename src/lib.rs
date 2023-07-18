@@ -25,14 +25,20 @@ pub trait Game {
     /// The type of move this game uses.
     type Move: Copy;
 
+    /// The iterator type for possible moves.
+    type Iter: Iterator<Item = Self::Move>;
+
     /// Returns the player whose turn it is.
     fn player(&self) -> Player;
 
     /// Scores a position. The default implementation uses the size minus the number of moves (for finite games)
     fn score(&self) -> u32;
 
-    /// Returns true if the game is over.
-    fn is_over(&self) -> bool;
+    /// Get the max score of a game.
+    fn max_score(&self) -> u32;
+
+    /// Get the min score of a game. This should be negative.
+    fn min_score(&self) -> i32;
 
     /// Returns true if the move was valid, and makes the move if it was.
     fn make_move(&mut self, m: Self::Move) -> bool;
@@ -42,7 +48,8 @@ pub trait Game {
     /// If possible, this function should "guess" what the best moves are first.
     /// For example, if this is for tic tac toe, it should give the middle move first.
     /// This allows alpha-beta pruning to move faster.
-    fn possible_moves(&self) -> Vec<Self::Move>;
+    // fn possible_moves(&self) -> iterator?
+    fn possible_moves(&self) -> Self::Iter;
 
     /// Returns true if the move is a winning move.
     fn is_winning_move(&self, m: Self::Move) -> bool;
@@ -86,14 +93,14 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
     mut alpha: i32,
     mut beta: i32,
 ) -> i32 {
-    for m in game.possible_moves() {
+    for m in &mut game.possible_moves() {
         if game.is_winning_move(m) {
             return game.score() as i32 - 1;
         }
     }
 
     {
-        let max = transposition_table.get(game).unwrap_or(game.score() as i32);
+        let max = transposition_table.get(game).unwrap_or(game.max_score() as i32);
         if beta > max {
             beta = max;
             if alpha >= beta {
@@ -102,7 +109,7 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
         }
     }
 
-    for m in game.possible_moves() {
+    for m in &mut game.possible_moves() {
         let mut board = game.clone();
         board.make_move(m);
 
@@ -116,27 +123,28 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
         }
     }
 
-    transposition_table.insert(game.clone(), alpha - game.score() as i32 + 1);
+    transposition_table.insert(game.clone(), alpha);
 
     alpha
 }
 
 /// Utility function to get a list of the move scores of a certain game.
 ///
-/// This is useful if you're making a visual interface to display the various scores
+/// This is mainly intended for front-facing visual interfaces
 /// for each move.
-pub fn move_scores<T: Game + Clone + Eq + Hash>(
-    game: &T,
-    transposition_table: &mut dyn TranspositionTable<T>,
+/// 
+/// We flip the sign of the score because we want the score from the perspective of the player playing
+/// the move, not the player whose turn it is.
+pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
+    game: &'a T,
+    transposition_table: &'a mut dyn TranspositionTable<T>,
     alpha: i32,
     beta: i32,
-) -> Vec<(T::Move, i32)> {
-    game.possible_moves()
-        .iter()
-        .map(|m| {
-            let mut board = game.clone();
-            board.make_move(*m);
-            (*m, -negamax(&board, transposition_table, alpha, beta))
-        })
-        .collect::<Vec<_>>()
+) -> impl Iterator<Item = (<T as Game>::Move, i32)> + 'a {
+    game.possible_moves().map(move |m| {
+        let mut board = game.clone();
+        board.make_move(m);
+        (m, -negamax(&board, transposition_table, alpha, beta))
+    })
 }
+

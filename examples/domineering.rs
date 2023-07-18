@@ -1,8 +1,9 @@
-//! Chomp is a two-player game played on a rectangular grid of squares.
-//! The bottom right square is poisoned, and the players take turns eating squares.
-//! Every square they eat, every square to the right and above it is also eaten (inclusively)
-//!
-//! This is a flipped version of the traiditional [Chomp](https://en.wikipedia.org/wiki/Chomp) game.
+//! Domineering is a two-player game played on a grid of squares.
+//! The goal is to be the last player to make a legal move.
+//! 
+//! Player 1 places a domino (two adjacent squares) horizontally, and player 2 places a domino vertically.
+//! 
+//! Learn more: https://en.wikipedia.org/wiki/Domineering
 
 use combinatorial_game::{move_scores, Game, Player};
 
@@ -14,25 +15,20 @@ use std::{
 };
 
 #[derive(Clone, Hash, Eq, PartialEq)]
-struct Chomp {
+struct Domineering {
     width: u32,
     height: u32,
-    /// True represents a square that has not been eaten
+    /// True represents a square - true if empty, false otherwise
     board: Vec<Vec<bool>>,
     n_moves: u32,
 }
 
-impl Chomp {
+impl Domineering {
     fn new(width: u32, height: u32) -> Self {
         let mut board = Vec::new();
-        for i in 0..height {
+        for _ in 0..height {
             let mut row = Vec::new();
-            for j in 0..width {
-                if i == height - 1 && j == 0 {
-                    row.push(false);
-                    continue;
-                }
-
+            for _ in 0..width {
                 row.push(true);
             }
             board.push(row);
@@ -47,7 +43,7 @@ impl Chomp {
     }
 }
 
-impl Game for Chomp {
+impl Game for Domineering {
     type Move = (u32, u32);
     type Iter = std::vec::IntoIter<Self::Move>;
 
@@ -72,25 +68,44 @@ impl Game for Chomp {
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
-        if self.board[m.1 as usize][m.0 as usize] {
-            for i in m.0..self.width {
-                for j in 0..=m.1 {
-                    self.board[j as usize][i as usize] = false;
+        if !self.board[m.1 as usize][m.0 as usize] {
+            false
+        } else {
+            if self.player() == Player::P1 {
+                if m.1 == self.height - 1 {
+                    return false;
                 }
+                self.board[m.1 as usize][m.0 as usize] = false;
+                self.board[(m.1 + 1) as usize][m.0 as usize] = false;
+            } else {
+                if m.0 == self.width - 1 {
+                    return false;
+                }
+                self.board[m.1 as usize][m.0 as usize] = false;
+                self.board[m.1 as usize][(m.0 + 1) as usize] = false;
             }
+
             self.n_moves += 1;
             true
-        } else {
-            false
         }
     }
 
     fn possible_moves(&self) -> Self::Iter {
         let mut moves = Vec::new();
-        for i in 0..self.height {
-            for j in 0..self.width {
-                if self.board[i as usize][j as usize] {
-                    moves.push((j, i));
+        if self.player() == Player::P1 {
+            for i in 0..self.height - 1 {
+                for j in 0..self.width {
+                    if self.board[i as usize][j as usize] && self.board[(i + 1) as usize][j as usize] {
+                        moves.push((j, i));
+                    }
+                }
+            }
+        } else {
+            for i in 0..self.height {
+                for j in 0..self.width - 1 {
+                    if self.board[i as usize][j as usize] && self.board[i as usize][(j + 1) as usize] {
+                        moves.push((j, i));
+                    }
                 }
             }
         }
@@ -104,7 +119,7 @@ impl Game for Chomp {
     }
 }
 
-impl Display for Chomp {
+impl Display for Domineering {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         for i in 0..self.height {
             for j in 0..self.width {
@@ -121,8 +136,8 @@ impl Display for Chomp {
 }
 
 fn main() {
-    let mut transposition_table = HashMap::<Chomp, i32>::new();
-    let mut game = Chomp::new(8, 5);
+    let mut transposition_table = HashMap::<Domineering, i32>::new();
+    let mut game = Domineering::new(5, 5);
 
     // parse every move in args, e.g. 0-0 1-1 in args
     args().skip(1).for_each(|arg| {
@@ -159,60 +174,5 @@ fn main() {
         println!();
     } else {
         println!("Player {:?} won!", game.player().opposite());
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_add() {
-        let mut game = Chomp::new(8, 5);
-        assert_eq!(game.make_move((0, 0)), true);
-        assert_eq!(game.possible_moves().len(), 31);
-        let move_scores = move_scores(
-            &game,
-            &mut HashMap::new(),
-            game.min_score(),
-            game.max_score() as i32,
-        );
-        assert_eq!(move_scores.len(), game.possible_moves().len());
-        assert_eq!(
-            move_scores,
-            vec![
-                ((0, 1), -2),
-                ((0, 2), -10),
-                ((0, 3), -37),
-                ((1, 1), -38),
-                ((1, 2), -38),
-                ((1, 3), -2),
-                ((1, 4), -37),
-                ((2, 1), -38),
-                ((2, 2), -38),
-                ((2, 3), -2),
-                ((2, 4), -35),
-                ((3, 1), -38),
-                ((3, 2), -38),
-                ((3, 3), -32),
-                ((3, 4), -1),
-                ((4, 1), -38),
-                ((4, 2), -38),
-                ((4, 3), -8),
-                ((4, 4), -38),
-                ((5, 1), -38),
-                ((5, 2), -38),
-                ((5, 3), -30),
-                ((5, 4), -38),
-                ((6, 1), -38),
-                ((6, 2), -38),
-                ((6, 3), -30),
-                ((6, 4), -38),
-                ((7, 1), -38),
-                ((7, 2), -38),
-                ((7, 3), -30),
-                ((7, 4), -38)
-            ]
-        );
     }
 }
