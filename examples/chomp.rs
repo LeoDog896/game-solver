@@ -45,6 +45,10 @@ impl Chomp {
             n_moves: 0,
         }
     }
+
+    fn size(&self) -> u32 {
+        self.width * self.height
+    }
 }
 
 impl Game for Chomp {
@@ -58,12 +62,8 @@ impl Game for Chomp {
         }
     }
 
-    fn n_moves(&self) -> u32 {
-        self.n_moves
-    }
-
-    fn size(&self) -> u32 {
-        self.width * self.height
+    fn score(&self) -> u32 {
+        self.size() - self.n_moves   
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {

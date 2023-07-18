@@ -28,16 +28,8 @@ pub trait Game {
     /// Returns the player whose turn it is.
     fn player(&self) -> Player;
 
-    /// Returns the number of moves that have been made.
-    fn n_moves(&self) -> u32;
-
     /// Scores a position. The default implementation uses the size minus the number of moves (for finite games)
-    fn score(&self) -> u32 {
-        self.size() - self.n_moves()
-    }
-
-    /// Returns the size of the board (used to calculate the score)
-    fn size(&self) -> u32;
+    fn score(&self) -> u32;
 
     /// Returns true if the game is over.
     fn is_over(&self) -> bool;
