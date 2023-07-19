@@ -130,7 +130,7 @@ fn main() {
             .split("-")
             .map(|num| num.parse::<u32>().expect("Not a number!"))
             .collect();
-
+        
         game.make_move((numbers[0], numbers[1]));
     });
 
@@ -167,7 +167,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_add() {
+    fn test_chomp() {
         let mut game = Chomp::new(8, 5);
         assert_eq!(game.make_move((0, 0)), true);
         assert_eq!(game.possible_moves().len(), 31);
@@ -176,7 +176,7 @@ mod tests {
             &mut HashMap::new(),
             game.min_score(),
             game.max_score() as i32,
-        );
+        ).collect::<Vec<_>>();
         assert_eq!(move_scores.len(), game.possible_moves().len());
         assert_eq!(
             move_scores,

@@ -176,3 +176,52 @@ fn main() {
         println!("Player {:?} won!", game.player().opposite());
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_domineering() {
+        let game = Domineering::new(5, 5);
+        let mut move_scores = move_scores(
+            &game,
+            &mut HashMap::new(),
+            game.min_score(),
+            game.max_score() as i32,
+        ).collect::<Vec<_>>();
+
+        assert_eq!(move_scores.len(), game.possible_moves().len());
+        
+        move_scores.sort();
+        let mut current_scores = vec![
+            ((4, 3), -13),
+            ((3, 3), -13),
+            ((2, 3), -13),
+            ((1, 3), -13),
+            ((0, 3), -13),
+            ((3, 2), -13),
+            ((1, 2), -13),
+            ((3, 1), -13),
+            ((1, 1), -13),
+            ((4, 0), -13),
+            ((3, 0), -13),
+            ((2, 0), -13),
+            ((1, 0), -13),
+            ((0, 0), -13),
+            ((4, 2), -15),
+            ((2, 2), -15),
+            ((0, 2), -15),
+            ((4, 1), -15),
+            ((2, 1), -15),
+            ((0, 1), -15),
+        ];
+
+        current_scores.sort();
+
+        assert_eq!(
+            move_scores,
+            current_scores
+        );
+    }
+}
