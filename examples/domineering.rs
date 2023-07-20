@@ -15,42 +15,31 @@ use std::{
 };
 
 #[derive(Clone, Hash, Eq, PartialEq)]
-struct Domineering {
-    width: u32,
-    height: u32,
+struct Domineering<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> {
     /// True represents a square - true if empty, false otherwise
-    board: Vec<bool>,
+    board: [bool; SIZE],
     n_moves: u32,
 }
 
-impl Domineering {
-    fn new(width: u32, height: u32) -> Self {
-        let mut board = Vec::with_capacity((width * height) as usize);
-        for _ in 0..height {
-            for _ in 0..width {
-                board.push(true);
-            }
-        }
-
+impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Domineering<SIZE, WIDTH, HEIGHT> {
+    fn new() -> Self {
         Self {
-            width,
-            height,
-            board,
+            board: [true; SIZE],
             n_moves: 0,
         }
     }
 }
 
-impl Game for Domineering {
-    type Move = (u32, u32);
+impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Game for Domineering<SIZE, WIDTH, HEIGHT> {
+    type Move = (usize, usize);
     type Iter = std::vec::IntoIter<Self::Move>;
 
     fn max_score(&self) -> u32 {
-        self.width * self.height
+        (WIDTH * HEIGHT) as u32
     }
 
     fn min_score(&self) -> i32 {
-        -(self.width as i32 * self.height as i32)
+        -(WIDTH as i32 * HEIGHT as i32) as i32
     }
 
     fn player(&self) -> Player {
@@ -66,21 +55,21 @@ impl Game for Domineering {
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
-        if !self.board[m.0 as usize + m.1 as usize * self.width as usize] {
+        if !self.board[m.0 as usize + m.1 as usize * WIDTH as usize] {
             false
         } else {
             if self.player() == Player::P1 {
-                if m.0 == self.width - 1 {
+                if m.0 == WIDTH - 1 {
                     return false;
                 }
-                self.board[m.0 as usize + m.1 as usize * self.width as usize] = false;
-                self.board[(m.0 + 1) as usize + m.1 as usize * self.width as usize] = false;
+                self.board[m.0 as usize + m.1 as usize * WIDTH as usize] = false;
+                self.board[(m.0 + 1) as usize + m.1 as usize * WIDTH as usize] = false;
             } else {
-                if m.1 == self.height - 1 {
+                if m.1 == HEIGHT - 1 {
                     return false;
                 }
-                self.board[m.0 as usize + m.1 as usize * self.width as usize] = false;
-                self.board[m.0 as usize + (m.1 + 1) as usize * self.width as usize] = false;
+                self.board[m.0 as usize + m.1 as usize * WIDTH as usize] = false;
+                self.board[m.0 as usize + (m.1 + 1) as usize * WIDTH as usize] = false;
             }
 
             self.n_moves += 1;
@@ -91,17 +80,17 @@ impl Game for Domineering {
     fn possible_moves(&self) -> Self::Iter {
         let mut moves = Vec::new();
         if self.player() == Player::P1 {
-            for i in 0..self.height {
-                for j in 0..self.width - 1 {
-                    if self.board[j as usize + i as usize * self.width as usize] && self.board[(j + 1) as usize + i as usize * self.width as usize] {
+            for i in 0..HEIGHT {
+                for j in 0..WIDTH - 1 {
+                    if self.board[j as usize + i as usize * WIDTH as usize] && self.board[(j + 1) as usize + i as usize * WIDTH as usize] {
                         moves.push((j, i));
                     }
                 }
             }
         } else {
-            for i in 0..self.height - 1 {
-                for j in 0..self.width {
-                    if self.board[j as usize + i as usize * self.width as usize] && self.board[j as usize + (i + 1) as usize * self.width as usize] {
+            for i in 0..HEIGHT - 1 {
+                for j in 0..WIDTH {
+                    if self.board[j as usize + i as usize * WIDTH as usize] && self.board[j as usize + (i + 1) as usize * WIDTH as usize] {
                         moves.push((j, i));
                     }
                 }
@@ -117,11 +106,11 @@ impl Game for Domineering {
     }
 }
 
-impl Display for Domineering {
+impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Display for Domineering<SIZE, WIDTH, HEIGHT> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
-        for i in 0..self.height {
-            for j in 0..self.width {
-                if self.board[j as usize + i as usize * self.width as usize] {
+        for i in 0..HEIGHT {
+            for j in 0..WIDTH {
+                if self.board[j as usize + i as usize * WIDTH as usize] {
                     write!(f, "X")?;
                 } else {
                     write!(f, ".")?;
@@ -134,14 +123,14 @@ impl Display for Domineering {
 }
 
 fn main() {
-    let mut transposition_table = HashMap::<Domineering, i32>::new();
-    let mut game = Domineering::new(5, 5);
+    let mut game = Domineering::<25, 5, 5>::new();
+    let mut transposition_table = HashMap::<Domineering<25, 5, 5>, i32>::new();
 
     // parse every move in args, e.g. 0-0 1-1 in args
     args().skip(1).for_each(|arg| {
-        let numbers: Vec<u32> = arg
+        let numbers: Vec<usize> = arg
             .split("-")
-            .map(|num| num.parse::<u32>().expect("Not a number!"))
+            .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
         game.make_move((numbers[0], numbers[1]));
@@ -181,7 +170,7 @@ mod tests {
 
     #[test]
     fn test_domineering() {
-        let game = Domineering::new(5, 5);
+        let mut game = Domineering::<5, 5>::new();
         let mut move_scores = move_scores(
             &game,
             &mut HashMap::new(),
