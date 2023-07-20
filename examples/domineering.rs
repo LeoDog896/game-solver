@@ -19,19 +19,17 @@ struct Domineering {
     width: u32,
     height: u32,
     /// True represents a square - true if empty, false otherwise
-    board: Vec<Vec<bool>>,
+    board: Vec<bool>,
     n_moves: u32,
 }
 
 impl Domineering {
     fn new(width: u32, height: u32) -> Self {
-        let mut board = Vec::new();
+        let mut board = Vec::with_capacity((width * height) as usize);
         for _ in 0..height {
-            let mut row = Vec::new();
             for _ in 0..width {
-                row.push(true);
+                board.push(true);
             }
-            board.push(row);
         }
 
         Self {
@@ -68,21 +66,21 @@ impl Game for Domineering {
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
-        if !self.board[m.1 as usize][m.0 as usize] {
+        if !self.board[m.0 as usize + m.1 as usize * self.width as usize] {
             false
         } else {
             if self.player() == Player::P1 {
-                if m.1 == self.height - 1 {
-                    return false;
-                }
-                self.board[m.1 as usize][m.0 as usize] = false;
-                self.board[(m.1 + 1) as usize][m.0 as usize] = false;
-            } else {
                 if m.0 == self.width - 1 {
                     return false;
                 }
-                self.board[m.1 as usize][m.0 as usize] = false;
-                self.board[m.1 as usize][(m.0 + 1) as usize] = false;
+                self.board[m.0 as usize + m.1 as usize * self.width as usize] = false;
+                self.board[(m.0 + 1) as usize + m.1 as usize * self.width as usize] = false;
+            } else {
+                if m.1 == self.height - 1 {
+                    return false;
+                }
+                self.board[m.0 as usize + m.1 as usize * self.width as usize] = false;
+                self.board[m.0 as usize + (m.1 + 1) as usize * self.width as usize] = false;
             }
 
             self.n_moves += 1;
@@ -93,17 +91,17 @@ impl Game for Domineering {
     fn possible_moves(&self) -> Self::Iter {
         let mut moves = Vec::new();
         if self.player() == Player::P1 {
-            for i in 0..self.height - 1 {
-                for j in 0..self.width {
-                    if self.board[i as usize][j as usize] && self.board[(i + 1) as usize][j as usize] {
+            for i in 0..self.height {
+                for j in 0..self.width - 1 {
+                    if self.board[j as usize + i as usize * self.width as usize] && self.board[(j + 1) as usize + i as usize * self.width as usize] {
                         moves.push((j, i));
                     }
                 }
             }
         } else {
-            for i in 0..self.height {
-                for j in 0..self.width - 1 {
-                    if self.board[i as usize][j as usize] && self.board[i as usize][(j + 1) as usize] {
+            for i in 0..self.height - 1 {
+                for j in 0..self.width {
+                    if self.board[j as usize + i as usize * self.width as usize] && self.board[j as usize + (i + 1) as usize * self.width as usize] {
                         moves.push((j, i));
                     }
                 }
@@ -123,7 +121,7 @@ impl Display for Domineering {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         for i in 0..self.height {
             for j in 0..self.width {
-                if self.board[i as usize][j as usize] {
+                if self.board[j as usize + i as usize * self.width as usize] {
                     write!(f, "X")?;
                 } else {
                     write!(f, ".")?;
