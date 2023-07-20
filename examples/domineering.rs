@@ -122,9 +122,12 @@ impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Display for Dom
     }
 }
 
+// nm, n, m
+type DomineeringGame = Domineering<36, 6, 6>;
+
 fn main() {
-    let mut game = Domineering::<25, 5, 5>::new();
-    let mut transposition_table = HashMap::<Domineering<25, 5, 5>, i32>::new();
+    let mut game = DomineeringGame::new();
+    let mut transposition_table = HashMap::<DomineeringGame, i32>::new();
 
     // parse every move in args, e.g. 0-0 1-1 in args
     args().skip(1).for_each(|arg| {
@@ -170,7 +173,7 @@ mod tests {
 
     #[test]
     fn test_domineering() {
-        let mut game = Domineering::<5, 5>::new();
+        let mut game = Domineering::<25, 5, 5>::new();
         let mut move_scores = move_scores(
             &game,
             &mut HashMap::new(),
