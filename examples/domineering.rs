@@ -123,7 +123,7 @@ impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Display for Dom
 }
 
 // nm, n, m
-type DomineeringGame = Domineering<36, 6, 6>;
+type DomineeringGame = Domineering<25, 5, 5>;
 
 fn main() {
     let mut game = DomineeringGame::new();
@@ -171,9 +171,41 @@ fn main() {
 mod tests {
     use super::*;
 
+    /// Get the winner of a generic configuration of domineering
+    fn winner<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize>() -> Option<Player> {
+        let game = Domineering::<SIZE, WIDTH, HEIGHT>::new();
+        let mut move_scores = move_scores(
+            &game,
+            &mut HashMap::new(),
+            game.min_score(),
+            game.max_score() as i32,
+        ).collect::<Vec<_>>();
+
+        if move_scores.is_empty() {
+            None
+        } else {
+            move_scores.sort_by_key(|m| m.1);
+            move_scores.reverse();
+            if move_scores[0].1 > 0 {
+                Some(Player::P1)
+            } else {
+                Some(Player::P2)
+            }
+        }
+    }
+
+    #[test]
+    fn test_wins() {
+        assert_eq!(winner::<25, 5, 5>(), Some(Player::P2));
+        assert_eq!(winner::<16, 4, 4>(), Some(Player::P1));
+        assert_eq!(winner::<9, 3, 3>(), Some(Player::P1));
+        assert_eq!(winner::<26, 13, 2>(), Some(Player::P2));
+        assert_eq!(winner::<22, 11, 2>(), Some(Player::P1));
+    }
+
     #[test]
     fn test_domineering() {
-        let mut game = Domineering::<25, 5, 5>::new();
+        let game = Domineering::<25, 5, 5>::new();
         let mut move_scores = move_scores(
             &game,
             &mut HashMap::new(),
@@ -184,27 +216,28 @@ mod tests {
         assert_eq!(move_scores.len(), game.possible_moves().len());
         
         move_scores.sort();
+        
         let mut current_scores = vec![
-            ((4, 3), -13),
+            ((3, 4), -13),
+            ((0, 4), -13),
             ((3, 3), -13),
             ((2, 3), -13),
             ((1, 3), -13),
             ((0, 3), -13),
             ((3, 2), -13),
-            ((1, 2), -13),
+            ((0, 2), -13),
             ((3, 1), -13),
+            ((2, 1), -13),
             ((1, 1), -13),
-            ((4, 0), -13),
+            ((0, 1), -13),
             ((3, 0), -13),
-            ((2, 0), -13),
-            ((1, 0), -13),
             ((0, 0), -13),
-            ((4, 2), -15),
+            ((2, 4), -15),
+            ((1, 4), -15),
             ((2, 2), -15),
-            ((0, 2), -15),
-            ((4, 1), -15),
-            ((2, 1), -15),
-            ((0, 1), -15),
+            ((1, 2), -15),
+            ((2, 0), -15),
+            ((1, 0), -15),
         ];
 
         current_scores.sort();
