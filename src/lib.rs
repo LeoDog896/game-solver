@@ -157,9 +157,9 @@ pub fn solve<T: Game + Clone + Eq + Hash>(game: &T) -> i32 {
 /// 
 /// We flip the sign of the score because we want the score from the perspective of the player playing
 /// the move, not the player whose turn it is.
-pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
-    game: &'a T,
-) -> impl Iterator<Item = (<T as Game>::Move, i32)> + 'a {
+pub fn move_scores<T: Game + Clone + Eq + Hash>(
+    game: &T,
+) -> impl Iterator<Item = (<T as Game>::Move, i32)> + '_ {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
         board.make_move(m);

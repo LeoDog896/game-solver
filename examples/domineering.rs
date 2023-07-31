@@ -6,6 +6,7 @@
 //! Learn more: https://en.wikipedia.org/wiki/Domineering
 
 use combinatorial_game::{move_scores, Game, Player};
+use array2d::Array2D;
 
 use std::{
     env::args,
@@ -14,22 +15,22 @@ use std::{
 };
 
 #[derive(Clone, Hash, Eq, PartialEq)]
-struct Domineering<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> {
+struct Domineering<const WIDTH: usize, const HEIGHT: usize> {
     /// True represents a square - true if empty, false otherwise
-    board: [bool; SIZE],
+    board: Array2D<bool>,
     n_moves: u32,
 }
 
-impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Domineering<SIZE, WIDTH, HEIGHT> {
+impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
     fn new() -> Self {
         Self {
-            board: [true; SIZE],
+            board: Array2D::filled_with(true, WIDTH, HEIGHT),
             n_moves: 0,
         }
     }
 }
 
-impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Game for Domineering<SIZE, WIDTH, HEIGHT> {
+impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT> {
     type Move = (usize, usize);
     type Iter = std::vec::IntoIter<Self::Move>;
 
@@ -54,25 +55,26 @@ impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Game for Domine
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
-        if !self.board[m.0 as usize + m.1 as usize * WIDTH as usize] {
-            false
-        } else {
+        // }
+        if *self.board.get(m.0, m.1).unwrap() {
             if self.player() == Player::P1 {
                 if m.0 == WIDTH - 1 {
                     return false;
                 }
-                self.board[m.0 as usize + m.1 as usize * WIDTH as usize] = false;
-                self.board[(m.0 + 1) as usize + m.1 as usize * WIDTH as usize] = false;
+                self.board.set(m.0, m.1, false).unwrap();
+                self.board.set(m.0 + 1, m.1, false).unwrap();
             } else {
                 if m.1 == HEIGHT - 1 {
                     return false;
                 }
-                self.board[m.0 as usize + m.1 as usize * WIDTH as usize] = false;
-                self.board[m.0 as usize + (m.1 + 1) as usize * WIDTH as usize] = false;
+                self.board.set(m.0, m.1, false).unwrap();
+                self.board.set(m.0, m.1 + 1, false).unwrap();
             }
 
             self.n_moves += 1;
             true
+        } else {
+            false
         }
     }
 
@@ -81,7 +83,7 @@ impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Game for Domine
         if self.player() == Player::P1 {
             for i in 0..HEIGHT {
                 for j in 0..WIDTH - 1 {
-                    if self.board[j as usize + i as usize * WIDTH as usize] && self.board[(j + 1) as usize + i as usize * WIDTH as usize] {
+                    if *self.board.get(j, i).unwrap() && *self.board.get(j + 1, i).unwrap() {
                         moves.push((j, i));
                     }
                 }
@@ -89,7 +91,7 @@ impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Game for Domine
         } else {
             for i in 0..HEIGHT - 1 {
                 for j in 0..WIDTH {
-                    if self.board[j as usize + i as usize * WIDTH as usize] && self.board[j as usize + (i + 1) as usize * WIDTH as usize] {
+                    if *self.board.get(j, i).unwrap() && *self.board.get(j, i + 1).unwrap() {
                         moves.push((j, i));
                     }
                 }
@@ -105,11 +107,11 @@ impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Game for Domine
     }
 }
 
-impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Display for Domineering<SIZE, WIDTH, HEIGHT> {
+impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEIGHT> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         for i in 0..HEIGHT {
             for j in 0..WIDTH {
-                if self.board[j as usize + i as usize * WIDTH as usize] {
+                if *self.board.get(j, i).unwrap() {
                     write!(f, "X")?;
                 } else {
                     write!(f, ".")?;
@@ -121,8 +123,8 @@ impl<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize> Display for Dom
     }
 }
 
-// nm, n, m
-type DomineeringGame = Domineering<25, 5, 5>;
+// n, m
+type DomineeringGame = Domineering<5, 5>;
 
 fn main() {
     let mut game = DomineeringGame::new();
@@ -167,8 +169,8 @@ mod tests {
     use super::*;
 
     /// Get the winner of a generic configuration of domineering
-    fn winner<const SIZE: usize, const WIDTH: usize, const HEIGHT: usize>() -> Option<Player> {
-        let game = Domineering::<SIZE, WIDTH, HEIGHT>::new();
+    fn winner<const WIDTH: usize, const HEIGHT: usize>() -> Option<Player> {
+        let game = Domineering::<WIDTH, HEIGHT>::new();
         let mut move_scores = move_scores(
             &game,
         ).collect::<Vec<_>>();
@@ -188,16 +190,16 @@ mod tests {
 
     #[test]
     fn test_wins() {
-        assert_eq!(winner::<25, 5, 5>(), Some(Player::P2));
-        assert_eq!(winner::<16, 4, 4>(), Some(Player::P1));
-        assert_eq!(winner::<9, 3, 3>(), Some(Player::P1));
-        assert_eq!(winner::<26, 13, 2>(), Some(Player::P2));
-        assert_eq!(winner::<22, 11, 2>(), Some(Player::P1));
+        assert_eq!(winner::<5, 5>(), Some(Player::P2));
+        assert_eq!(winner::<4, 4>(), Some(Player::P1));
+        assert_eq!(winner::<3, 3>(), Some(Player::P1));
+        assert_eq!(winner::<13, 2>(), Some(Player::P2));
+        assert_eq!(winner::<11, 2>(), Some(Player::P1));
     }
 
     #[test]
     fn test_domineering() {
-        let game = Domineering::<25, 5, 5>::new();
+        let game = Domineering::<5, 5>::new();
         let mut move_scores = move_scores(
             &game,
         ).collect::<Vec<_>>();

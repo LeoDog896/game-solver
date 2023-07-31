@@ -4,6 +4,7 @@
 //!
 //! This is a flipped version of the traiditional [Chomp](https://en.wikipedia.org/wiki/Chomp) game.
 
+use array2d::Array2D;
 use combinatorial_game::{move_scores, Game, Player};
 
 use std::{
@@ -14,28 +15,17 @@ use std::{
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Chomp {
-    width: u32,
-    height: u32,
+    width: usize,
+    height: usize,
     /// True represents a square that has not been eaten
-    board: Vec<Vec<bool>>,
+    board: Array2D<bool>,
     n_moves: u32,
 }
 
 impl Chomp {
-    fn new(width: u32, height: u32) -> Self {
-        let mut board = Vec::new();
-        for i in 0..height {
-            let mut row = Vec::new();
-            for j in 0..width {
-                if i == height - 1 && j == 0 {
-                    row.push(false);
-                    continue;
-                }
-
-                row.push(true);
-            }
-            board.push(row);
-        }
+    fn new(width: usize, height: usize) -> Self {
+        let mut board = Array2D::filled_with(true, width, height);
+        board.set(0, height - 1, false).unwrap();
 
         Self {
             width,
@@ -47,11 +37,11 @@ impl Chomp {
 }
 
 impl Game for Chomp {
-    type Move = (u32, u32);
+    type Move = (usize, usize);
     type Iter = std::vec::IntoIter<Self::Move>;
 
     fn max_score(&self) -> u32 {
-        self.width * self.height
+        (self.width * self.height).try_into().unwrap()
     }
 
     fn min_score(&self) -> i32 {
@@ -71,10 +61,10 @@ impl Game for Chomp {
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
-        if self.board[m.1 as usize][m.0 as usize] {
+        if *self.board.get(m.0, m.1).unwrap() {
             for i in m.0..self.width {
                 for j in 0..=m.1 {
-                    self.board[j as usize][i as usize] = false;
+                    self.board.set(i, j, false).unwrap();
                 }
             }
             self.n_moves += 1;
@@ -88,7 +78,7 @@ impl Game for Chomp {
         let mut moves = Vec::new();
         for i in 0..self.height {
             for j in 0..self.width {
-                if self.board[i as usize][j as usize] {
+                if *self.board.get(j, i).unwrap() {
                     moves.push((j, i));
                 }
             }
@@ -107,7 +97,7 @@ impl Display for Chomp {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         for i in 0..self.height {
             for j in 0..self.width {
-                if self.board[i as usize][j as usize] {
+                if *self.board.get(j, i).unwrap() {
                     write!(f, "X")?;
                 } else {
                     write!(f, ".")?;
@@ -124,9 +114,9 @@ fn main() {
 
     // parse every move in args, e.g. 0-0 1-1 in args
     args().skip(1).for_each(|arg| {
-        let numbers: Vec<u32> = arg
+        let numbers: Vec<usize> = arg
             .split("-")
-            .map(|num| num.parse::<u32>().expect("Not a number!"))
+            .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
         
         game.make_move((numbers[0], numbers[1]));

@@ -5,3 +5,6 @@ edition = "2021"
 
 [profile.release]
 lto = true
+
+[dev-dependencies]
+array2d = "0.3.0"
