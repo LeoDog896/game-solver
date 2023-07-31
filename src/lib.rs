@@ -11,6 +11,7 @@ pub enum Player {
 }
 
 impl Player {
+    /// Get the player opposite to this one.
     #[must_use]
     pub const fn opposite(&self) -> Self {
         match self {
