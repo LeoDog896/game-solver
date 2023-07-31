@@ -57,7 +57,7 @@ impl Game for Chomp {
     }
 
     fn score(&self) -> u32 {
-        self.max_score() - self.n_moves   
+        self.max_score() - self.n_moves
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
@@ -76,7 +76,7 @@ impl Game for Chomp {
 
     fn possible_moves(&self) -> Self::Iter {
         let mut moves = Vec::new();
-        for i in 0..self.height {
+        for i in (0..self.height).rev() {
             for j in 0..self.width {
                 if *self.board.get(j, i).unwrap() {
                     moves.push((j, i));
@@ -110,7 +110,7 @@ impl Display for Chomp {
 }
 
 fn main() {
-    let mut game = Chomp::new(8, 5);
+    let mut game = Chomp::new(6, 4);
 
     // parse every move in args, e.g. 0-0 1-1 in args
     args().skip(1).for_each(|arg| {
@@ -118,16 +118,14 @@ fn main() {
             .split("-")
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
-        
+
         game.make_move((numbers[0], numbers[1]));
     });
 
     print!("{}", game);
     println!("Player {:?} to move", game.player());
 
-    let mut move_scores = move_scores(
-        &game,
-    ).collect::<Vec<_>>();
+    let mut move_scores = move_scores(&game).collect::<Vec<_>>();
 
     if !move_scores.is_empty() {
         move_scores.sort_by_key(|m| m.1);
@@ -151,50 +149,40 @@ fn main() {
 mod tests {
     use super::*;
 
-    // #[test]
+    #[test]
     fn test_chomp() {
-        let mut game = Chomp::new(8, 5);
-        assert_eq!(game.make_move((0, 0)), true);
-        assert_eq!(game.possible_moves().len(), 31);
-        let move_scores = move_scores(
-            &game,
-        ).collect::<Vec<_>>();
-        assert_eq!(move_scores.len(), game.possible_moves().len());
-        assert_eq!(
-            move_scores,
-            vec![
-                ((0, 1), -2),
-                ((0, 2), -10),
-                ((0, 3), -37),
-                ((1, 1), -38),
-                ((1, 2), -38),
-                ((1, 3), -2),
-                ((1, 4), -37),
-                ((2, 1), -38),
-                ((2, 2), -38),
-                ((2, 3), -2),
-                ((2, 4), -35),
-                ((3, 1), -38),
-                ((3, 2), -38),
-                ((3, 3), -32),
-                ((3, 4), -1),
-                ((4, 1), -38),
-                ((4, 2), -38),
-                ((4, 3), -8),
-                ((4, 4), -38),
-                ((5, 1), -38),
-                ((5, 2), -38),
-                ((5, 3), -30),
-                ((5, 4), -38),
-                ((6, 1), -38),
-                ((6, 2), -38),
-                ((6, 3), -30),
-                ((6, 4), -38),
-                ((7, 1), -38),
-                ((7, 2), -38),
-                ((7, 3), -30),
-                ((7, 4), -38)
-            ]
-        );
+        let game = Chomp::new(6, 4);
+        let mut move_scores = move_scores(&game).collect::<Vec<_>>();
+        move_scores.sort();
+
+        let mut new_scores = vec![
+            ((2, 2), 13),
+            ((5, 0), -12),
+            ((4, 0), -12),
+            ((3, 0), -12),
+            ((2, 0), -12),
+            ((0, 0), -12),
+            ((5, 1), -12),
+            ((4, 1), -12),
+            ((3, 1), -12),
+            ((2, 1), -12),
+            ((0, 1), -12),
+            ((5, 2), -12),
+            ((4, 2), -12),
+            ((3, 2), -12),
+            ((5, 3), -12),
+            ((1, 0), -16),
+            ((1, 1), -16),
+            ((1, 2), -16),
+            ((4, 3), -16),
+            ((3, 3), -16),
+            ((2, 3), -16),
+            ((0, 2), -22),
+            ((1, 3), -22),
+        ];
+
+        new_scores.sort();
+
+        assert_eq!(move_scores, new_scores);
     }
 }

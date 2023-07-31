@@ -1,12 +1,12 @@
 //! Domineering is a two-player game played on a grid of squares.
 //! The goal is to be the last player to make a legal move.
-//! 
+//!
 //! Player 1 places a domino (two adjacent squares) horizontally, and player 2 places a domino vertically.
-//! 
+//!
 //! Learn more: https://en.wikipedia.org/wiki/Domineering
 
-use combinatorial_game::{move_scores, Game, Player};
 use array2d::Array2D;
+use combinatorial_game::{move_scores, Game, Player};
 
 use std::{
     env::args,
@@ -51,7 +51,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
     }
 
     fn score(&self) -> u32 {
-        self.max_score() - self.n_moves   
+        self.max_score() - self.n_moves
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
@@ -142,9 +142,7 @@ fn main() {
     print!("{}", game);
     println!("Player {:?} to move", game.player());
 
-    let mut move_scores = move_scores(
-        &game,
-    ).collect::<Vec<_>>();
+    let mut move_scores = move_scores(&game).collect::<Vec<_>>();
 
     if !move_scores.is_empty() {
         move_scores.sort_by_key(|m| m.1);
@@ -171,9 +169,7 @@ mod tests {
     /// Get the winner of a generic configuration of domineering
     fn winner<const WIDTH: usize, const HEIGHT: usize>() -> Option<Player> {
         let game = Domineering::<WIDTH, HEIGHT>::new();
-        let mut move_scores = move_scores(
-            &game,
-        ).collect::<Vec<_>>();
+        let mut move_scores = move_scores(&game).collect::<Vec<_>>();
 
         if move_scores.is_empty() {
             None
@@ -200,14 +196,12 @@ mod tests {
     #[test]
     fn test_domineering() {
         let game = Domineering::<5, 5>::new();
-        let mut move_scores = move_scores(
-            &game,
-        ).collect::<Vec<_>>();
+        let mut move_scores = move_scores(&game).collect::<Vec<_>>();
 
         assert_eq!(move_scores.len(), game.possible_moves().len());
-        
+
         move_scores.sort();
-        
+
         let mut current_scores = vec![
             ((3, 4), -13),
             ((0, 4), -13),
@@ -233,9 +227,6 @@ mod tests {
 
         current_scores.sort();
 
-        assert_eq!(
-            move_scores,
-            current_scores
-        );
+        assert_eq!(move_scores, current_scores);
     }
 }

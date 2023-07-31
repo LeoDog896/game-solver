@@ -100,7 +100,9 @@ fn negamax<T: Game + Clone + Eq + Hash>(
     }
 
     {
-        let max = transposition_table.get(game).unwrap_or(game.max_score() as i32);
+        let max = transposition_table
+            .get(game)
+            .unwrap_or(game.max_score() as i32);
         if beta > max {
             beta = max;
             if alpha >= beta {
@@ -148,13 +150,12 @@ pub fn solve<T: Game + Clone + Eq + Hash>(game: &T) -> i32 {
 
     alpha
 }
-    
 
 /// Utility function to get a list of the move scores of a certain game.
 ///
 /// This is mainly intended for front-facing visual interfaces
 /// for each move.
-/// 
+///
 /// We flip the sign of the score because we want the score from the perspective of the player playing
 /// the move, not the player whose turn it is.
 pub fn move_scores<T: Game + Clone + Eq + Hash>(
@@ -166,4 +167,3 @@ pub fn move_scores<T: Game + Clone + Eq + Hash>(
         (m, -solve(&board))
     })
 }
-
