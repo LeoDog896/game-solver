@@ -8,7 +8,6 @@
 use combinatorial_game::{move_scores, Game, Player};
 
 use std::{
-    collections::HashMap,
     env::args,
     fmt::{Display, Formatter},
     hash::Hash,
@@ -127,7 +126,6 @@ type DomineeringGame = Domineering<25, 5, 5>;
 
 fn main() {
     let mut game = DomineeringGame::new();
-    let mut transposition_table = HashMap::<DomineeringGame, i32>::new();
 
     // parse every move in args, e.g. 0-0 1-1 in args
     args().skip(1).for_each(|arg| {
@@ -144,9 +142,6 @@ fn main() {
 
     let mut move_scores = move_scores(
         &game,
-        &mut transposition_table,
-        game.min_score(),
-        game.max_score() as i32,
     ).collect::<Vec<_>>();
 
     if !move_scores.is_empty() {
@@ -176,9 +171,6 @@ mod tests {
         let game = Domineering::<SIZE, WIDTH, HEIGHT>::new();
         let mut move_scores = move_scores(
             &game,
-            &mut HashMap::new(),
-            game.min_score(),
-            game.max_score() as i32,
         ).collect::<Vec<_>>();
 
         if move_scores.is_empty() {
@@ -208,9 +200,6 @@ mod tests {
         let game = Domineering::<25, 5, 5>::new();
         let mut move_scores = move_scores(
             &game,
-            &mut HashMap::new(),
-            game.min_score(),
-            game.max_score() as i32,
         ).collect::<Vec<_>>();
 
         assert_eq!(move_scores.len(), game.possible_moves().len());

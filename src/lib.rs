@@ -87,7 +87,7 @@ impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for Ha
 ///
 /// This function requires a transposition table. If you only plan on running this function once,
 /// you can use a the in-built `HashMap`.
-pub fn negamax<T: Game + Clone + Eq + Hash>(
+fn negamax<T: Game + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
     mut alpha: i32,
@@ -128,6 +128,28 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
     alpha
 }
 
+pub fn solve<T: Game + Clone + Eq + Hash>(game: &T) -> i32 {
+    let min = game.min_score();
+    let max = game.max_score() as i32 + 1;
+
+    let mut alpha = min;
+    let mut beta = max;
+
+    while alpha < beta {
+        let med = alpha + (beta - alpha) / 2;
+        let r = negamax(game, &mut HashMap::new(), med, med + 1);
+
+        if r <= med {
+            beta = r;
+        } else {
+            alpha = r;
+        }
+    }
+
+    alpha
+}
+    
+
 /// Utility function to get a list of the move scores of a certain game.
 ///
 /// This is mainly intended for front-facing visual interfaces
@@ -137,14 +159,11 @@ pub fn negamax<T: Game + Clone + Eq + Hash>(
 /// the move, not the player whose turn it is.
 pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
     game: &'a T,
-    transposition_table: &'a mut dyn TranspositionTable<T>,
-    alpha: i32,
-    beta: i32,
 ) -> impl Iterator<Item = (<T as Game>::Move, i32)> + 'a {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
         board.make_move(m);
-        (m, -negamax(&board, transposition_table, alpha, beta))
+        (m, -solve(&board))
     })
 }
 
