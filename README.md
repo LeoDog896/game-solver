@@ -32,7 +32,7 @@ for benchmarks, analysis, and further optimization.
 These are some future features that I've gathered from the few games in examples:
 
 - Game Tree Visualization
-- Parallelization as a feature
+- Parallelization w/ rayon
 - 2+ player games (multiple agents w/ minimax instead of negamax)
 - Non-perfect information games
   - Games that involve chance
