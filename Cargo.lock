@@ -9,7 +9,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "79093d31d0a9c7832c71ad74dd945b7861f721e6f242aa67be253a5eecbac937"
 
 [[package]]
-name = "combinatorial-game"
+name = "game-solver"
 version = "0.1.0"
 dependencies = [
  "array2d",

@@ -5,7 +5,7 @@
 //! This is a flipped version of the traiditional [Chomp](https://en.wikipedia.org/wiki/Chomp) game.
 
 use array2d::Array2D;
-use combinatorial_game::{move_scores, Game, Player};
+use game_solver::{move_scores, Game, Player};
 
 use std::{
     env::args,
