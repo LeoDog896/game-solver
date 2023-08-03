@@ -56,13 +56,9 @@ pub trait Game {
     fn is_winning_move(&self, m: Self::Move) -> bool;
 }
 
-/// A transposition table for a game.
-/// Transposition tables implement caching for minimax algorithms.
+/// A memoization strategy for a perfect-information sequential game.
 ///
-/// Transposition tables should optimally be O(1) for get, has, and insert.
-/// The best structure for this is a `HashMap`.
-///
-/// all `HashMap`s already implement `TranspositionTable`.
+/// Transposition tables should optimally be a form of hash table.
 pub trait TranspositionTable<T: Eq + Hash + Game> {
     fn get(&self, board: &T) -> Option<i32>;
     fn insert(&mut self, board: T, score: i32);
