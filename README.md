@@ -21,15 +21,23 @@ can save a lot of time on alpha-beta pruning and iterative deepening.
 
 Use efficient bitboards - you can look at the examples for inspiration, but make sure your board representation is fast, and *preferably* doesn't need allocation.
 
-## Credits
+## Contribute
 
-A lot of the algorithms have been inspired by [Pascal Pons's excellent blog](http://blog.gamesolver.org/solving-connect-four/)
-and the general [Chessprogramming wiki](https://www.chessprogramming.org/Main_Page).
+If you want to contribute, new game implementations would be greately appreciated!
+The more examples of games that are provided, the more examples that can be used
+for benchmarks, analysis, and further optimization.
 
-## Future Plans (Contributions Welcome!)
+### Future Plans (Contributions Welcome!)
+
+These are some future features that I've gathered from the few games in examples:
 
 - Game Tree Visualization
 - Parallelization as a feature
 - 2+ player games (multiple agents w/ minimax instead of negamax)
 - Non-perfect information games
   - Games that involve chance
+
+## Credits
+
+A lot of the algorithms have been inspired by [Pascal Pons's excellent blog](http://blog.gamesolver.org/solving-connect-four/)
+and the general [Chessprogramming wiki](https://www.chessprogramming.org/Main_Page).
