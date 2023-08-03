@@ -131,6 +131,8 @@ fn negamax<T: Game + Clone + Eq + Hash>(
     alpha
 }
 
+/// Solves a game with iterative deepening.
+/// Internally, it uses the `negamax` function.
 pub fn solve<T: Game + Clone + Eq + Hash>(game: &T) -> i32 {
     let min = game.min_score();
     let max = game.max_score() as i32 + 1;
