@@ -1,5 +1,10 @@
 [package]
 name = "game-solver"
+description = "Solve any combinatorial game"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/LeoDog896/game-solver"
+keywords = ["combinatorial-game", "negamax", "minimax"]
+categories = ["game", "algorithm"]
 version = "0.1.0"
 edition = "2021"
 
