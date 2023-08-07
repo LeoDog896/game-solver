@@ -24,10 +24,11 @@ impl Player {
 /// Represents a combinatorial game.
 pub trait Game {
     /// The type of move this game uses.
-    type Move: Copy;
+    type Move: Clone;
 
     /// The iterator type for possible moves.
-    type Iter: Iterator<Item = Self::Move>;
+    // type Iter: Iterator<Item = Self::Move>; allow for a lifetime
+    type Iter<'a>: Iterator<Item = Self::Move> + 'a where Self: 'a;
 
     /// Returns the player whose turn it is.
     fn player(&self) -> Player;
@@ -49,8 +50,7 @@ pub trait Game {
     /// If possible, this function should "guess" what the best moves are first.
     /// For example, if this is for tic tac toe, it should give the middle move first.
     /// This allows alpha-beta pruning to move faster.
-    // fn possible_moves(&self) -> iterator?
-    fn possible_moves(&self) -> Self::Iter;
+    fn possible_moves(&self) -> Self::Iter<'_>;
 
     /// Returns true if the move is a winning move.
     fn is_winning_move(&self, m: Self::Move) -> bool;
@@ -162,7 +162,7 @@ pub fn move_scores<T: Game + Clone + Eq + Hash>(
 ) -> impl Iterator<Item = (<T as Game>::Move, i32)> + '_ {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
-        board.make_move(m);
+        board.make_move(m.clone());
         (m, -solve(&board))
     })
 }

@@ -1,51 +1,57 @@
-//! Chomp is a two-player game played on a rectangular grid of squares.
-//! The bottom right square is poisoned, and the players take turns eating squares.
-//! Every square they eat, every square to the right and above it is also eaten (inclusively)
-//!
-//! This is a flipped version of the traiditional [Chomp](https://en.wikipedia.org/wiki/Chomp) game.
+//! Tic Tac Toe is a traditional two-player game played on a 3x3 grid.
+//! For the sake of complexity, this allows simulating any n-dimensional 3-in-a-row game
+//! with the same bounds as the traditional game.
 
-use array2d::Array2D;
+use ndarray::{ArrayD, IxDyn, Dim, IxDynImpl, iter::IndexedIter, IntoDimension, Dimension};
 use game_solver::{move_scores, Game, Player};
 
 use std::{
     env::args,
     fmt::{Display, Formatter},
-    hash::Hash,
+    hash::Hash, iter::FilterMap,
 };
 
+/// The straight size of the board. E.g. if there were 2 dimensions, it would be a SIZE x SIZE board.
+const SIZE: usize = 3;
+
+#[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
+enum Square {
+    Empty,
+    X,
+    O,
+}
+
 #[derive(Clone, Hash, Eq, PartialEq)]
-struct Chomp {
-    width: usize,
-    height: usize,
+struct TicTacToe {
+    dim: usize,
     /// True represents a square that has not been eaten
-    board: Array2D<bool>,
+    board: ArrayD<Square>,
     n_moves: u32,
 }
 
-impl Chomp {
-    fn new(width: usize, height: usize) -> Self {
-        let mut board = Array2D::filled_with(true, width, height);
-        board.set(0, height - 1, false).unwrap();
+impl TicTacToe {
+    fn new(dim: usize) -> Self {
+        // we want [SIZE; dim] but dim isn't a const - we have to get the slice from a vec
+        let board = ArrayD::from_elem(IxDyn(&vec![SIZE; dim]), Square::Empty);
 
         Self {
-            width,
-            height,
+            dim,
             board,
             n_moves: 0,
         }
     }
 }
 
-impl Game for Chomp {
-    type Move = (usize, usize);
-    type Iter<'a> = std::vec::IntoIter<Self::Move>;
+impl Game for TicTacToe {
+    type Move = Dim<IxDynImpl>;
+    type Iter<'a> = FilterMap<IndexedIter<'a, Square, Self::Move>, fn((Self::Move, &Square)) -> Option<Self::Move>>;
 
     fn max_score(&self) -> u32 {
-        (self.width * self.height).try_into().unwrap()
+        (SIZE.pow(self.dim as u32) * self.dim).try_into().unwrap()
     }
 
     fn min_score(&self) -> i32 {
-        -(self.width as i32 * self.height as i32)
+        -(SIZE.pow(self.dim as u32) as i32 * self.dim as i32)
     }
 
     fn player(&self) -> Player {
@@ -61,13 +67,14 @@ impl Game for Chomp {
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
-        if *self.board.get(m.0, m.1).unwrap() {
-            for i in m.0..self.width {
-                for j in 0..=m.1 {
-                    self.board.set(i, j, false).unwrap();
-                }
-            }
-            self.n_moves += 1;
+        if *self.board.get(m.clone()).unwrap() == Square::Empty {
+            let square = if self.player() == Player::P1 {
+                Square::X
+            } else {
+                Square::O
+            };
+
+            *self.board.get_mut(m).unwrap() = square;
             true
         } else {
             false
@@ -75,42 +82,48 @@ impl Game for Chomp {
     }
 
     fn possible_moves(&self) -> Self::Iter<'_> {
-        let mut moves = Vec::new();
-        for i in (0..self.height).rev() {
-            for j in 0..self.width {
-                if *self.board.get(j, i).unwrap() {
-                    moves.push((j, i));
-                }
+        self.board.indexed_iter().filter_map(move |(index, square)| {
+            if square == &Square::Empty {
+                Some(index)
+            } else {
+                None
             }
-        }
-        moves.into_iter()
+        })
     }
 
     fn is_winning_move(&self, m: Self::Move) -> bool {
         let mut board = self.clone();
-        board.make_move(m);
-        board.possible_moves().collect::<Vec<_>>().is_empty()
+        board.make_move(m.clone());
+
+        // check if the board has any matches of SIZE in a row
+        // horizontal, diagonal, and vertical
+        // wins whenever it meets the following conditions:
+        // where (a1, a2, ... an) is the move
+        // each an has to follow a set rule:
+        // - it stays the same
+        // - it increases
+        // - it decreases
+        // e.g. (0, 0, 2), (0, 1, 1), (0, 2, 0) wins
+
+        // we can get the neighbors of the current move
     }
 }
 
-impl Display for Chomp {
+fn format_dim(dim: &Dim<IxDynImpl>) -> String {
+    format!("{:?}", dim.as_array_view().as_slice().unwrap())
+}
+
+impl Display for TicTacToe {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
-        for i in 0..self.height {
-            for j in 0..self.width {
-                if *self.board.get(j, i).unwrap() {
-                    write!(f, "X")?;
-                } else {
-                    write!(f, ".")?;
-                }
-            }
-            writeln!(f)?;
+        for (index, square) in self.board.indexed_iter() {
+            write!(f, "{:?} @ {}\n", square, format_dim(&index))?;
         }
         Ok(())
     }
 }
 
 fn main() {
-    let mut game = Chomp::new(6, 4);
+    let mut game = TicTacToe::new(2);
 
     // parse every move in args, e.g. 0-0 1-1 in args
     args().skip(1).for_each(|arg| {
@@ -119,7 +132,7 @@ fn main() {
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
-        game.make_move((numbers[0], numbers[1]));
+        game.make_move(numbers.into_dimension());
     });
 
     print!("{}", game);
@@ -137,7 +150,7 @@ fn main() {
                 println!("\n\nBest moves @ score {}:", score);
                 current_move_score = Some(score);
             }
-            print!("({}, {}), ", game_move.0, game_move.1);
+            print!("{}, ", format_dim(&game_move));
         }
         println!();
     } else {
@@ -150,8 +163,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_chomp() {
-        let game = Chomp::new(6, 4);
+    fn test_tictactoe() {
+        let game = TicTacToe::new(4);
         let mut move_scores = move_scores(&game).collect::<Vec<_>>();
         move_scores.sort();
 

@@ -33,7 +33,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
 
 impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT> {
     type Move = (usize, usize);
-    type Iter = std::vec::IntoIter<Self::Move>;
+    type Iter<'a> = std::vec::IntoIter<Self::Move>;
 
     fn max_score(&self) -> u32 {
         (WIDTH * HEIGHT) as u32
@@ -78,7 +78,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
         }
     }
 
-    fn possible_moves(&self) -> Self::Iter {
+    fn possible_moves(&self) -> Self::Iter<'_> {
         let mut moves = Vec::new();
         if self.player() == Player::P1 {
             for i in 0..HEIGHT {
