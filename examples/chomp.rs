@@ -89,7 +89,7 @@ impl Game for Chomp {
     fn is_winning_move(&self, m: Self::Move) -> bool {
         let mut board = self.clone();
         board.make_move(m);
-        board.possible_moves().collect::<Vec<_>>().is_empty()
+        board.possible_moves().next().is_none()
     }
 
     fn is_draw(&self) -> bool {
@@ -119,7 +119,7 @@ fn main() {
     // parse every move in args, e.g. 0-0 1-1 in args
     args().skip(1).for_each(|arg| {
         let numbers: Vec<usize> = arg
-            .split("-")
+            .split('-')
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 

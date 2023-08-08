@@ -8,7 +8,7 @@ use game_solver::{move_scores, Game, Player};
 use std::{
     env::args,
     fmt::{Display, Formatter},
-    hash::Hash, iter::FilterMap, collections::HashSet, ops::Sub,
+    hash::Hash, iter::FilterMap, collections::HashSet,
 };
 
 /// The straight size of the board. E.g. if there were 2 dimensions, it would be a SIZE x SIZE board.
@@ -30,7 +30,7 @@ struct TicTacToe {
 }
 
 fn add_checked(a: Dim<IxDynImpl>, b: Vec<i32>) -> Option<Dim<IxDynImpl>> {
-    let mut result = a.clone();
+    let mut result = a;
     for (i, j) in result.as_array_view_mut().iter_mut().zip(b.iter()) {
         if *i as i32 + *j < 0 {
             return None;
@@ -55,7 +55,7 @@ impl TicTacToe {
         }
     }
 
-    fn winning_line(&self, point: &Dim<IxDynImpl>, offset: &Vec<i32>) -> bool {
+    fn winning_line(&self, point: &Dim<IxDynImpl>, offset: &[i32]) -> bool {
         let square = self.board.get(point.clone()).unwrap();
 
         if *square == Square::Empty {
@@ -65,9 +65,9 @@ impl TicTacToe {
         let mut n = 1;
 
         let mut current = point.clone();
-        while let Some(new_current) = add_checked(current.clone(), offset.clone()) {
+        while let Some(new_current) = add_checked(current.clone(), offset.to_owned()) {
             current = new_current;
-            if self.board.get(current.clone()) == Some(&square) {
+            if self.board.get(current.clone()) == Some(square) {
                 n += 1;
             } else {
                 break;
@@ -77,7 +77,7 @@ impl TicTacToe {
 
         while let Some(new_current) = add_checked(current.clone(), offset.clone().iter().map(|x| -x).collect()) {
             current = new_current;
-            if self.board.get(current.clone()) == Some(&square) {
+            if self.board.get(current.clone()) == Some(square) {
                 n += 1;
             } else {
                 break;
@@ -231,19 +231,26 @@ fn format_dim(dim: &Dim<IxDynImpl>) -> String {
 impl Display for TicTacToe {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         for (index, square) in self.board.indexed_iter() {
-            write!(f, "{:?} @ {}\n", square, format_dim(&index))?;
+            writeln!(f, "{:?} @ {}", square, format_dim(&index))?;
         }
         Ok(())
     }
 }
 
 fn main() {
-    let mut game = TicTacToe::new(2);
+    // get the amount of dimensions from the first argument
+    let dim = args()
+        .nth(1)
+        .expect("Please provide a dimension!")
+        .parse::<usize>()
+        .expect("Not a number!");
+
+    let mut game = TicTacToe::new(dim);
 
     // parse every move in args, e.g. 0-0 1-1 in args
-    args().skip(1).for_each(|arg| {
+    args().skip(2).for_each(|arg| {
         let numbers: Vec<usize> = arg
-            .split("-")
+            .split('-')
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
