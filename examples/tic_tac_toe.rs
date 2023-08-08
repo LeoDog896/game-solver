@@ -291,12 +291,54 @@ mod tests {
     }
 
     #[test]
-    fn test_tictactoe() {
+    fn test_middle_move() {
         let mut game = TicTacToe::new(2);
         game.make_move(vec![0, 0].into_dimension());
 
         let best_move = best_moves(&game).unwrap();
 
         assert_eq!(best_move, vec![1, 1].into_dimension());
+    }
+
+    #[test]
+    fn test_always_tie() {
+        let game = TicTacToe::new(2);
+
+        assert!(move_scores(&game).all(|(_, score)| score == 0));
+    }
+
+    #[test]
+    fn test_win() {
+        let mut game = TicTacToe::new(2);
+
+        game.make_move(vec![0, 2].into_dimension()); // X
+        game.make_move(vec![0, 1].into_dimension()); // O
+        game.make_move(vec![1, 1].into_dimension()); // X
+        game.make_move(vec![0, 0].into_dimension()); // O
+        game.make_move(vec![2, 0].into_dimension()); // X
+
+        assert!(game.won());
+    }
+
+    #[test]
+    fn test_win_3d() {
+        let mut game = TicTacToe::new(3);
+
+        game.make_move(vec![0, 0, 0].into_dimension()); // X
+        game.make_move(vec![0, 0, 1].into_dimension()); // O
+        game.make_move(vec![0, 1, 1].into_dimension()); // X
+        game.make_move(vec![0, 0, 2].into_dimension()); // O
+        game.make_move(vec![0, 2, 2].into_dimension()); // X
+        game.make_move(vec![0, 1, 0].into_dimension()); // O
+        game.make_move(vec![0, 2, 0].into_dimension()); // X
+
+        assert!(game.won());
+    }
+
+    #[test]
+    fn test_always_tie_1d() {
+        let game = TicTacToe::new(1);
+
+        assert!(move_scores(&game).all(|(_, score)| score == 0));
     }
 }
