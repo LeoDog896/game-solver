@@ -286,12 +286,16 @@ fn main() {
 mod tests {
     use super::*;
 
+    fn best_moves(game: &TicTacToe) -> Option<Dim<IxDynImpl>> {
+        move_scores(game).max_by(|(_, a), (_, b)| a.cmp(b)).map(|(m, _)| m)
+    }
+
     #[test]
     fn test_tictactoe() {
         let mut game = TicTacToe::new(2);
         game.make_move(vec![0, 0].into_dimension());
 
-        let best_move = move_scores(&game).max_by(|(_, a), (_, b)| a.cmp(b)).unwrap().0;
+        let best_move = best_moves(&game).unwrap();
 
         assert_eq!(best_move, vec![1, 1].into_dimension());
     }
