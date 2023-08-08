@@ -54,6 +54,9 @@ pub trait Game {
 
     /// Returns true if the move is a winning move.
     fn is_winning_move(&self, m: Self::Move) -> bool;
+
+    /// Returns true if the game is a draw.
+    fn is_draw(&self) -> bool;
 }
 
 /// A memoization strategy for a perfect-information sequential game.
@@ -90,9 +93,15 @@ fn negamax<T: Game + Clone + Eq + Hash>(
     mut alpha: i32,
     mut beta: i32,
 ) -> i32 {
+    if game.is_draw() {
+        return 0;
+    }
+
     for m in &mut game.possible_moves() {
-        if game.is_winning_move(m) {
-            return game.score() as i32 - 1;
+        if game.is_winning_move(m.clone()) {
+            let mut board = game.clone();
+            board.make_move(m);
+            return board.score() as i32;
         }
     }
 

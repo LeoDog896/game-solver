@@ -105,6 +105,10 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
         board.make_move(m);
         board.possible_moves().collect::<Vec<_>>().is_empty()
     }
+
+    fn is_draw(&self) -> bool {
+        self.n_moves == WIDTH as u32 * HEIGHT as u32
+    }
 }
 
 impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEIGHT> {

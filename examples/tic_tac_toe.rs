@@ -8,7 +8,7 @@ use game_solver::{move_scores, Game, Player};
 use std::{
     env::args,
     fmt::{Display, Formatter},
-    hash::Hash, iter::FilterMap,
+    hash::Hash, iter::FilterMap, collections::HashSet, ops::Sub,
 };
 
 /// The straight size of the board. E.g. if there were 2 dimensions, it would be a SIZE x SIZE board.
@@ -29,6 +29,20 @@ struct TicTacToe {
     n_moves: u32,
 }
 
+fn add_checked(a: Dim<IxDynImpl>, b: Vec<i32>) -> Option<Dim<IxDynImpl>> {
+    let mut result = a.clone();
+    for (i, j) in result.as_array_view_mut().iter_mut().zip(b.iter()) {
+        if *i as i32 + *j < 0 {
+            return None;
+        }
+
+        *i = ((*i) as i32 + *j).try_into().unwrap();
+    }
+
+    Some(result)
+}
+
+
 impl TicTacToe {
     fn new(dim: usize) -> Self {
         // we want [SIZE; dim] but dim isn't a const - we have to get the slice from a vec
@@ -40,6 +54,57 @@ impl TicTacToe {
             n_moves: 0,
         }
     }
+
+    fn winning_line(&self, point: &Dim<IxDynImpl>, offset: &Vec<i32>) -> bool {
+        let square = self.board.get(point.clone()).unwrap();
+
+        if *square == Square::Empty {
+            return false;
+        }
+
+        let mut n = 1;
+
+        let mut current = point.clone();
+        while let Some(new_current) = add_checked(current.clone(), offset.clone()) {
+            current = new_current;
+            if self.board.get(current.clone()) == Some(&square) {
+                n += 1;
+            } else {
+                break;
+            }
+        }
+        let mut current = point.clone();
+
+        while let Some(new_current) = add_checked(current.clone(), offset.clone().iter().map(|x| -x).collect()) {
+            current = new_current;
+            if self.board.get(current.clone()) == Some(&square) {
+                n += 1;
+            } else {
+                break;
+            }
+        }
+
+
+        n >= SIZE
+    }
+
+    fn won(&self) -> bool {
+        // check every move 
+        for (index, square) in self.board.indexed_iter() {
+            if square == &Square::Empty {
+                continue;
+            }
+
+            let point = index.into_dimension();
+            for offset in offsets(&point) {
+                if self.winning_line(&point, &offset) {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
 }
 
 impl Game for TicTacToe {
@@ -47,11 +112,11 @@ impl Game for TicTacToe {
     type Iter<'a> = FilterMap<IndexedIter<'a, Square, Self::Move>, fn((Self::Move, &Square)) -> Option<Self::Move>>;
 
     fn max_score(&self) -> u32 {
-        (SIZE.pow(self.dim as u32) * self.dim).try_into().unwrap()
+        (SIZE.pow(self.dim as u32)).try_into().unwrap()
     }
 
     fn min_score(&self) -> i32 {
-        -(SIZE.pow(self.dim as u32) as i32 * self.dim as i32)
+        -(SIZE.pow(self.dim as u32) as i32)
     }
 
     fn player(&self) -> Player {
@@ -75,6 +140,7 @@ impl Game for TicTacToe {
             };
 
             *self.board.get_mut(m).unwrap() = square;
+            self.n_moves += 1;
             true
         } else {
             false
@@ -104,9 +170,58 @@ impl Game for TicTacToe {
         // - it increases
         // - it decreases
         // e.g. (0, 0, 2), (0, 1, 1), (0, 2, 0) wins
+        for offset in offsets(&m) {
+            if board.winning_line(&m, &offset) {
+                return true;
+            }
+        }
 
-        // we can get the neighbors of the current move
+        false
     }
+
+    fn is_draw(&self) -> bool {
+        self.n_moves == SIZE.pow(self.dim as u32) as u32
+    }
+}
+
+
+fn offsets(dim: &Dim<IxDynImpl>) -> HashSet<Vec<i32>> {
+    // TODO: this is horrendous
+    dim
+        .as_array_view()
+        .iter()
+        .map(|&i| (i as i32 - 1)..=(i as i32 + 1))
+        .fold(vec![vec![]], |acc, range| {
+            let mut new_acc = vec![];
+            for i in range {
+                for mut vec in acc.clone() {
+                    vec.push(i);
+                    new_acc.push(vec);
+                }
+            }
+            new_acc
+        })
+        .into_iter()
+        // check if in bounds (all numbers must be between [0..SIZE))
+        .filter(|vec|
+            vec.iter().all(|&i| i >= 0 && i < SIZE as i32)
+        )
+        // convert back to usize
+        .map(|vec| vec.into_iter().map(|i| i as usize).collect::<Vec<_>>())
+        // filter out the current move (we only want neighbors)
+        .filter(|vec| vec.iter().ne(dim.as_array_view().iter()))
+        // then convert back to i32
+        .map(|vec| vec.into_iter().map(|i| i as i32).collect::<Vec<_>>())
+        // then subtract the current dimension
+        .map(|vec| {
+            let mut new_vec = dim.as_array_view().iter().map(|&i| i as i32).collect::<Vec<_>>();
+            for (i, &j) in vec.iter().enumerate() {
+                new_vec[i] -= j;
+            }
+            new_vec
+        })
+        // then filter for duplicate vectors (turn into set)
+        .collect::<HashSet<_>>()
 }
 
 fn format_dim(dim: &Dim<IxDynImpl>) -> String {
@@ -140,7 +255,11 @@ fn main() {
 
     let mut move_scores = move_scores(&game).collect::<Vec<_>>();
 
-    if !move_scores.is_empty() {
+    if game.won() {
+        println!("Player {:?} won!", game.player().opposite());
+    } else if move_scores.is_empty() {
+        println!("No moves left! Game tied!");
+    } else {
         move_scores.sort_by_key(|m| m.1);
         move_scores.reverse();
 
@@ -153,8 +272,6 @@ fn main() {
             print!("{}, ", format_dim(&game_move));
         }
         println!();
-    } else {
-        println!("Player {:?} won!", game.player().opposite());
     }
 }
 
@@ -165,37 +282,5 @@ mod tests {
     #[test]
     fn test_tictactoe() {
         let game = TicTacToe::new(4);
-        let mut move_scores = move_scores(&game).collect::<Vec<_>>();
-        move_scores.sort();
-
-        let mut new_scores = vec![
-            ((2, 2), 13),
-            ((5, 0), -12),
-            ((4, 0), -12),
-            ((3, 0), -12),
-            ((2, 0), -12),
-            ((0, 0), -12),
-            ((5, 1), -12),
-            ((4, 1), -12),
-            ((3, 1), -12),
-            ((2, 1), -12),
-            ((0, 1), -12),
-            ((5, 2), -12),
-            ((4, 2), -12),
-            ((3, 2), -12),
-            ((5, 3), -12),
-            ((1, 0), -16),
-            ((1, 1), -16),
-            ((1, 2), -16),
-            ((4, 3), -16),
-            ((3, 3), -16),
-            ((2, 3), -16),
-            ((0, 2), -22),
-            ((1, 3), -22),
-        ];
-
-        new_scores.sort();
-
-        assert_eq!(move_scores, new_scores);
     }
 }

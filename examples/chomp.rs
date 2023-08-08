@@ -91,6 +91,10 @@ impl Game for Chomp {
         board.make_move(m);
         board.possible_moves().collect::<Vec<_>>().is_empty()
     }
+
+    fn is_draw(&self) -> bool {
+        self.n_moves as usize == self.width * self.height
+    }
 }
 
 impl Display for Chomp {
