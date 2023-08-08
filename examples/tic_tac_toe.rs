@@ -186,7 +186,7 @@ impl Game for TicTacToe {
 
 
 fn offsets(dim: &Dim<IxDynImpl>) -> HashSet<Vec<i32>> {
-    // TODO: this is horrendous
+    // TODO: this is ridiculously inefficient
     dim
         .as_array_view()
         .iter()
@@ -288,6 +288,11 @@ mod tests {
 
     #[test]
     fn test_tictactoe() {
-        let game = TicTacToe::new(4);
+        let mut game = TicTacToe::new(2);
+        game.make_move(vec![0, 0].into_dimension());
+
+        let best_move = move_scores(&game).max_by(|(_, a), (_, b)| a.cmp(b)).unwrap().0;
+
+        assert_eq!(best_move, vec![1, 1].into_dimension());
     }
 }
