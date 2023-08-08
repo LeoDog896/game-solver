@@ -206,13 +206,7 @@ fn offsets(dim: &Dim<IxDynImpl>) -> HashSet<Vec<i32>> {
         .filter(|vec|
             vec.iter().all(|&i| i >= 0 && i < SIZE as i32)
         )
-        // convert back to usize
-        .map(|vec| vec.into_iter().map(|i| i as usize).collect::<Vec<_>>())
-        // filter out the current move (we only want neighbors)
-        .filter(|vec| vec.iter().ne(dim.as_array_view().iter()))
-        // then convert back to i32
-        .map(|vec| vec.into_iter().map(|i| i as i32).collect::<Vec<_>>())
-        // then subtract the current dimension
+        // subtract the current dimension
         .map(|vec| {
             let mut new_vec = dim.as_array_view().iter().map(|&i| i as i32).collect::<Vec<_>>();
             for (i, &j) in vec.iter().enumerate() {
@@ -220,6 +214,8 @@ fn offsets(dim: &Dim<IxDynImpl>) -> HashSet<Vec<i32>> {
             }
             new_vec
         })
+        // filter out (0, 0)
+        .filter(|vec| vec.iter().any(|&i| i != 0))
         // then filter for duplicate vectors (turn into set)
         .collect::<HashSet<_>>()
 }
