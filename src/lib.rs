@@ -1,4 +1,8 @@
-//! A library for solving games.
+//! `game-solver` is a library for solving games.
+//! 
+//! If you want to read how to properly use this library,
+//! [the book](https://leodog896.github.io/game-solver) is
+//! a great place to start.
 
 use std::{
     collections::HashMap,

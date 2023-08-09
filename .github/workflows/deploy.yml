@@ -15,6 +15,12 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
       - name: Install latest mdbook
         run: |
           tag=$(curl 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' | jq -r '.tag_name')
@@ -26,6 +32,14 @@ jobs:
         run: |
           cd book
           mdbook build
+      - name: Build docs
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+      - name: Copy docs
+        run: |
+          mkdir -p book/book/doc
+          cp -r target/doc/* book/book/doc
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
