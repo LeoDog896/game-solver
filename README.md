@@ -2,7 +2,7 @@
 
 Solve any sequential game (currently only works with [combinatorial games](https://en.wikipedia.org/wiki/Combinatorial_game_theory), aka 2-player perfect-information sequential games).
 
-More in-depth information can be found in [the book](https://leodog896.github.io/game-solver).
+More in-depth information can be found in [the book](https://leodog896.github.io/game-solver/book).
 
 ## Contribute
 

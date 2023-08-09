@@ -36,17 +36,24 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: doc
+      - name: Make dist folder
+        run: |
+          mkdir dist
       - name: Copy docs
         run: |
-          mkdir -p book/book/doc
-          cp -r target/doc/* book/book/doc
+          mkdir dist/doc
+          cp -r target/doc dist/doc
+      - name: Copy book
+        run: |
+          mkdir dist/book
+          cp -r book/book dist/book
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload entire repository
-          path: 'book/book'
+          path: 'dist'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1

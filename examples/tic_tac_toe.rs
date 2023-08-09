@@ -76,7 +76,7 @@ impl TicTacToe {
         let mut current = point.clone();
 
         while let Some(new_current) =
-            add_checked(current.clone(), offset.clone().iter().map(|x| -x).collect())
+            add_checked(current.clone(), offset.iter().map(|x| -x).collect())
         {
             current = new_current;
             if self.board.get(current.clone()) == Some(square) {
