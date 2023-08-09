@@ -1,3 +1,5 @@
+//! A library for solving games.
+
 use std::{
     collections::HashMap,
     hash::{BuildHasher, Hash},

@@ -1,10 +1,12 @@
 # game-solver
 
-solve any sequential game (currently only works with combinatorial games, aka or 2-player perfect-information sequential games)
+Solve any sequential game (currently only works with [combinatorial games](https://en.wikipedia.org/wiki/Combinatorial_game_theory), aka 2-player perfect-information sequential games).
 
-(more in-depth information can be found in [the book](https://leodog896.github.io/game-solver))
+More in-depth information can be found in [the book](https://leodog896.github.io/game-solver).
 
 ## Contribute
+
+Rust nightly is required to compile the examples (as `game-solver` uses benches for examples)
 
 If you want to contribute, new game implementations would be greately appreciated!
 The more examples of games that are provided, the more examples that can be used
@@ -20,6 +22,24 @@ These are some future features that I've gathered from the few games in examples
 - Imperfect information games
 - Games that involve chance
 - Trained move ordering (e.g. via a neural network similar to the likes of Stockfish)
+
+### Profiling
+
+(TODO: probably should set up benchmarks :3)
+
+Reccomended profiling tools:
+
+#### Flamegraph
+
+`cargo install flamegraph` (requires linux `perf` or windows `dtrace`)
+
+```sh
+CARGO_PROFILE_RELEASE_DEBUG=true cargo flamegraph --example <example> -- <args>
+```
+
+```ps
+$env:CARGO_PROFILE_RELEASE_DEBUG='true'; cargo flamegraph --example <example> -- <args>; $env:CARGO_PROFILE_RELEASE_DEBUG=$null
+```
 
 ## Credits
 
