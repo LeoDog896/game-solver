@@ -2,17 +2,16 @@
 //! For the sake of complexity, this allows simulating any n-dimensional 3-in-a-row game
 //! with the same bounds as the traditional game.
 
-use ndarray::{ArrayD, IxDyn, Dim, IxDynImpl, iter::IndexedIter, IntoDimension, Dimension};
 use game_solver::{move_scores, Game, Player};
+use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};
 
 use std::{
+    collections::HashSet,
     env::args,
     fmt::{Display, Formatter},
-    hash::Hash, iter::FilterMap, collections::HashSet,
+    hash::Hash,
+    iter::FilterMap,
 };
-
-/// The straight size of the board. E.g. if there were 2 dimensions, it would be a SIZE x SIZE board.
-const SIZE: usize = 3;
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
 enum Square {
@@ -24,6 +23,7 @@ enum Square {
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct TicTacToe {
     dim: usize,
+    size: usize,
     /// True represents a square that has not been eaten
     board: ArrayD<Square>,
     n_moves: u32,
@@ -42,14 +42,14 @@ fn add_checked(a: Dim<IxDynImpl>, b: Vec<i32>) -> Option<Dim<IxDynImpl>> {
     Some(result)
 }
 
-
 impl TicTacToe {
-    fn new(dim: usize) -> Self {
+    fn new(dim: usize, size: usize) -> Self {
         // we want [SIZE; dim] but dim isn't a const - we have to get the slice from a vec
-        let board = ArrayD::from_elem(IxDyn(&vec![SIZE; dim]), Square::Empty);
+        let board = ArrayD::from_elem(IxDyn(&vec![size; dim]), Square::Empty);
 
         Self {
             dim,
+            size,
             board,
             n_moves: 0,
         }
@@ -75,7 +75,9 @@ impl TicTacToe {
         }
         let mut current = point.clone();
 
-        while let Some(new_current) = add_checked(current.clone(), offset.clone().iter().map(|x| -x).collect()) {
+        while let Some(new_current) =
+            add_checked(current.clone(), offset.clone().iter().map(|x| -x).collect())
+        {
             current = new_current;
             if self.board.get(current.clone()) == Some(square) {
                 n += 1;
@@ -84,19 +86,18 @@ impl TicTacToe {
             }
         }
 
-
-        n >= SIZE
+        n >= self.size
     }
 
     fn won(&self) -> bool {
-        // check every move 
+        // check every move
         for (index, square) in self.board.indexed_iter() {
             if square == &Square::Empty {
                 continue;
             }
 
             let point = index.into_dimension();
-            for offset in offsets(&point) {
+            for offset in offsets(&point, self.size) {
                 if self.winning_line(&point, &offset) {
                     return true;
                 }
@@ -109,14 +110,17 @@ impl TicTacToe {
 
 impl Game for TicTacToe {
     type Move = Dim<IxDynImpl>;
-    type Iter<'a> = FilterMap<IndexedIter<'a, Square, Self::Move>, fn((Self::Move, &Square)) -> Option<Self::Move>>;
+    type Iter<'a> = FilterMap<
+        IndexedIter<'a, Square, Self::Move>,
+        fn((Self::Move, &Square)) -> Option<Self::Move>,
+    >;
 
     fn max_score(&self) -> u32 {
-        (SIZE.pow(self.dim as u32)).try_into().unwrap()
+        (self.size.pow(self.dim as u32)).try_into().unwrap()
     }
 
     fn min_score(&self) -> i32 {
-        -(SIZE.pow(self.dim as u32) as i32)
+        -(self.size.pow(self.dim as u32) as i32)
     }
 
     fn player(&self) -> Player {
@@ -148,13 +152,15 @@ impl Game for TicTacToe {
     }
 
     fn possible_moves(&self) -> Self::Iter<'_> {
-        self.board.indexed_iter().filter_map(move |(index, square)| {
-            if square == &Square::Empty {
-                Some(index)
-            } else {
-                None
-            }
-        })
+        self.board
+            .indexed_iter()
+            .filter_map(move |(index, square)| {
+                if square == &Square::Empty {
+                    Some(index)
+                } else {
+                    None
+                }
+            })
     }
 
     fn is_winning_move(&self, m: Self::Move) -> bool {
@@ -170,7 +176,7 @@ impl Game for TicTacToe {
         // - it increases
         // - it decreases
         // e.g. (0, 0, 2), (0, 1, 1), (0, 2, 0) wins
-        for offset in offsets(&m) {
+        for offset in offsets(&m, self.size) {
             if board.winning_line(&m, &offset) {
                 return true;
             }
@@ -180,15 +186,13 @@ impl Game for TicTacToe {
     }
 
     fn is_draw(&self) -> bool {
-        self.n_moves == SIZE.pow(self.dim as u32) as u32
+        self.n_moves == self.size.pow(self.dim as u32) as u32
     }
 }
 
-
-fn offsets(dim: &Dim<IxDynImpl>) -> HashSet<Vec<i32>> {
+fn offsets(dim: &Dim<IxDynImpl>, size: usize) -> HashSet<Vec<i32>> {
     // TODO: this is ridiculously inefficient
-    dim
-        .as_array_view()
+    dim.as_array_view()
         .iter()
         .map(|&i| (i as i32 - 1)..=(i as i32 + 1))
         .fold(vec![vec![]], |acc, range| {
@@ -203,12 +207,14 @@ fn offsets(dim: &Dim<IxDynImpl>) -> HashSet<Vec<i32>> {
         })
         .into_iter()
         // check if in bounds (all numbers must be between [0..SIZE))
-        .filter(|vec|
-            vec.iter().all(|&i| i >= 0 && i < SIZE as i32)
-        )
+        .filter(|vec| vec.iter().all(|&i| i >= 0 && i < size as i32))
         // subtract the current dimension
         .map(|vec| {
-            let mut new_vec = dim.as_array_view().iter().map(|&i| i as i32).collect::<Vec<_>>();
+            let mut new_vec = dim
+                .as_array_view()
+                .iter()
+                .map(|&i| i as i32)
+                .collect::<Vec<_>>();
             for (i, &j) in vec.iter().enumerate() {
                 new_vec[i] -= j;
             }
@@ -241,10 +247,17 @@ fn main() {
         .parse::<usize>()
         .expect("Not a number!");
 
-    let mut game = TicTacToe::new(dim);
+    // get the size of the board from the second argument
+    let size = args()
+        .nth(2)
+        .expect("Please provide a game size")
+        .parse::<usize>()
+        .expect("Not a number!");
+
+    let mut game = TicTacToe::new(dim, size);
 
     // parse every move in args, e.g. 0-0 1-1 in args
-    args().skip(2).for_each(|arg| {
+    args().skip(3).for_each(|arg| {
         let numbers: Vec<usize> = arg
             .split('-')
             .map(|num| num.parse::<usize>().expect("Not a number!"))
@@ -283,12 +296,14 @@ mod tests {
     use super::*;
 
     fn best_moves(game: &TicTacToe) -> Option<Dim<IxDynImpl>> {
-        move_scores(game).max_by(|(_, a), (_, b)| a.cmp(b)).map(|(m, _)| m)
+        move_scores(game)
+            .max_by(|(_, a), (_, b)| a.cmp(b))
+            .map(|(m, _)| m)
     }
 
     #[test]
     fn test_middle_move() {
-        let mut game = TicTacToe::new(2);
+        let mut game = TicTacToe::new(2, 3);
         game.make_move(vec![0, 0].into_dimension());
 
         let best_move = best_moves(&game).unwrap();
@@ -298,14 +313,14 @@ mod tests {
 
     #[test]
     fn test_always_tie() {
-        let game = TicTacToe::new(2);
+        let game = TicTacToe::new(2, 3);
 
         assert!(move_scores(&game).all(|(_, score)| score == 0));
     }
 
     #[test]
     fn test_win() {
-        let mut game = TicTacToe::new(2);
+        let mut game = TicTacToe::new(2, 3);
 
         game.make_move(vec![0, 2].into_dimension()); // X
         game.make_move(vec![0, 1].into_dimension()); // O
@@ -318,7 +333,7 @@ mod tests {
 
     #[test]
     fn test_win_3d() {
-        let mut game = TicTacToe::new(3);
+        let mut game = TicTacToe::new(3, 3);
 
         game.make_move(vec![0, 0, 0].into_dimension()); // X
         game.make_move(vec![0, 0, 1].into_dimension()); // O
@@ -333,7 +348,7 @@ mod tests {
 
     #[test]
     fn test_always_tie_1d() {
-        let game = TicTacToe::new(1);
+        let game = TicTacToe::new(1, 3);
 
         assert!(move_scores(&game).all(|(_, score)| score == 0));
     }

@@ -27,7 +27,9 @@ pub trait Game {
     type Move: Clone;
 
     /// The iterator type for possible moves.
-    type Iter<'a>: Iterator<Item = Self::Move> + 'a where Self: 'a;
+    type Iter<'a>: Iterator<Item = Self::Move> + 'a
+    where
+        Self: 'a;
 
     /// Returns the player whose turn it is.
     fn player(&self) -> Player;
