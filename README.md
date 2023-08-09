@@ -1,6 +1,6 @@
 # game-solver
 
-solve any sequential game (currently only works with combinatorial games, or 2-player perfect-information sequential games)
+solve any sequential game (currently only works with combinatorial games, aka or 2-player perfect-information sequential games)
 
 (more in-depth information can be found in [the book](https://leodog896.github.io/game-solver))
 
@@ -17,8 +17,8 @@ These are some future features that I've gathered from the few games in examples
 - Game Tree Visualization
 - Parallelization w/ rayon
 - 2+ player games (multiple agents w/ minimax instead of negamax)
-- Non-perfect information games
-  - Games that involve chance
+- Imperfect information games
+- Games that involve chance
 - Trained move ordering (e.g. via a neural network similar to the likes of Stockfish)
 
 ## Credits
