@@ -1,5 +1,5 @@
 //! `game-solver` is a library for solving games.
-//! 
+//!
 //! If you want to read how to properly use this library,
 //! [the book](https://leodog896.github.io/game-solver/book) is
 //! a great place to start.
