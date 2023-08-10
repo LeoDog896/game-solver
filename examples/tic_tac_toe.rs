@@ -4,9 +4,10 @@
 
 use game_solver::{move_scores, Game, Player};
 use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};
+use itertools::Itertools;
+
 
 use std::{
-    collections::HashSet,
     env::args,
     fmt::{Display, Formatter},
     hash::Hash,
@@ -67,7 +68,7 @@ impl TicTacToe {
         let mut current = point.clone();
         while let Some(new_current) = add_checked(current.clone(), offset.to_owned()) {
             current = new_current;
-            if self.board.get(&current) == Some(square) {
+            if self.board.get(current.clone()) == Some(square) {
                 n += 1;
             } else {
                 break;
@@ -190,40 +191,26 @@ impl Game for TicTacToe {
     }
 }
 
-fn offsets(dim: &Dim<IxDynImpl>, size: usize) -> HashSet<Vec<i32>> {
-    // TODO: this is ridiculously inefficient
-    dim.as_array_view()
-        .iter()
-        .map(|&i| (i as i32 - 1)..=(i as i32 + 1))
-        .fold(vec![vec![]], |acc, range| {
-            let mut new_acc = vec![];
-            for i in range {
-                for mut vec in acc.clone() {
-                    vec.push(i);
-                    new_acc.push(vec);
-                }
-            }
-            new_acc
-        })
-        .into_iter()
-        // check if in bounds (all numbers must be between [0..SIZE))
-        .filter(|vec| vec.iter().all(|&i| i >= 0 && i < size as i32))
-        // subtract the current dimension
-        .map(|vec| {
-            let mut new_vec = dim
-                .as_array_view()
-                .iter()
-                .map(|&i| i as i32)
-                .collect::<Vec<_>>();
-            for (i, &j) in vec.iter().enumerate() {
-                new_vec[i] -= j;
-            }
-            new_vec
-        })
-        // filter out (0, 0)
-        .filter(|vec| vec.iter().any(|&i| i != 0))
-        // then filter for duplicate vectors (turn into set)
-        .collect::<HashSet<_>>()
+fn offsets(dim: &Dim<IxDynImpl>, size: usize) -> Vec<Vec<i32>> {
+    let values = (-1i32..=1).collect::<Vec<_>>(); // every offset
+    let permutations = itertools::repeat_n(values.iter(), dim.ndim()).multi_cartesian_product();
+
+    permutations.map(|permutation| {
+        // dereference the permutation
+        permutation.iter().map(|x| **x).collect::<Vec<_>>()
+    }).filter(|permutation| {
+        // filter out the permutations that are all 0
+        permutation.iter().any(|x| *x != 0)
+    }).filter(|permutation| {
+        // filter out the permutations that are out of bounds [0, size)
+        let result = add_checked(dim.clone(), permutation.to_owned());
+
+        if let Some(result) = result {
+            result.as_array_view().iter().all(|x| *x < size)
+        } else {
+            false
+        }
+    }).collect()
 }
 
 fn format_dim(dim: &Dim<IxDynImpl>) -> String {

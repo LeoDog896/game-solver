@@ -138,7 +138,9 @@ fn main() {
 
     let mut move_scores = move_scores(&game).collect::<Vec<_>>();
 
-    if !move_scores.is_empty() {
+    if move_scores.is_empty() {
+        println!("Player {:?} won!", game.player().opposite());
+    } else {
         move_scores.sort_by_key(|m| m.1);
         move_scores.reverse();
 
@@ -151,8 +153,6 @@ fn main() {
             print!("({}, {}), ", game_move.0, game_move.1);
         }
         println!();
-    } else {
-        println!("Player {:?} won!", game.player().opposite());
     }
 }
 
