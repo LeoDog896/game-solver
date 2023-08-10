@@ -40,11 +40,11 @@ jobs:
       - name: Copy docs
         run: |
           mkdir dist/doc
-          cp -r doc dist/doc
+          cp -r doc dist
       - name: Copy book
         run: |
           mkdir dist/book
-          cp -r book/book dist/book
+          cp -r book/book dist
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
