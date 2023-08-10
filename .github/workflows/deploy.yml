@@ -32,6 +32,8 @@ jobs:
         run: |
           cd book
           mdbook build
+      - name: Check if rustdoc exists
+        run: rustdoc
       - name: Build docs
         uses: actions-rs/cargo@v1
         with:
