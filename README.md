@@ -22,10 +22,9 @@ These are some future features that I've gathered from the few games in examples
 - Imperfect information games
 - Games that involve chance
 - Trained move ordering (e.g. via a neural network similar to the likes of Stockfish)
+- Benchmarks
 
 ### Profiling
-
-(TODO: probably should set up benchmarks :3)
 
 Reccomended profiling tools:
 
