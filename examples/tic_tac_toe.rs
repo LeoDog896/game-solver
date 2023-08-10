@@ -3,9 +3,8 @@
 //! with the same bounds as the traditional game.
 
 use game_solver::{move_scores, Game, Player};
-use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};
 use itertools::Itertools;
-
+use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};
 
 use std::{
     env::args,
@@ -195,22 +194,26 @@ fn offsets(dim: &Dim<IxDynImpl>, size: usize) -> Vec<Vec<i32>> {
     let values = (-1i32..=1).collect::<Vec<_>>(); // every offset
     let permutations = itertools::repeat_n(values.iter(), dim.ndim()).multi_cartesian_product();
 
-    permutations.map(|permutation| {
-        // dereference the permutation
-        permutation.iter().map(|x| **x).collect::<Vec<_>>()
-    }).filter(|permutation| {
-        // filter out the permutations that are all 0
-        permutation.iter().any(|x| *x != 0)
-    }).filter(|permutation| {
-        // filter out the permutations that are out of bounds [0, size)
-        let result = add_checked(dim.clone(), permutation.to_owned());
+    permutations
+        .map(|permutation| {
+            // dereference the permutation
+            permutation.iter().map(|x| **x).collect::<Vec<_>>()
+        })
+        .filter(|permutation| {
+            // filter out the permutations that are all 0
+            permutation.iter().any(|x| *x != 0)
+        })
+        .filter(|permutation| {
+            // filter out the permutations that are out of bounds [0, size)
+            let result = add_checked(dim.clone(), permutation.to_owned());
 
-        if let Some(result) = result {
-            result.as_array_view().iter().all(|x| *x < size)
-        } else {
-            false
-        }
-    }).collect()
+            if let Some(result) = result {
+                result.as_array_view().iter().all(|x| *x < size)
+            } else {
+                false
+            }
+        })
+        .collect()
 }
 
 fn format_dim(dim: &Dim<IxDynImpl>) -> String {
