@@ -144,7 +144,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
 }
 
 /// Solves a game, returning the evaluated score.
-/// 
+///
 /// The score of a position is defined by the best possible end result for the player whose turn it is.
 /// In 2 player games, if a score > 0, then the player whose turn it is has a winning strategy.
 /// If a score < 0, then the player whose turn it is has a losing strategy.
@@ -180,7 +180,7 @@ pub fn move_scores<T: Game + Clone + Eq + Hash>(
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
         board.make_move(m.clone());
-        // We flip the sign of the score because we want the score from the 
+        // We flip the sign of the score because we want the score from the
         // perspective of the player playing the move, not the player whose turn it is.
         (m, -solve(&board))
     })
