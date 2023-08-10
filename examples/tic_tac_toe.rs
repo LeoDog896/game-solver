@@ -206,12 +206,9 @@ fn offsets(dim: &Dim<IxDynImpl>, size: usize) -> Vec<Vec<i32>> {
         .filter(|permutation| {
             // filter out the permutations that are out of bounds [0, size)
             let result = add_checked(dim.clone(), permutation.to_owned());
-
-            if let Some(result) = result {
+            result.map_or(false, |result| {
                 result.as_array_view().iter().all(|x| *x < size)
-            } else {
-                false
-            }
+            })
         })
         .collect()
 }
