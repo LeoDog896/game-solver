@@ -14,14 +14,14 @@ for benchmarks, analysis, and further optimization.
 
 ### Future Plans (Contributions Welcome!)
 
-These are some future features that I've gathered from the few games in examples:
+These are some future features that I've gathered:
 
 - Game Tree Visualization
 - Parallelization w/ rayon
 - 2+ player games (multiple agents w/ minimax instead of negamax)
 - Imperfect information games
 - Games that involve chance
-- Trained move ordering (e.g. via a neural network similar to the likes of Stockfish)
+- Trained move ordering (e.g. via a neural network similar to the likes of Stockfish) ([candle](https://github.com/huggingface/candle) might help)
 - Benchmarks
 
 ### Profiling
