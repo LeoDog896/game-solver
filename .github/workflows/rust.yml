@@ -32,3 +32,8 @@ jobs:
       with:
         command: test
         args: --verbose --examples --all-features
+    - name: Check format
+      uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: -- --check
