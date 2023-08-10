@@ -26,7 +26,7 @@ struct Chomp {
     height: usize,
     /// True represents a square that has not been eaten
     board: Array2D<bool>,
-    n_moves: u32,
+    move_count: u32,
 }
 
 impl Chomp {
@@ -38,7 +38,7 @@ impl Chomp {
             width,
             height,
             board,
-            n_moves: 0,
+            move_count: 0,
         }
     }
 }
@@ -56,7 +56,7 @@ impl Game for Chomp {
     }
 
     fn player(&self) -> Player {
-        if self.n_moves % 2 == 0 {
+        if self.move_count % 2 == 0 {
             Player::P1
         } else {
             Player::P2
@@ -64,7 +64,7 @@ impl Game for Chomp {
     }
 
     fn score(&self) -> u32 {
-        self.max_score() - self.n_moves
+        self.max_score() - self.move_count
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
@@ -74,7 +74,7 @@ impl Game for Chomp {
                     self.board.set(i, j, false).unwrap();
                 }
             }
-            self.n_moves += 1;
+            self.move_count += 1;
             true
         } else {
             false
@@ -100,7 +100,7 @@ impl Game for Chomp {
     }
 
     fn is_draw(&self) -> bool {
-        self.n_moves as usize == self.width * self.height
+        self.move_count as usize == self.width * self.height
     }
 }
 

@@ -26,7 +26,7 @@ struct TicTacToe {
     size: usize,
     /// True represents a square that has not been eaten
     board: ArrayD<Square>,
-    n_moves: u32,
+    move_count: u32,
 }
 
 fn add_checked(a: Dim<IxDynImpl>, b: Vec<i32>) -> Option<Dim<IxDynImpl>> {
@@ -51,12 +51,12 @@ impl TicTacToe {
             dim,
             size,
             board,
-            n_moves: 0,
+            move_count: 0,
         }
     }
 
     fn winning_line(&self, point: &Dim<IxDynImpl>, offset: &[i32]) -> bool {
-        let square = self.board.get(point.clone()).unwrap();
+        let square = self.board.get(point).unwrap();
 
         if *square == Square::Empty {
             return false;
@@ -67,7 +67,7 @@ impl TicTacToe {
         let mut current = point.clone();
         while let Some(new_current) = add_checked(current.clone(), offset.to_owned()) {
             current = new_current;
-            if self.board.get(current.clone()) == Some(square) {
+            if self.board.get(&current) == Some(square) {
                 n += 1;
             } else {
                 break;
@@ -124,7 +124,7 @@ impl Game for TicTacToe {
     }
 
     fn player(&self) -> Player {
-        if self.n_moves % 2 == 0 {
+        if self.move_count % 2 == 0 {
             Player::P1
         } else {
             Player::P2
@@ -132,7 +132,7 @@ impl Game for TicTacToe {
     }
 
     fn score(&self) -> u32 {
-        self.max_score() - self.n_moves
+        self.max_score() - self.move_count
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
@@ -144,7 +144,7 @@ impl Game for TicTacToe {
             };
 
             *self.board.get_mut(m).unwrap() = square;
-            self.n_moves += 1;
+            self.move_count += 1;
             true
         } else {
             false
@@ -186,7 +186,7 @@ impl Game for TicTacToe {
     }
 
     fn is_draw(&self) -> bool {
-        self.n_moves == self.size.pow(self.dim as u32) as u32
+        self.move_count == self.size.pow(self.dim as u32) as u32
     }
 }
 

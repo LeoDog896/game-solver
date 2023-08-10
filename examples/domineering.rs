@@ -19,14 +19,14 @@ use std::{
 struct Domineering<const WIDTH: usize, const HEIGHT: usize> {
     /// True represents a square - true if empty, false otherwise
     board: Array2D<bool>,
-    n_moves: u32,
+    move_count: u32,
 }
 
 impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
     fn new() -> Self {
         Self {
             board: Array2D::filled_with(true, WIDTH, HEIGHT),
-            n_moves: 0,
+            move_count: 0,
         }
     }
 }
@@ -44,7 +44,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
     }
 
     fn player(&self) -> Player {
-        if self.n_moves % 2 == 0 {
+        if self.move_count % 2 == 0 {
             Player::P1
         } else {
             Player::P2
@@ -52,7 +52,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
     }
 
     fn score(&self) -> u32 {
-        self.max_score() - self.n_moves
+        self.max_score() - self.move_count
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {
@@ -71,7 +71,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
                 self.board.set(m.0, m.1 + 1, false).unwrap();
             }
 
-            self.n_moves += 1;
+            self.move_count += 1;
             true
         } else {
             false
@@ -107,7 +107,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
     }
 
     fn is_draw(&self) -> bool {
-        self.n_moves == WIDTH as u32 * HEIGHT as u32
+        self.move_count == WIDTH as u32 * HEIGHT as u32
     }
 }
 
