@@ -32,19 +32,15 @@ jobs:
         run: |
           cd book
           mdbook build
-      - name: Check if rustdoc exists
-        run: rustdoc
       - name: Build docs
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
+        run: rustdoc --crate-name game_solver src/lib.rs -L --enable-index-page
       - name: Make dist folder
         run: |
           mkdir dist
       - name: Copy docs
         run: |
           mkdir dist/doc
-          cp -r target/doc dist/doc
+          cp -r doc dist/doc
       - name: Copy book
         run: |
           mkdir dist/book
