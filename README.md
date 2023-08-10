@@ -1,4 +1,4 @@
-# game-solver
+# [game-solver](https://leodog896.github.io/game-solver)
 
 Solve any sequential game (currently only works with [combinatorial games](https://en.wikipedia.org/wiki/Combinatorial_game_theory), aka 2-player perfect-information sequential games).
 
