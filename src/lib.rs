@@ -143,8 +143,12 @@ fn negamax<T: Game + Clone + Eq + Hash>(
     alpha
 }
 
-/// Solves a game with iterative deepening.
-/// Internally, it uses the `negamax` function.
+/// Solves a game, returning the evaluated score.
+/// 
+/// The score of a position is defined by the best possible end result for the player whose turn it is.
+/// In 2 player games, if a score > 0, then the player whose turn it is has a winning strategy.
+/// If a score < 0, then the player whose turn it is has a losing strategy.
+/// Else, the game is a draw.
 pub fn solve<T: Game + Clone + Eq + Hash>(game: &T) -> i32 {
     let min = game.min_score();
     let max = game.max_score() as i32 + 1;
@@ -170,15 +174,14 @@ pub fn solve<T: Game + Clone + Eq + Hash>(game: &T) -> i32 {
 ///
 /// This is mainly intended for front-facing visual interfaces
 /// for each move.
-///
-/// We flip the sign of the score because we want the score from the perspective of the player playing
-/// the move, not the player whose turn it is.
 pub fn move_scores<T: Game + Clone + Eq + Hash>(
     game: &T,
 ) -> impl Iterator<Item = (<T as Game>::Move, i32)> + '_ {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
         board.make_move(m.clone());
+        // We flip the sign of the score because we want the score from the 
+        // perspective of the player playing the move, not the player whose turn it is.
         (m, -solve(&board))
     })
 }
