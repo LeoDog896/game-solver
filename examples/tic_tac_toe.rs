@@ -7,10 +7,11 @@ use itertools::Itertools;
 use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};
 
 use std::{
+    collections::HashMap,
     env::args,
     fmt::{Display, Formatter},
     hash::Hash,
-    iter::FilterMap, collections::HashMap,
+    iter::FilterMap,
 };
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]

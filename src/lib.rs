@@ -133,6 +133,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
         if score >= beta {
             return beta;
         }
+
         if score > alpha {
             alpha = score;
         }
@@ -149,7 +150,10 @@ fn negamax<T: Game + Clone + Eq + Hash>(
 /// In 2 player games, if a score > 0, then the player whose turn it is has a winning strategy.
 /// If a score < 0, then the player whose turn it is has a losing strategy.
 /// Else, the game is a draw.
-pub fn solve<T: Game + Clone + Eq + Hash>(game: &T, transposition_table: &mut dyn TranspositionTable<T>) -> i32 {
+pub fn solve<T: Game + Clone + Eq + Hash>(
+    game: &T,
+    transposition_table: &mut dyn TranspositionTable<T>,
+) -> i32 {
     let min = game.min_score();
     let max = game.max_score() as i32 + 1;
 
@@ -176,7 +180,7 @@ pub fn solve<T: Game + Clone + Eq + Hash>(game: &T, transposition_table: &mut dy
 /// for each move.
 pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
     game: &'a T,
-    transposition_table: &'a mut dyn TranspositionTable<T>
+    transposition_table: &'a mut dyn TranspositionTable<T>,
 ) -> impl Iterator<Item = (<T as Game>::Move, i32)> + 'a {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();

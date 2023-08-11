@@ -15,9 +15,10 @@ use array2d::Array2D;
 use game_solver::{move_scores, Game, Player};
 
 use std::{
+    collections::HashMap,
     env::args,
     fmt::{Display, Formatter},
-    hash::Hash, collections::HashMap,
+    hash::Hash,
 };
 
 #[derive(Clone, Hash, Eq, PartialEq)]
