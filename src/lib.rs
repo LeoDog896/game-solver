@@ -69,9 +69,21 @@ pub trait Game {
 /// A memoization strategy for a perfect-information sequential game.
 ///
 /// Transposition tables should optimally be a form of hash table.
+/// 
+/// # Optimization
+/// 
+/// [rustc-hash](https://crates.io/crates/rustc-hash) is the best
+/// hashmap implementation for this crate, given its speed.
+/// 
+/// To optimize it, its better to have your Moves (keys) be numbers.
 pub trait TranspositionTable<T: Eq + Hash + Game> {
+    /// Get the score of a board, if it exists.
     fn get(&self, board: &T) -> Option<i32>;
+
+    /// Insert a board into the transposition table.
     fn insert(&mut self, board: T, score: i32);
+
+    /// Returns true if the board is in the transposition table.
     fn has(&self, board: &T) -> bool;
 }
 
@@ -149,7 +161,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
 /// The score of a position is defined by the best possible end result for the player whose turn it is.
 /// In 2 player games, if a score > 0, then the player whose turn it is has a winning strategy.
 /// If a score < 0, then the player whose turn it is has a losing strategy.
-/// Else, the game is a draw.
+/// Else, the game is a draw (score = 0).
 pub fn solve<T: Game + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
@@ -175,9 +187,13 @@ pub fn solve<T: Game + Clone + Eq + Hash>(
 }
 
 /// Utility function to get a list of the move scores of a certain game.
-///
-/// This is mainly intended for front-facing visual interfaces
-/// for each move.
+/// Since its evaluating the same game, you can use the same transposition table.
+/// 
+/// If you want to evaluate the score of a board as a whole, use the `solve` function.
+/// 
+/// # Returns
+/// 
+/// An iterator of tuples of the form `(move, score)`.
 pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
     game: &'a T,
     transposition_table: &'a mut dyn TranspositionTable<T>,
