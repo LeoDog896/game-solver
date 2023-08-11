@@ -17,7 +17,7 @@ use game_solver::{move_scores, Game, Player};
 use std::{
     env::args,
     fmt::{Display, Formatter},
-    hash::Hash,
+    hash::Hash, collections::HashMap,
 };
 
 #[derive(Clone, Hash, Eq, PartialEq)]
@@ -136,7 +136,7 @@ fn main() {
     print!("{}", game);
     println!("Player {:?} to move", game.player());
 
-    let mut move_scores = move_scores(&game).collect::<Vec<_>>();
+    let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
 
     if move_scores.is_empty() {
         println!("Player {:?} won!", game.player().opposite());
@@ -163,7 +163,7 @@ mod tests {
     #[test]
     fn test_chomp() {
         let game = Chomp::new(6, 4);
-        let mut move_scores = move_scores(&game).collect::<Vec<_>>();
+        let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
         move_scores.sort();
 
         let mut new_scores = vec![

@@ -149,7 +149,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
 /// In 2 player games, if a score > 0, then the player whose turn it is has a winning strategy.
 /// If a score < 0, then the player whose turn it is has a losing strategy.
 /// Else, the game is a draw.
-pub fn solve<T: Game + Clone + Eq + Hash>(game: &T) -> i32 {
+pub fn solve<T: Game + Clone + Eq + Hash>(game: &T, transposition_table: &mut dyn TranspositionTable<T>) -> i32 {
     let min = game.min_score();
     let max = game.max_score() as i32 + 1;
 
@@ -158,7 +158,7 @@ pub fn solve<T: Game + Clone + Eq + Hash>(game: &T) -> i32 {
 
     while alpha < beta {
         let med = alpha + (beta - alpha) / 2;
-        let r = negamax(game, &mut HashMap::new(), med, med + 1);
+        let r = negamax(game, transposition_table, med, med + 1);
 
         if r <= med {
             beta = r;
@@ -174,14 +174,15 @@ pub fn solve<T: Game + Clone + Eq + Hash>(game: &T) -> i32 {
 ///
 /// This is mainly intended for front-facing visual interfaces
 /// for each move.
-pub fn move_scores<T: Game + Clone + Eq + Hash>(
-    game: &T,
-) -> impl Iterator<Item = (<T as Game>::Move, i32)> + '_ {
+pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
+    game: &'a T,
+    transposition_table: &'a mut dyn TranspositionTable<T>
+) -> impl Iterator<Item = (<T as Game>::Move, i32)> + 'a {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
         board.make_move(m.clone());
         // We flip the sign of the score because we want the score from the
         // perspective of the player playing the move, not the player whose turn it is.
-        (m, -solve(&board))
+        (m, -solve(&board, transposition_table))
     })
 }

@@ -10,7 +10,7 @@ use std::{
     env::args,
     fmt::{Display, Formatter},
     hash::Hash,
-    iter::FilterMap,
+    iter::FilterMap, collections::HashMap,
 };
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
@@ -256,7 +256,7 @@ fn main() {
     print!("{}", game);
     println!("Player {:?} to move", game.player());
 
-    let mut move_scores = move_scores(&game).collect::<Vec<_>>();
+    let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
 
     if game.won() {
         println!("Player {:?} won!", game.player().opposite());
@@ -283,7 +283,7 @@ mod tests {
     use super::*;
 
     fn best_moves(game: &TicTacToe) -> Option<Dim<IxDynImpl>> {
-        move_scores(game)
+        move_scores(game, &mut HashMap::new())
             .max_by(|(_, a), (_, b)| a.cmp(b))
             .map(|(m, _)| m)
     }
@@ -302,7 +302,7 @@ mod tests {
     fn test_always_tie() {
         let game = TicTacToe::new(2, 3);
 
-        assert!(move_scores(&game).all(|(_, score)| score == 0));
+        assert!(move_scores(&game, &mut HashMap::new()).all(|(_, score)| score == 0));
     }
 
     #[test]
@@ -337,6 +337,6 @@ mod tests {
     fn test_always_tie_1d() {
         let game = TicTacToe::new(1, 3);
 
-        assert!(move_scores(&game).all(|(_, score)| score == 0));
+        assert!(move_scores(&game, &mut HashMap::new()).all(|(_, score)| score == 0));
     }
 }

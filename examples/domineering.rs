@@ -3,8 +3,6 @@
 //! The first player to get 4 in a row (horizontally, vertically, or diagonally) wins.
 //!
 //! Learn more: https://en.wikipedia.org/wiki/Connect_Four
-//!
-//! Bitboard representation based on Pascal Pons's [Bitboard Connect Four](http://blog.gamesolver.org/solving-connect-four/06-bitboard/)
 
 use array2d::Array2D;
 use game_solver::{move_scores, Game, Player};
@@ -12,7 +10,7 @@ use game_solver::{move_scores, Game, Player};
 use std::{
     env::args,
     fmt::{Display, Formatter},
-    hash::Hash,
+    hash::Hash, collections::HashMap,
 };
 
 #[derive(Clone, Hash, Eq, PartialEq)]
@@ -146,7 +144,7 @@ fn main() {
     print!("{}", game);
     println!("Player {:?} to move", game.player());
 
-    let mut move_scores = move_scores(&game).collect::<Vec<_>>();
+    let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
 
     if !move_scores.is_empty() {
         move_scores.sort_by_key(|m| m.1);
@@ -173,7 +171,7 @@ mod tests {
     /// Get the winner of a generic configuration of domineering
     fn winner<const WIDTH: usize, const HEIGHT: usize>() -> Option<Player> {
         let game = Domineering::<WIDTH, HEIGHT>::new();
-        let mut move_scores = move_scores(&game).collect::<Vec<_>>();
+        let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
 
         if move_scores.is_empty() {
             None
@@ -200,7 +198,7 @@ mod tests {
     #[test]
     fn test_domineering() {
         let game = Domineering::<5, 5>::new();
-        let mut move_scores = move_scores(&game).collect::<Vec<_>>();
+        let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
 
         assert_eq!(move_scores.len(), game.possible_moves().len());
 
