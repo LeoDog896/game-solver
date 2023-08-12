@@ -210,8 +210,18 @@ pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
     })
 }
 
+/// Parallelized version of `move_scores`.
+/// This function requires the `rayon` feature to be enabled.
+/// It uses rayon's parallel iterators to evaluate the scores of each move in parallel.
+///
+/// This can help cut computational time by t / c, where t is the time it takes to evaluate
+/// the moves sequentially, and c is the number of cores on your machine.
+///
+/// # Returns
+///
+/// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn move_scores_par<T>(game: &T) -> Vec<(T::Move, i32)>
+pub fn par_move_scores<T>(game: &T) -> Vec<(T::Move, i32)>
 where
     T: Game + Clone + Eq + Hash + Sync,
     T::Move: Sync + Send,

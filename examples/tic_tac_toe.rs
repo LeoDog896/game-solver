@@ -2,7 +2,7 @@
 //! For the sake of complexity, this allows simulating any n-dimensional 3-in-a-row game
 //! with the same bounds as the traditional game.
 
-use game_solver::{move_scores_par, Game, Player};
+use game_solver::{par_move_scores, Game, Player};
 use itertools::Itertools;
 use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};
 
@@ -256,7 +256,7 @@ fn main() {
     print!("{}", game);
     println!("Player {:?} to move", game.player());
 
-    let mut move_scores = move_scores_par(&game);
+    let mut move_scores = par_move_scores(&game);
 
     if game.won() {
         println!("Player {:?} won!", game.player().opposite());
