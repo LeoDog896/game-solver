@@ -4,6 +4,9 @@
 //! [the book](https://leodog896.github.io/game-solver/book) is
 //! a great place to start.
 
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
+
 use std::{
     collections::HashMap,
     hash::{BuildHasher, Hash},
@@ -69,12 +72,12 @@ pub trait Game {
 /// A memoization strategy for a perfect-information sequential game.
 ///
 /// Transposition tables should optimally be a form of hash table.
-/// 
+///
 /// # Optimization
-/// 
+///
 /// [rustc-hash](https://crates.io/crates/rustc-hash) is the best
 /// hashmap implementation for this crate, given its speed.
-/// 
+///
 /// To optimize it, its better to have your Moves (keys) be numbers.
 pub trait TranspositionTable<T: Eq + Hash + Game> {
     /// Get the score of a board, if it exists.
@@ -188,16 +191,16 @@ pub fn solve<T: Game + Clone + Eq + Hash>(
 
 /// Utility function to get a list of the move scores of a certain game.
 /// Since its evaluating the same game, you can use the same transposition table.
-/// 
+///
 /// If you want to evaluate the score of a board as a whole, use the `solve` function.
-/// 
+///
 /// # Returns
-/// 
+///
 /// An iterator of tuples of the form `(move, score)`.
 pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
     game: &'a T,
     transposition_table: &'a mut dyn TranspositionTable<T>,
-) -> impl Iterator<Item = (<T as Game>::Move, i32)> + 'a {
+) -> impl Iterator<Item = (T::Move, i32)> + 'a {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
         board.make_move(m.clone());
@@ -205,4 +208,27 @@ pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
         // perspective of the player playing the move, not the player whose turn it is.
         (m, -solve(&board, transposition_table))
     })
+}
+
+#[cfg(feature = "rayon")]
+pub fn move_scores_par<T>(game: &T) -> Vec<(T::Move, i32)>
+where
+    T: Game + Clone + Eq + Hash + Sync,
+    T::Move: Sync,
+{
+    let all_moves = game.possible_moves().collect::<Vec<_>>();
+
+    all_moves
+        .par_iter()
+        .map(move |m| {
+            let mut board = game.clone();
+            board.make_move(m.clone());
+            // We flip the sign of the score because we want the score from the
+            // perspective of the player playing the move, not the player whose turn it is.
+            (m, -solve(&board, &mut HashMap::new()))
+        })
+        .collect::<Vec<_>>()
+        .iter()
+        .map(|(m, s)| ((*m).clone(), *s))
+        .collect()
 }

@@ -2,12 +2,11 @@
 //! For the sake of complexity, this allows simulating any n-dimensional 3-in-a-row game
 //! with the same bounds as the traditional game.
 
-use game_solver::{move_scores, Game, Player};
+use game_solver::{move_scores_par, Game, Player};
 use itertools::Itertools;
 use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};
 
 use std::{
-    collections::HashMap,
     env::args,
     fmt::{Display, Formatter},
     hash::Hash,
@@ -257,7 +256,7 @@ fn main() {
     print!("{}", game);
     println!("Player {:?} to move", game.player());
 
-    let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
+    let mut move_scores = move_scores_par(&game);
 
     if game.won() {
         println!("Player {:?} won!", game.player().opposite());
@@ -282,6 +281,8 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+    use game_solver::move_scores;
 
     fn best_moves(game: &TicTacToe) -> Option<Dim<IxDynImpl>> {
         move_scores(game, &mut HashMap::new())
