@@ -214,7 +214,7 @@ pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
 pub fn move_scores_par<T>(game: &T) -> Vec<(T::Move, i32)>
 where
     T: Game + Clone + Eq + Hash + Sync,
-    T::Move: Sync,
+    T::Move: Sync + Send,
 {
     let all_moves = game.possible_moves().collect::<Vec<_>>();
 
@@ -225,10 +225,7 @@ where
             board.make_move(m.clone());
             // We flip the sign of the score because we want the score from the
             // perspective of the player playing the move, not the player whose turn it is.
-            (m, -solve(&board, &mut HashMap::new()))
+            ((*m).clone(), -solve(&board, &mut HashMap::new()))
         })
         .collect::<Vec<_>>()
-        .iter()
-        .map(|(m, s)| ((*m).clone(), *s))
-        .collect()
 }
