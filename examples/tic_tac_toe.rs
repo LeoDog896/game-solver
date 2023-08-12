@@ -281,8 +281,8 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
     use game_solver::move_scores;
+    use std::collections::HashMap;
 
     fn best_moves(game: &TicTacToe) -> Option<Dim<IxDynImpl>> {
         move_scores(game, &mut HashMap::new())
