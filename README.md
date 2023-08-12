@@ -16,7 +16,9 @@ for benchmarks, analysis, and further optimization.
 
 These are some future features that I've gathered:
 
-- Game Tree Visualization
+- Game Tree Analysis
+    - Visualization
+    - [Game complexity](https://en.wikipedia.org/wiki/Game_complexity) information
 - 2+ player games (multiple agents w/ minimax instead of negamax)
 - Imperfect information games
 - Games that involve chance
