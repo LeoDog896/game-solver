@@ -96,3 +96,7 @@ Best moves @ score -8:
 ```
 
 Full source on [GitHub](https://github.com/LeoDog896/game-solver/blob/master/examples/nim.rs).
+
+## Further Room for Optimization
+
+Since Nim is relatively simple, it runs pretty fast. However, for complex games, the [Optimization Tips](../optimization_tips.md) may help you.
