@@ -33,7 +33,7 @@ jobs:
           cd book
           mdbook build
       - name: Build docs
-        run: rustdoc --crate-name game_solver src/lib.rs -L --enable-index-page
+        run: rustdoc --edition=2021 --crate-type lib --crate-name game_solver src/lib.rs -Z unstable-options -L --enable-index-page
       - name: Make dist folder
         run: |
           mkdir dist
