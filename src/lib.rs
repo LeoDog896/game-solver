@@ -92,7 +92,12 @@ pub trait Game {
 /// A score in a transposition table.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TranspositionTableScore {
+    /// The lower bound of the score.
+    /// This generally doesn't bring too much benefit,
+    /// but still helps optimize a bit.
     LowerBound(i32),
+    /// The upper bound of the score,
+    /// which helps get rid of many useless branches.
     UpperBound(i32),
 }
 
