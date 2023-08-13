@@ -71,3 +71,5 @@ Finally, we'll solve the game using the `par_move_scores` function, or the paral
         println!();
     }
 ```
+
+Full source on [GitHub](https://github.com/LeoDog896/game-solver/blob/master/examples/nim.rs).
