@@ -30,7 +30,7 @@ These are some future features that I've gathered:
 
 ### Profiling
 
-Reccomended profiling tools:
+Recommended profiling tools:
 
 #### Flamegraph
 
