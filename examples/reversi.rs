@@ -255,11 +255,14 @@ fn main() {
     let mut move_scores = par_move_scores(&game);
 
     if move_scores.is_empty() {
-        game.winning_player().map_or_else(|| {
-            println!("Game tied!");
-        }, |player| {
-            println!("Player {:?} won!", player.opponent());
-        })
+        game.winning_player().map_or_else(
+            || {
+                println!("Game tied!");
+            },
+            |player| {
+                println!("Player {:?} won!", player.opponent());
+            },
+        )
     } else {
         move_scores.sort_by_key(|m| m.1);
         move_scores.reverse();

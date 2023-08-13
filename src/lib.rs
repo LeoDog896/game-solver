@@ -6,6 +6,10 @@
 
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
+#[cfg(feature = "rayon")]
+use dashmap::{DashMap, Map};
+#[cfg(feature = "rayon")]
+use std::sync::Arc;
 
 use std::{
     collections::HashMap,
@@ -120,6 +124,24 @@ impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for Ha
     }
 }
 
+#[cfg(feature = "rayon")]
+impl<
+    K: Eq + Hash + Game + Sync,
+    S: BuildHasher + Default + Clone + Sync + Send,
+> TranspositionTable<K> for Arc<DashMap<K, i32, S>> {
+    fn get(&self, board: &K) -> Option<i32> {
+        self._get(board).map(|x| *x)
+    }
+
+    fn insert(&mut self, board: K, score: i32) {
+        self._insert(board, score);
+    }
+
+    fn has(&self, board: &K) -> bool {
+        self.contains_key(board)
+    }
+}
+
 /// Runs the two-player minimax variant on a game.
 /// It uses alpha beta pruning (e.g. you can specify \[-1, 1\] to get only win/loss/draw moves).
 ///
@@ -185,11 +207,8 @@ pub fn solve<T: Game + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
 ) -> i32 {
-    let min = game.min_score();
-    let max = game.max_score() as i32 + 1;
-
-    let mut alpha = min;
-    let mut beta = max;
+    let mut alpha = game.min_score();
+    let mut beta = game.max_score() as i32 + 1;
 
     while alpha < beta {
         let med = alpha + (beta - alpha) / 2;
@@ -226,23 +245,26 @@ pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
     })
 }
 
-/// Parallelized version of `move_scores`.
-/// This function requires the `rayon` feature to be enabled.
+/// Parallelized version of `move_scores`. (faster by a large margin)
+/// This requires the `rayon` feature to be enabled.
 /// It uses rayon's parallel iterators to evaluate the scores of each move in parallel.
-///
-/// This can help cut computational time by t / c, where t is the time it takes to evaluate
-/// the moves sequentially, and c is the number of cores on your machine.
+/// 
+/// This also allows you to pass in your own hasher, for transposition table optimization.
 ///
 /// # Returns
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores<T>(game: &T) -> Vec<(T::Move, i32)>
+pub fn par_move_scores_with_hasher<T>(
+    game: &T,
+    hasher: impl BuildHasher + Default + Clone + Sync + Send,
+) -> Vec<(T::Move, i32)>
 where
-    T: Game + Clone + Eq + Hash + Sync,
+    T: Game + Clone + Eq + Hash + Sync + Send,
     T::Move: Sync + Send,
 {
     let all_moves = game.possible_moves().collect::<Vec<_>>();
+    let hashmap = Arc::new(DashMap::with_hasher(hasher));
 
     all_moves
         .par_iter()
@@ -251,7 +273,28 @@ where
             board.make_move(m.clone());
             // We flip the sign of the score because we want the score from the
             // perspective of the player playing the move, not the player whose turn it is.
-            ((*m).clone(), -solve(&board, &mut HashMap::new()))
+            let mut map = hashmap.clone();
+            ((*m).clone(), -solve(&board, &mut map))
         })
         .collect::<Vec<_>>()
+}
+
+/// Parallelized version of `move_scores`. (faster by a large margin)
+/// This requires the `rayon` feature to be enabled.
+/// It uses rayon's parallel iterators to evaluate the scores of each move in parallel.
+///
+/// # Returns
+///
+/// A vector of tuples of the form `(move, score)`.
+ #[cfg(feature = "rayon")]
+pub fn par_move_scores<T>(
+    game: &T,
+) -> Vec<(T::Move, i32)>
+where
+    T: Game + Clone + Eq + Hash + Sync + Send,
+    T::Move: Sync + Send,
+{
+    use std::collections::hash_map::RandomState;
+
+    par_move_scores_with_hasher(game, RandomState::new())
 }
