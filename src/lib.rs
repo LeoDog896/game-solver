@@ -170,7 +170,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
     {
         let score = transposition_table
             .get(game)
-            .unwrap_or(TranspositionTableScore::UpperBound(game.max_score() as i32));
+            .unwrap_or_else(|| TranspositionTableScore::UpperBound(game.max_score() as i32));
 
         match score {
             TranspositionTableScore::UpperBound(max) => {
