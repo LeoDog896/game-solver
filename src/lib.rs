@@ -5,9 +5,9 @@
 //! a great place to start.
 
 #[cfg(feature = "rayon")]
-use rayon::prelude::*;
-#[cfg(feature = "rayon")]
 use dashmap::{DashMap, Map};
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 #[cfg(feature = "rayon")]
 use std::sync::Arc;
 
@@ -125,10 +125,9 @@ impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for Ha
 }
 
 #[cfg(feature = "rayon")]
-impl<
-    K: Eq + Hash + Game + Sync,
-    S: BuildHasher + Default + Clone + Sync + Send,
-> TranspositionTable<K> for Arc<DashMap<K, i32, S>> {
+impl<K: Eq + Hash + Game + Sync, S: BuildHasher + Default + Clone + Sync + Send>
+    TranspositionTable<K> for Arc<DashMap<K, i32, S>>
+{
     fn get(&self, board: &K) -> Option<i32> {
         self._get(board).map(|x| *x)
     }
@@ -248,7 +247,7 @@ pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
 /// Parallelized version of `move_scores`. (faster by a large margin)
 /// This requires the `rayon` feature to be enabled.
 /// It uses rayon's parallel iterators to evaluate the scores of each move in parallel.
-/// 
+///
 /// This also allows you to pass in your own hasher, for transposition table optimization.
 ///
 /// # Returns
@@ -263,6 +262,7 @@ where
     T: Game + Clone + Eq + Hash + Sync + Send,
     T::Move: Sync + Send,
 {
+    // we need to collect it first as we cant parallelize an already non-parallel iterator
     let all_moves = game.possible_moves().collect::<Vec<_>>();
     let hashmap = Arc::new(DashMap::with_hasher(hasher));
 
@@ -286,10 +286,8 @@ where
 /// # Returns
 ///
 /// A vector of tuples of the form `(move, score)`.
- #[cfg(feature = "rayon")]
-pub fn par_move_scores<T>(
-    game: &T,
-) -> Vec<(T::Move, i32)>
+#[cfg(feature = "rayon")]
+pub fn par_move_scores<T>(game: &T) -> Vec<(T::Move, i32)>
 where
     T: Game + Clone + Eq + Hash + Sync + Send,
     T::Move: Sync + Send,
