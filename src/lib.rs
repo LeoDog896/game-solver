@@ -117,7 +117,9 @@ pub trait TranspositionTable<T: Eq + Hash + Game> {
     fn has(&self, board: &T) -> bool;
 }
 
-impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for HashMap<K, TranspositionTableScore, S> {
+impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K>
+    for HashMap<K, TranspositionTableScore, S>
+{
     fn get(&self, board: &K) -> Option<TranspositionTableScore> {
         self.get(board).copied()
     }
@@ -171,6 +173,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
         }
     }
 
+    // fetch values from the transposition table
     {
         let score = transposition_table
             .get(game)
@@ -184,7 +187,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
                         return beta;
                     }
                 }
-            },
+            }
             TranspositionTableScore::LowerBound(min) => {
                 if alpha < min {
                     alpha = min;
@@ -192,7 +195,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
                         return alpha;
                     }
                 }
-            },
+            }
         };
     }
 
