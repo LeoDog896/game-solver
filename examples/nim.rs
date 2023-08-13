@@ -14,8 +14,8 @@ use std::{
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Nim {
     heaps: Vec<usize>,
-    move_count: u32,
-    max_score: u32,
+    move_count: usize,
+    max_score: usize,
 }
 
 impl Nim {
@@ -26,7 +26,7 @@ impl Nim {
             heaps: heaps.clone(),
             move_count: 0,
             // sum of all the heaps is the upper bound for the amount of moves - add 1 to give a positive score
-            max_score: (heaps.iter().sum::<usize>() + 1) as u32,
+            max_score: heaps.iter().sum::<usize>() + 1,
         }
     }
 }
@@ -36,12 +36,12 @@ impl Game for Nim {
     type Move = (usize, usize);
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
 
-    fn max_score(&self) -> u32 {
+    fn max_score(&self) -> usize {
         self.max_score
     }
 
-    fn min_score(&self) -> i32 {
-        -(self.max_score as i32)
+    fn min_score(&self) -> isize {
+        -(self.max_score as isize)
     }
 
     fn player(&self) -> Player {
@@ -56,7 +56,7 @@ impl Game for Nim {
     // we want to minimize the amount of moves it takes to win.
     // thus, we penalize the AI for taking more moves
     // by removing points for every move it takes.
-    fn score(&self) -> u32 {
+    fn score(&self) -> usize {
         self.max_score() - self.move_count
     }
 

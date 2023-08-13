@@ -13,7 +13,7 @@ struct Reversi {
     height: usize,
     /// None if empty, Some(Player) if occupied
     board: Array2D<Option<Player>>,
-    move_count: u32,
+    move_count: usize,
 }
 
 impl Reversi {
@@ -148,12 +148,12 @@ impl Game for Reversi {
     type Move = (usize, usize);
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
 
-    fn max_score(&self) -> u32 {
-        (self.width * self.height).try_into().unwrap()
+    fn max_score(&self) -> usize {
+        self.width * self.height
     }
 
-    fn min_score(&self) -> i32 {
-        -(self.width as i32 * self.height as i32)
+    fn min_score(&self) -> isize {
+        -(self.width as isize * self.height as isize)
     }
 
     fn player(&self) -> Player {
@@ -164,7 +164,7 @@ impl Game for Reversi {
         }
     }
 
-    fn score(&self) -> u32 {
+    fn score(&self) -> usize {
         self.max_score() - self.move_count
     }
 

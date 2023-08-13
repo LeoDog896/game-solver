@@ -26,7 +26,7 @@ struct TicTacToe {
     size: usize,
     /// True represents a square that has not been eaten
     board: ArrayD<Square>,
-    move_count: u32,
+    move_count: usize,
 }
 
 fn add_checked(a: Dim<IxDynImpl>, b: Vec<i32>) -> Option<Dim<IxDynImpl>> {
@@ -115,12 +115,12 @@ impl Game for TicTacToe {
         fn((Self::Move, &Square)) -> Option<Self::Move>,
     >;
 
-    fn max_score(&self) -> u32 {
-        (self.size.pow(self.dim as u32)).try_into().unwrap()
+    fn max_score(&self) -> usize {
+        self.size.pow(self.dim as u32)
     }
 
-    fn min_score(&self) -> i32 {
-        -(self.size.pow(self.dim as u32) as i32)
+    fn min_score(&self) -> isize {
+        -(self.size.pow(self.dim as u32) as isize)
     }
 
     fn player(&self) -> Player {
@@ -131,7 +131,7 @@ impl Game for TicTacToe {
         }
     }
 
-    fn score(&self) -> u32 {
+    fn score(&self) -> usize {
         self.max_score() - self.move_count
     }
 
@@ -186,7 +186,7 @@ impl Game for TicTacToe {
     }
 
     fn is_draw(&self) -> bool {
-        self.move_count == self.size.pow(self.dim as u32) as u32
+        self.move_count == self.size.pow(self.dim as u32)
     }
 }
 

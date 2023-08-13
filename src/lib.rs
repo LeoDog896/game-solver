@@ -62,13 +62,13 @@ pub trait Game {
     fn player(&self) -> Player;
 
     /// Scores a position. The default implementation uses the size minus the number of moves (for finite games)
-    fn score(&self) -> u32;
+    fn score(&self) -> usize;
 
     /// Get the max score of a game.
-    fn max_score(&self) -> u32;
+    fn max_score(&self) -> usize;
 
     /// Get the min score of a game. This should be negative.
-    fn min_score(&self) -> i32;
+    fn min_score(&self) -> isize;
 
     /// Returns true if the move was valid, and makes the move if it was.
     fn make_move(&mut self, m: Self::Move) -> bool;
@@ -95,10 +95,10 @@ pub enum TranspositionTableScore {
     /// The lower bound of the score.
     /// This generally doesn't bring too much benefit,
     /// but still helps optimize a bit.
-    LowerBound(i32),
+    LowerBound(isize),
     /// The upper bound of the score,
     /// which helps get rid of many useless branches.
-    UpperBound(i32),
+    UpperBound(isize),
 }
 
 /// A memoization strategy for a perfect-information sequential game.
@@ -156,9 +156,9 @@ impl<K: Eq + Hash + Game + Sync, S: BuildHasher + Default + Clone + Sync + Send>
 fn negamax<T: Game + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
-    mut alpha: i32,
-    mut beta: i32,
-) -> i32 {
+    mut alpha: isize,
+    mut beta: isize,
+) -> isize {
     if game.is_draw() {
         return 0;
     }
@@ -167,7 +167,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
         if game.is_winning_move(m.clone()) {
             let mut board = game.clone();
             board.make_move(m);
-            return board.score() as i32;
+            return board.score() as isize;
         }
     }
 
@@ -175,7 +175,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
     {
         let score = transposition_table
             .get(game)
-            .unwrap_or_else(|| TranspositionTableScore::UpperBound(game.max_score() as i32));
+            .unwrap_or_else(|| TranspositionTableScore::UpperBound(game.max_score() as isize));
 
         match score {
             TranspositionTableScore::UpperBound(max) => {
@@ -227,9 +227,9 @@ fn negamax<T: Game + Clone + Eq + Hash>(
 pub fn solve<T: Game + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
-) -> i32 {
+) -> isize {
     let mut alpha = game.min_score();
-    let mut beta = game.max_score() as i32 + 1;
+    let mut beta = game.max_score() as isize + 1;
 
     while alpha < beta {
         let med = alpha + (beta - alpha) / 2;
@@ -256,7 +256,7 @@ pub fn solve<T: Game + Clone + Eq + Hash>(
 pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
     game: &'a T,
     transposition_table: &'a mut dyn TranspositionTable<T>,
-) -> impl Iterator<Item = (T::Move, i32)> + 'a {
+) -> impl Iterator<Item = (T::Move, isize)> + 'a {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
         board.make_move(m.clone());
@@ -279,7 +279,7 @@ pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
 pub fn par_move_scores_with_hasher<T>(
     game: &T,
     hasher: impl BuildHasher + Default + Clone + Sync + Send,
-) -> Vec<(T::Move, i32)>
+) -> Vec<(T::Move, isize)>
 where
     T: Game + Clone + Eq + Hash + Sync + Send,
     T::Move: Sync + Send,
@@ -309,7 +309,7 @@ where
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores<T>(game: &T) -> Vec<(T::Move, i32)>
+pub fn par_move_scores<T>(game: &T) -> Vec<(T::Move, isize)>
 where
     T: Game + Clone + Eq + Hash + Sync + Send,
     T::Move: Sync + Send,

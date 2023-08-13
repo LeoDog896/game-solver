@@ -27,7 +27,7 @@ struct Chomp {
     height: usize,
     /// True represents a square that has not been eaten
     board: Array2D<bool>,
-    move_count: u32,
+    move_count: usize,
 }
 
 impl Chomp {
@@ -48,12 +48,12 @@ impl Game for Chomp {
     type Move = (usize, usize);
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
 
-    fn max_score(&self) -> u32 {
+    fn max_score(&self) -> usize {
         (self.width * self.height).try_into().unwrap()
     }
 
-    fn min_score(&self) -> i32 {
-        -(self.width as i32 * self.height as i32)
+    fn min_score(&self) -> isize {
+        -(self.width as isize * self.height as isize)
     }
 
     fn player(&self) -> Player {
@@ -64,7 +64,7 @@ impl Game for Chomp {
         }
     }
 
-    fn score(&self) -> u32 {
+    fn score(&self) -> usize {
         self.max_score() - self.move_count
     }
 

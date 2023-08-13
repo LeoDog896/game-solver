@@ -18,7 +18,7 @@ use std::{
 struct Domineering<const WIDTH: usize, const HEIGHT: usize> {
     /// True represents a square - true if empty, false otherwise
     board: Array2D<bool>,
-    move_count: u32,
+    move_count: usize,
 }
 
 impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
@@ -34,12 +34,12 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
     type Move = (usize, usize);
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
 
-    fn max_score(&self) -> u32 {
-        (WIDTH * HEIGHT) as u32
+    fn max_score(&self) -> usize {
+        WIDTH * HEIGHT
     }
 
-    fn min_score(&self) -> i32 {
-        -(WIDTH as i32 * HEIGHT as i32)
+    fn min_score(&self) -> isize {
+        -(WIDTH as isize * HEIGHT as isize)
     }
 
     fn player(&self) -> Player {
@@ -50,7 +50,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
         }
     }
 
-    fn score(&self) -> u32 {
+    fn score(&self) -> usize {
         self.max_score() - self.move_count
     }
 
@@ -106,7 +106,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
     }
 
     fn is_draw(&self) -> bool {
-        self.move_count == WIDTH as u32 * HEIGHT as u32
+        self.move_count == WIDTH * HEIGHT
     }
 }
 
