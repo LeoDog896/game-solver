@@ -75,7 +75,6 @@ Finally, we'll solve the game using the `par_move_scores` function, or the paral
 And to use the CLI, do:
 
 ```sh
-
 cargo run --features rayon --example nim 3,5,7
 ```
 
