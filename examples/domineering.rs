@@ -44,9 +44,9 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
 
     fn player(&self) -> Player {
         if self.move_count % 2 == 0 {
-            Player::P1
+            Player::One
         } else {
-            Player::P2
+            Player::Two
         }
     }
 
@@ -56,7 +56,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
 
     fn make_move(&mut self, m: Self::Move) -> bool {
         if *self.board.get(m.0, m.1).unwrap() {
-            if self.player() == Player::P1 {
+            if self.player() == Player::One {
                 if m.0 == WIDTH - 1 {
                     return false;
                 }
@@ -79,7 +79,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
 
     fn possible_moves(&self) -> Self::Iter<'_> {
         let mut moves = Vec::new();
-        if self.player() == Player::P1 {
+        if self.player() == Player::One {
             for i in 0..HEIGHT {
                 for j in 0..WIDTH - 1 {
                     if *self.board.get(j, i).unwrap() && *self.board.get(j + 1, i).unwrap() {
@@ -161,7 +161,7 @@ fn main() {
         }
         println!();
     } else {
-        println!("Player {:?} won!", game.player().opposite());
+        println!("Player {:?} won!", game.player().opponent());
     }
 }
 
@@ -180,20 +180,20 @@ mod tests {
             move_scores.sort_by_key(|m| m.1);
             move_scores.reverse();
             if move_scores[0].1 > 0 {
-                Some(Player::P1)
+                Some(Player::One)
             } else {
-                Some(Player::P2)
+                Some(Player::Two)
             }
         }
     }
 
     #[test]
     fn test_wins() {
-        assert_eq!(winner::<5, 5>(), Some(Player::P2));
-        assert_eq!(winner::<4, 4>(), Some(Player::P1));
-        assert_eq!(winner::<3, 3>(), Some(Player::P1));
-        assert_eq!(winner::<13, 2>(), Some(Player::P2));
-        assert_eq!(winner::<11, 2>(), Some(Player::P1));
+        assert_eq!(winner::<5, 5>(), Some(Player::Two));
+        assert_eq!(winner::<4, 4>(), Some(Player::One));
+        assert_eq!(winner::<3, 3>(), Some(Player::One));
+        assert_eq!(winner::<13, 2>(), Some(Player::Two));
+        assert_eq!(winner::<11, 2>(), Some(Player::One));
     }
 
     #[test]

@@ -58,9 +58,9 @@ impl Game for Chomp {
 
     fn player(&self) -> Player {
         if self.move_count % 2 == 0 {
-            Player::P1
+            Player::One
         } else {
-            Player::P2
+            Player::Two
         }
     }
 
@@ -140,7 +140,7 @@ fn main() {
     let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
 
     if move_scores.is_empty() {
-        println!("Player {:?} won!", game.player().opposite());
+        println!("Player {:?} won!", game.player().opponent());
     } else {
         move_scores.sort_by_key(|m| m.1);
         move_scores.reverse();

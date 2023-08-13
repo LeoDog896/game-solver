@@ -13,19 +13,19 @@ use std::{
 };
 
 /// Represents a player in a two-player combinatorial game.
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash)]
 pub enum Player {
-    P1,
-    P2,
+    One,
+    Two,
 }
 
 impl Player {
     /// Get the player opposite to this one.
     #[must_use]
-    pub const fn opposite(&self) -> Self {
+    pub const fn opponent(&self) -> Self {
         match self {
-            Self::P1 => Self::P2,
-            Self::P2 => Self::P1,
+            Self::One => Self::Two,
+            Self::Two => Self::One,
         }
     }
 }
@@ -41,6 +41,20 @@ pub trait Game {
         Self: 'a;
 
     /// Returns the player whose turn it is.
+    /// The implementation of this should be:
+    ///
+    /// ```rust
+    /// fn player(&self) -> Player {
+    ///     if game.move_count % 2 == 0 {
+    ///        Player::One
+    ///     } else {
+    ///         Player::Two
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// However, no implementation is provided
+    /// because this does not keep track of the move count.
     fn player(&self) -> Player;
 
     /// Scores a position. The default implementation uses the size minus the number of moves (for finite games)
@@ -66,6 +80,8 @@ pub trait Game {
     fn is_winning_move(&self, m: Self::Move) -> bool;
 
     /// Returns true if the game is a draw.
+    /// This function must exist for the current game,
+    /// e.g. with tic tac toe, it must check if the board is full.
     fn is_draw(&self) -> bool;
 }
 

@@ -125,9 +125,9 @@ impl Game for TicTacToe {
 
     fn player(&self) -> Player {
         if self.move_count % 2 == 0 {
-            Player::P1
+            Player::One
         } else {
-            Player::P2
+            Player::Two
         }
     }
 
@@ -137,7 +137,7 @@ impl Game for TicTacToe {
 
     fn make_move(&mut self, m: Self::Move) -> bool {
         if *self.board.get(m.clone()).unwrap() == Square::Empty {
-            let square = if self.player() == Player::P1 {
+            let square = if self.player() == Player::One {
                 Square::X
             } else {
                 Square::O
@@ -259,7 +259,7 @@ fn main() {
     let mut move_scores = par_move_scores(&game);
 
     if game.won() {
-        println!("Player {:?} won!", game.player().opposite());
+        println!("Player {:?} won!", game.player().opponent());
     } else if move_scores.is_empty() {
         println!("No moves left! Game tied!");
     } else {
