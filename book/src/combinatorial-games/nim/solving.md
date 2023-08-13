@@ -72,4 +72,28 @@ Finally, we'll solve the game using the `par_move_scores` function, or the paral
     }
 ```
 
+And to use the CLI, do:
+
+```sh
+
+cargo run --features rayon --example nim 3,5,7
+```
+
+```
+Heap 0: 3
+Heap 1: 5
+Heap 2: 7
+Player One to move
+
+
+Best moves @ score 1:
+(2, 1), (1, 1), (0, 1),
+
+Best moves @ score -4:
+(2, 3), (2, 2), (0, 3), (0, 2),
+
+Best moves @ score -8:
+(2, 7), (2, 6), (2, 5), (2, 4), (1, 5), (1, 4), (1, 3), (1, 2),
+```
+
 Full source on [GitHub](https://github.com/LeoDog896/game-solver/blob/master/examples/nim.rs).
