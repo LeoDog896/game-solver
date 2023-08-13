@@ -49,7 +49,7 @@ impl Game for Chomp {
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
 
     fn max_score(&self) -> usize {
-        (self.width * self.height).try_into().unwrap()
+        self.width * self.height
     }
 
     fn min_score(&self) -> isize {
@@ -101,7 +101,7 @@ impl Game for Chomp {
     }
 
     fn is_draw(&self) -> bool {
-        self.move_count as usize == self.width * self.height
+        self.move_count == self.width * self.height
     }
 }
 
