@@ -99,13 +99,6 @@ pub enum TranspositionTableScore {
 /// A memoization strategy for a perfect-information sequential game.
 ///
 /// Transposition tables should optimally be a form of hash table.
-///
-/// # Optimization
-///
-/// [rustc-hash](https://crates.io/crates/rustc-hash) is the best
-/// hashmap implementation for this crate, given its speed.
-///
-/// To optimize it, its better to have your Moves (keys) be numbers.
 pub trait TranspositionTable<T: Eq + Hash + Game> {
     /// Get the score of a board, if it exists.
     fn get(&self, board: &T) -> Option<TranspositionTableScore>;
