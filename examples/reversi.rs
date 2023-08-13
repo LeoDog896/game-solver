@@ -52,10 +52,10 @@ impl Reversi {
         x < self.width && y < self.height
     }
 
-    fn is_valid_move(&self, m: <Reversi as Game>::Move) -> Option<Vec<<Reversi as Game>::Move>> {
+    fn is_valid_move(&self, m: <Self as Game>::Move) -> Option<Vec<<Self as Game>::Move>> {
         let cell = *self.board.get(m.0, m.1).unwrap();
 
-        if cell != None {
+        if cell.is_some() {
             return None;
         }
 
@@ -136,12 +136,10 @@ impl Reversi {
             }
         }
 
-        if player_one_count > player_two_count {
-            Some(Player::One)
-        } else if player_two_count > player_one_count {
-            Some(Player::Two)
-        } else {
-            None
+        match player_one_count.cmp(&player_two_count) {
+            std::cmp::Ordering::Greater => Some(Player::One),
+            std::cmp::Ordering::Less => Some(Player::Two),
+            std::cmp::Ordering::Equal => None,
         }
     }
 }
@@ -188,7 +186,7 @@ impl Game for Reversi {
         let mut moves = Vec::new();
         for x in 0..self.width {
             for y in 0..self.height {
-                if self.is_valid_move((x, y)) != None {
+                if self.is_valid_move((x, y)).is_some() {
                     moves.push((x, y));
                 }
             }
@@ -203,7 +201,7 @@ impl Game for Reversi {
     }
 
     fn is_draw(&self) -> bool {
-        self.winning_player() == None && self.possible_moves().next().is_none()
+        self.winning_player().is_none() && self.possible_moves().next().is_none()
     }
 }
 
@@ -257,11 +255,11 @@ fn main() {
     let mut move_scores = par_move_scores(&game);
 
     if move_scores.is_empty() {
-        if let Some(player) = game.winning_player() {
-            println!("Player {:?} won!", player.opponent());
-        } else {
+        game.winning_player().map_or_else(|| {
             println!("Game tied!");
-        };
+        }, |player| {
+            println!("Player {:?} won!", player.opponent());
+        })
     } else {
         move_scores.sort_by_key(|m| m.1);
         move_scores.reverse();
