@@ -89,6 +89,13 @@ pub trait Game {
     fn is_draw(&self) -> bool;
 }
 
+/// A score in a transposition table.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TranspositionTableScore {
+    LowerBound(i32),
+    UpperBound(i32),
+}
+
 /// A memoization strategy for a perfect-information sequential game.
 ///
 /// Transposition tables should optimally be a form of hash table.
@@ -101,21 +108,21 @@ pub trait Game {
 /// To optimize it, its better to have your Moves (keys) be numbers.
 pub trait TranspositionTable<T: Eq + Hash + Game> {
     /// Get the score of a board, if it exists.
-    fn get(&self, board: &T) -> Option<i32>;
+    fn get(&self, board: &T) -> Option<TranspositionTableScore>;
 
     /// Insert a board into the transposition table.
-    fn insert(&mut self, board: T, score: i32);
+    fn insert(&mut self, board: T, score: TranspositionTableScore);
 
     /// Returns true if the board is in the transposition table.
     fn has(&self, board: &T) -> bool;
 }
 
-impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for HashMap<K, i32, S> {
-    fn get(&self, board: &K) -> Option<i32> {
+impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for HashMap<K, TranspositionTableScore, S> {
+    fn get(&self, board: &K) -> Option<TranspositionTableScore> {
         self.get(board).copied()
     }
 
-    fn insert(&mut self, board: K, score: i32) {
+    fn insert(&mut self, board: K, score: TranspositionTableScore) {
         self.insert(board, score);
     }
 
@@ -126,13 +133,13 @@ impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for Ha
 
 #[cfg(feature = "rayon")]
 impl<K: Eq + Hash + Game + Sync, S: BuildHasher + Default + Clone + Sync + Send>
-    TranspositionTable<K> for Arc<DashMap<K, i32, S>>
+    TranspositionTable<K> for Arc<DashMap<K, TranspositionTableScore, S>>
 {
-    fn get(&self, board: &K) -> Option<i32> {
+    fn get(&self, board: &K) -> Option<TranspositionTableScore> {
         self._get(board).map(|x| *x)
     }
 
-    fn insert(&mut self, board: K, score: i32) {
+    fn insert(&mut self, board: K, score: TranspositionTableScore) {
         self._insert(board, score);
     }
 
@@ -165,15 +172,28 @@ fn negamax<T: Game + Clone + Eq + Hash>(
     }
 
     {
-        let max = transposition_table
+        let score = transposition_table
             .get(game)
-            .unwrap_or(game.max_score() as i32);
-        if beta > max {
-            beta = max;
-            if alpha >= beta {
-                return beta;
-            }
-        }
+            .unwrap_or(TranspositionTableScore::UpperBound(game.max_score() as i32));
+
+        match score {
+            TranspositionTableScore::UpperBound(max) => {
+                if beta > max {
+                    beta = max;
+                    if alpha >= beta {
+                        return beta;
+                    }
+                }
+            },
+            TranspositionTableScore::LowerBound(min) => {
+                if alpha < min {
+                    alpha = min;
+                    if alpha >= beta {
+                        return alpha;
+                    }
+                }
+            },
+        };
     }
 
     for m in &mut game.possible_moves() {
@@ -183,6 +203,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
         let score = -negamax(&board, transposition_table, -beta, -alpha);
 
         if score >= beta {
+            transposition_table.insert(game.clone(), TranspositionTableScore::LowerBound(score));
             return beta;
         }
 
@@ -191,7 +212,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
         }
     }
 
-    transposition_table.insert(game.clone(), alpha);
+    transposition_table.insert(game.clone(), TranspositionTableScore::UpperBound(alpha));
 
     alpha
 }
