@@ -163,6 +163,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
         return 0;
     }
 
+    // check if this is a winning configuration
     for m in &mut game.possible_moves() {
         if game.is_winning_move(m.clone()) {
             let mut board = game.clone();
@@ -197,12 +198,25 @@ fn negamax<T: Game + Clone + Eq + Hash>(
         };
     }
 
+    // for principal variation search
+    let mut first_child = true;
+
     for m in &mut game.possible_moves() {
         let mut board = game.clone();
         board.make_move(m);
 
-        let score = -negamax(&board, transposition_table, -beta, -alpha);
+        let score = if first_child {
+            -negamax(&board, transposition_table, -beta, -alpha)
+        } else {
+            let score = -negamax(&board, transposition_table, -alpha - 1, -alpha);
+            if score > alpha {
+                -negamax(&board, transposition_table, -beta, -alpha)
+            } else {
+                score
+            }
+        };
 
+        // alpha-beta pruning - we can return early
         if score >= beta {
             transposition_table.insert(game.clone(), TranspositionTableScore::LowerBound(score));
             return beta;
@@ -211,6 +225,8 @@ fn negamax<T: Game + Clone + Eq + Hash>(
         if score > alpha {
             alpha = score;
         }
+
+        first_child = false;
     }
 
     transposition_table.insert(game.clone(), TranspositionTableScore::UpperBound(alpha));

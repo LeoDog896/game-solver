@@ -12,5 +12,6 @@ Combinatorial games are the most restricted in their feature set, being sequenti
 - [Alpha-Beta Pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning) (ignore suboptimal branches)
     - [Iterative Deepening](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search)
     - [Null window search](https://www.chessprogramming.org/Null_Window)
+- [Principal Variation Search](https://en.wikipedia.org/wiki/Principal_variation_search)
 - Parallelization with [rayon](https://github.com/rayon-rs/rayon)
     - Note that this is under the `rayon` feature flag.
