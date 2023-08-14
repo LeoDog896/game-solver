@@ -60,8 +60,8 @@ impl Game for Nim {
         self.max_score() - self.move_count
     }
 
-    fn make_move(&mut self, m: Self::Move) -> bool {
-        let (heap, amount) = m;
+    fn make_move(&mut self, m: &Self::Move) -> bool {
+        let (heap, amount) = *m;
         // check for indexing OOB
         if heap >= self.heaps.len() {
             return false;
@@ -92,7 +92,7 @@ impl Game for Nim {
 
     // a move is winning if the next player
     // has no possible moves to make (normal play for Nim)
-    fn is_winning_move(&self, m: Self::Move) -> bool {
+    fn is_winning_move(&self, m: &Self::Move) -> bool {
         let mut board = self.clone();
         board.make_move(m);
         board.possible_moves().next().is_none()
@@ -134,7 +134,7 @@ fn main() {
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
-        game.make_move((numbers[0], numbers[1]));
+        game.make_move(&(numbers[0], numbers[1]));
     });
 
     print!("{}", game);

@@ -54,7 +54,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
         self.max_score() - self.move_count
     }
 
-    fn make_move(&mut self, m: Self::Move) -> bool {
+    fn make_move(&mut self, m: &Self::Move) -> bool {
         if *self.board.get(m.0, m.1).unwrap() {
             if self.player() == Player::One {
                 if m.0 == WIDTH - 1 {
@@ -99,7 +99,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
         moves.into_iter()
     }
 
-    fn is_winning_move(&self, m: Self::Move) -> bool {
+    fn is_winning_move(&self, m: &Self::Move) -> bool {
         let mut board = self.clone();
         board.make_move(m);
         board.possible_moves().next().is_none()
@@ -139,7 +139,7 @@ fn main() {
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
-        game.make_move((numbers[0], numbers[1]));
+        game.make_move(&(numbers[0], numbers[1]));
     });
 
     print!("{}", game);

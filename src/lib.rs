@@ -71,7 +71,7 @@ pub trait Game {
     fn min_score(&self) -> isize;
 
     /// Returns true if the move was valid, and makes the move if it was.
-    fn make_move(&mut self, m: Self::Move) -> bool;
+    fn make_move(&mut self, m: &Self::Move) -> bool;
 
     /// Returns a vector of all possible moves.
     ///
@@ -81,7 +81,7 @@ pub trait Game {
     fn possible_moves(&self) -> Self::Iter<'_>;
 
     /// Returns true if the move is a winning move.
-    fn is_winning_move(&self, m: Self::Move) -> bool;
+    fn is_winning_move(&self, m: &Self::Move) -> bool;
 
     /// Returns true if the game is a draw.
     /// This function must exist for the current game,
@@ -165,9 +165,9 @@ fn negamax<T: Game + Clone + Eq + Hash>(
 
     // check if this is a winning configuration
     for m in &mut game.possible_moves() {
-        if game.is_winning_move(m.clone()) {
+        if game.is_winning_move(&m) {
             let mut board = game.clone();
-            board.make_move(m);
+            board.make_move(&m);
             return board.score() as isize;
         }
     }
@@ -203,7 +203,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
 
     for m in &mut game.possible_moves() {
         let mut board = game.clone();
-        board.make_move(m);
+        board.make_move(&m);
 
         let score = if first_child {
             -negamax(&board, transposition_table, -beta, -alpha)
@@ -275,7 +275,7 @@ pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
 ) -> impl Iterator<Item = (T::Move, isize)> + 'a {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
-        board.make_move(m.clone());
+        board.make_move(&m);
         // We flip the sign of the score because we want the score from the
         // perspective of the player playing the move, not the player whose turn it is.
         (m, -solve(&board, transposition_table))
@@ -308,7 +308,7 @@ where
         .par_iter()
         .map(move |m| {
             let mut board = game.clone();
-            board.make_move(m.clone());
+            board.make_move(m);
             // We flip the sign of the score because we want the score from the
             // perspective of the player playing the move, not the player whose turn it is.
             let mut map = hashmap.clone();

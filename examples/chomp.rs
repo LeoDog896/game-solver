@@ -68,7 +68,7 @@ impl Game for Chomp {
         self.max_score() - self.move_count
     }
 
-    fn make_move(&mut self, m: Self::Move) -> bool {
+    fn make_move(&mut self, m: &Self::Move) -> bool {
         if *self.board.get(m.0, m.1).unwrap() {
             for i in m.0..self.width {
                 for j in 0..=m.1 {
@@ -94,7 +94,7 @@ impl Game for Chomp {
         moves.into_iter()
     }
 
-    fn is_winning_move(&self, m: Self::Move) -> bool {
+    fn is_winning_move(&self, m: &Self::Move) -> bool {
         let mut board = self.clone();
         board.make_move(m);
         board.possible_moves().next().is_none()
@@ -131,7 +131,7 @@ fn main() {
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
-        game.make_move((numbers[0], numbers[1]));
+        game.make_move(&(numbers[0], numbers[1]));
     });
 
     print!("{}", game);

@@ -86,8 +86,8 @@ Then, we want our control functions:
 In our case, `is_draw` is always false (as Nim's winning condition *is* no more moves remaining):
 
 ```rs
-    fn make_move(&mut self, m: Self::Move) -> bool {
-        let (heap, amount) = m;
+    fn make_move(&mut self, m: &Self::Move) -> bool {
+        let (heap, amount) = *m;
         // check for indexing OOB
         if heap >= self.heaps.len() {
             return false;
@@ -118,7 +118,7 @@ In our case, `is_draw` is always false (as Nim's winning condition *is* no more 
 
     // a move is winning if the next player
     // has no possible moves to make
-    fn is_winning_move(&self, m: Self::Move) -> bool {
+    fn is_winning_move(&self, m: &Self::Move) -> bool {
         let mut board = self.clone();
         board.make_move(m);
         board.possible_moves().next().is_none()

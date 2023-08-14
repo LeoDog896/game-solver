@@ -37,7 +37,7 @@ fn main() {
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
-        game.make_move((numbers[0], numbers[1]));
+        game.make_move(&(numbers[0], numbers[1]));
     });
 
     print!("{}", game);

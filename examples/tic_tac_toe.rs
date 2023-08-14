@@ -135,7 +135,7 @@ impl Game for TicTacToe {
         self.max_score() - self.move_count
     }
 
-    fn make_move(&mut self, m: Self::Move) -> bool {
+    fn make_move(&mut self, m: &Self::Move) -> bool {
         if *self.board.get(m.clone()).unwrap() == Square::Empty {
             let square = if self.player() == Player::One {
                 Square::X
@@ -163,9 +163,9 @@ impl Game for TicTacToe {
             })
     }
 
-    fn is_winning_move(&self, m: Self::Move) -> bool {
+    fn is_winning_move(&self, m: &Self::Move) -> bool {
         let mut board = self.clone();
-        board.make_move(m.clone());
+        board.make_move(m);
 
         // check if the board has any matches of SIZE in a row
         // horizontal, diagonal, and vertical
@@ -176,8 +176,8 @@ impl Game for TicTacToe {
         // - it increases
         // - it decreases
         // e.g. (0, 0, 2), (0, 1, 1), (0, 2, 0) wins
-        for offset in offsets(&m, self.size) {
-            if board.winning_line(&m, &offset) {
+        for offset in offsets(m, self.size) {
+            if board.winning_line(m, &offset) {
                 return true;
             }
         }
@@ -250,7 +250,7 @@ fn main() {
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
-        game.make_move(numbers.into_dimension());
+        game.make_move(&numbers.into_dimension());
     });
 
     print!("{}", game);
@@ -293,7 +293,7 @@ mod tests {
     #[test]
     fn test_middle_move() {
         let mut game = TicTacToe::new(2, 3);
-        game.make_move(vec![0, 0].into_dimension());
+        game.make_move(&vec![0, 0].into_dimension());
 
         let best_move = best_moves(&game).unwrap();
 
@@ -311,11 +311,11 @@ mod tests {
     fn test_win() {
         let mut game = TicTacToe::new(2, 3);
 
-        game.make_move(vec![0, 2].into_dimension()); // X
-        game.make_move(vec![0, 1].into_dimension()); // O
-        game.make_move(vec![1, 1].into_dimension()); // X
-        game.make_move(vec![0, 0].into_dimension()); // O
-        game.make_move(vec![2, 0].into_dimension()); // X
+        game.make_move(&vec![0, 2].into_dimension()); // X
+        game.make_move(&vec![0, 1].into_dimension()); // O
+        game.make_move(&vec![1, 1].into_dimension()); // X
+        game.make_move(&vec![0, 0].into_dimension()); // O
+        game.make_move(&vec![2, 0].into_dimension()); // X
 
         assert!(game.won());
     }
@@ -324,13 +324,13 @@ mod tests {
     fn test_win_3d() {
         let mut game = TicTacToe::new(3, 3);
 
-        game.make_move(vec![0, 0, 0].into_dimension()); // X
-        game.make_move(vec![0, 0, 1].into_dimension()); // O
-        game.make_move(vec![0, 1, 1].into_dimension()); // X
-        game.make_move(vec![0, 0, 2].into_dimension()); // O
-        game.make_move(vec![0, 2, 2].into_dimension()); // X
-        game.make_move(vec![0, 1, 0].into_dimension()); // O
-        game.make_move(vec![0, 2, 0].into_dimension()); // X
+        game.make_move(&vec![0, 0, 0].into_dimension()); // X
+        game.make_move(&vec![0, 0, 1].into_dimension()); // O
+        game.make_move(&vec![0, 1, 1].into_dimension()); // X
+        game.make_move(&vec![0, 0, 2].into_dimension()); // O
+        game.make_move(&vec![0, 2, 2].into_dimension()); // X
+        game.make_move(&vec![0, 1, 0].into_dimension()); // O
+        game.make_move(&vec![0, 2, 0].into_dimension()); // X
 
         assert!(game.won());
     }

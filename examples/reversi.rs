@@ -52,7 +52,7 @@ impl Reversi {
         x < self.width && y < self.height
     }
 
-    fn is_valid_move(&self, m: <Self as Game>::Move) -> Option<Vec<<Self as Game>::Move>> {
+    fn is_valid_move(&self, m: &<Self as Game>::Move) -> Option<Vec<<Self as Game>::Move>> {
         let cell = *self.board.get(m.0, m.1).unwrap();
 
         if cell.is_some() {
@@ -168,7 +168,7 @@ impl Game for Reversi {
         self.max_score() - self.move_count
     }
 
-    fn make_move(&mut self, m: Self::Move) -> bool {
+    fn make_move(&mut self, m: &Self::Move) -> bool {
         let move_set = self.is_valid_move(m).unwrap();
 
         self.board.set(m.0, m.1, Some(self.player())).unwrap();
@@ -186,7 +186,7 @@ impl Game for Reversi {
         let mut moves = Vec::new();
         for x in 0..self.width {
             for y in 0..self.height {
-                if self.is_valid_move((x, y)).is_some() {
+                if self.is_valid_move(&(x, y)).is_some() {
                     moves.push((x, y));
                 }
             }
@@ -194,7 +194,7 @@ impl Game for Reversi {
         moves.into_iter()
     }
 
-    fn is_winning_move(&self, m: Self::Move) -> bool {
+    fn is_winning_move(&self, m: &Self::Move) -> bool {
         let mut board = self.clone();
         board.make_move(m);
         board.winning_player() == Some(self.player()) && board.possible_moves().next().is_none()
@@ -246,7 +246,7 @@ fn main() {
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
-        game.make_move((numbers[0], numbers[1]));
+        game.make_move(&(numbers[0], numbers[1]));
     });
 
     print!("{}", game);
