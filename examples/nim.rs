@@ -4,7 +4,7 @@
 /// it still makes a great example as an implementation of the `Game` trait.
 ///
 /// Learn more about Nim here: <https://en.wikipedia.org/wiki/Nim>
-use game_solver::{par_move_scores, Game, Player};
+use game_solver::{par_move_scores, Game, ZeroSumPlayer};
 use std::{
     env::args,
     fmt::{Display, Formatter},
@@ -35,6 +35,7 @@ impl Game for Nim {
     /// where Move is a tuple of the heap index and the number of objects to remove
     type Move = (usize, usize);
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
+    type Player = ZeroSumPlayer;
 
     fn max_score(&self) -> usize {
         self.max_score
@@ -44,11 +45,11 @@ impl Game for Nim {
         -(self.max_score as isize)
     }
 
-    fn player(&self) -> Player {
+    fn player(&self) -> ZeroSumPlayer {
         if self.move_count % 2 == 0 {
-            Player::One
+            ZeroSumPlayer::One
         } else {
-            Player::Two
+            ZeroSumPlayer::Two
         }
     }
 

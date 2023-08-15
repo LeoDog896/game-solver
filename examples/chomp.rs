@@ -12,7 +12,7 @@
 //! repeats positions (as it only has nxm - 1 positions).
 
 use array2d::Array2D;
-use game_solver::{move_scores, Game, Player};
+use game_solver::{move_scores, Game, ZeroSumPlayer};
 
 use std::{
     collections::HashMap,
@@ -47,6 +47,7 @@ impl Chomp {
 impl Game for Chomp {
     type Move = (usize, usize);
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
+    type Player = ZeroSumPlayer;
 
     fn max_score(&self) -> usize {
         self.width * self.height
@@ -56,11 +57,11 @@ impl Game for Chomp {
         -(self.width as isize * self.height as isize)
     }
 
-    fn player(&self) -> Player {
+    fn player(&self) -> Self::Player {
         if self.move_count % 2 == 0 {
-            Player::One
+            ZeroSumPlayer::One
         } else {
-            Player::Two
+            ZeroSumPlayer::Two
         }
     }
 

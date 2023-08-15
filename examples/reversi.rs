@@ -4,7 +4,7 @@
 //! More information: <https://en.wikipedia.org/wiki/Reversi>
 
 use array2d::Array2D;
-use game_solver::{par_move_scores, Game, Player};
+use game_solver::{par_move_scores, Game, ZeroSumPlayer};
 use std::{env::args, fmt, hash::Hash};
 
 #[derive(Clone, Hash, Eq, PartialEq)]
@@ -12,7 +12,7 @@ struct Reversi {
     width: usize,
     height: usize,
     /// None if empty, Some(Player) if occupied
-    board: Array2D<Option<Player>>,
+    board: Array2D<Option<ZeroSumPlayer>>,
     move_count: usize,
 }
 
@@ -30,14 +30,16 @@ impl Reversi {
 
         // set middle squares to occupied:
         board
-            .set(width / 2 - 1, height / 2 - 1, Some(Player::One))
-            .unwrap();
-        board.set(width / 2, height / 2, Some(Player::One)).unwrap();
-        board
-            .set(width / 2 - 1, height / 2, Some(Player::Two))
+            .set(width / 2 - 1, height / 2 - 1, Some(ZeroSumPlayer::One))
             .unwrap();
         board
-            .set(width / 2, height / 2 - 1, Some(Player::Two))
+            .set(width / 2, height / 2, Some(ZeroSumPlayer::One))
+            .unwrap();
+        board
+            .set(width / 2 - 1, height / 2, Some(ZeroSumPlayer::Two))
+            .unwrap();
+        board
+            .set(width / 2, height / 2 - 1, Some(ZeroSumPlayer::Two))
             .unwrap();
 
         Self {
@@ -122,23 +124,23 @@ impl Reversi {
         }
     }
 
-    fn winning_player(&self) -> Option<Player> {
+    fn winning_player(&self) -> Option<ZeroSumPlayer> {
         let mut player_one_count = 0;
         let mut player_two_count = 0;
 
         for x in 0..self.width {
             for y in 0..self.height {
                 match *self.board.get(x, y).unwrap() {
-                    Some(Player::One) => player_one_count += 1,
-                    Some(Player::Two) => player_two_count += 1,
+                    Some(ZeroSumPlayer::One) => player_one_count += 1,
+                    Some(ZeroSumPlayer::Two) => player_two_count += 1,
                     None => (),
                 }
             }
         }
 
         match player_one_count.cmp(&player_two_count) {
-            std::cmp::Ordering::Greater => Some(Player::One),
-            std::cmp::Ordering::Less => Some(Player::Two),
+            std::cmp::Ordering::Greater => Some(ZeroSumPlayer::One),
+            std::cmp::Ordering::Less => Some(ZeroSumPlayer::Two),
             std::cmp::Ordering::Equal => None,
         }
     }
@@ -147,6 +149,7 @@ impl Reversi {
 impl Game for Reversi {
     type Move = (usize, usize);
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
+    type Player = ZeroSumPlayer;
 
     fn max_score(&self) -> usize {
         self.width * self.height
@@ -156,11 +159,11 @@ impl Game for Reversi {
         -(self.width as isize * self.height as isize)
     }
 
-    fn player(&self) -> Player {
+    fn player(&self) -> ZeroSumPlayer {
         if self.move_count % 2 == 0 {
-            Player::One
+            ZeroSumPlayer::One
         } else {
-            Player::Two
+            ZeroSumPlayer::Two
         }
     }
 
@@ -205,10 +208,10 @@ impl Game for Reversi {
     }
 }
 
-fn player_to_char(player: Option<Player>) -> char {
+fn player_to_char(player: Option<ZeroSumPlayer>) -> char {
     match player {
-        Some(Player::One) => 'X',
-        Some(Player::Two) => 'O',
+        Some(ZeroSumPlayer::One) => 'X',
+        Some(ZeroSumPlayer::Two) => 'O',
         None => '-',
     }
 }

@@ -2,7 +2,7 @@
 //! For the sake of complexity, this allows simulating any n-dimensional 3-in-a-row game
 //! with the same bounds as the traditional game.
 
-use game_solver::{par_move_scores, Game, Player};
+use game_solver::{par_move_scores, Game, ZeroSumPlayer};
 use itertools::Itertools;
 use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};
 
@@ -114,6 +114,7 @@ impl Game for TicTacToe {
         IndexedIter<'a, Square, Self::Move>,
         fn((Self::Move, &Square)) -> Option<Self::Move>,
     >;
+    type Player = ZeroSumPlayer;
 
     fn max_score(&self) -> usize {
         self.size.pow(self.dim as u32)
@@ -123,11 +124,11 @@ impl Game for TicTacToe {
         -(self.size.pow(self.dim as u32) as isize)
     }
 
-    fn player(&self) -> Player {
+    fn player(&self) -> Self::Player {
         if self.move_count % 2 == 0 {
-            Player::One
+            ZeroSumPlayer::One
         } else {
-            Player::Two
+            ZeroSumPlayer::Two
         }
     }
 
@@ -137,7 +138,7 @@ impl Game for TicTacToe {
 
     fn make_move(&mut self, m: &Self::Move) -> bool {
         if *self.board.get(m.clone()).unwrap() == Square::Empty {
-            let square = if self.player() == Player::One {
+            let square = if self.player() == ZeroSumPlayer::One {
                 Square::X
             } else {
                 Square::O

@@ -5,7 +5,7 @@
 //! Learn more: https://en.wikipedia.org/wiki/Connect_Four
 
 use array2d::Array2D;
-use game_solver::{move_scores, Game, Player};
+use game_solver::{move_scores, Game, ZeroSumPlayer};
 
 use std::{
     collections::HashMap,
@@ -33,6 +33,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
 impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT> {
     type Move = (usize, usize);
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
+    type Player = ZeroSumPlayer;
 
     fn max_score(&self) -> usize {
         WIDTH * HEIGHT
@@ -42,11 +43,11 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
         -(WIDTH as isize * HEIGHT as isize)
     }
 
-    fn player(&self) -> Player {
+    fn player(&self) -> Self::Player {
         if self.move_count % 2 == 0 {
-            Player::One
+            ZeroSumPlayer::One
         } else {
-            Player::Two
+            ZeroSumPlayer::Two
         }
     }
 
@@ -56,7 +57,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
 
     fn make_move(&mut self, m: &Self::Move) -> bool {
         if *self.board.get(m.0, m.1).unwrap() {
-            if self.player() == Player::One {
+            if self.player() == ZeroSumPlayer::One {
                 if m.0 == WIDTH - 1 {
                     return false;
                 }
@@ -79,7 +80,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
 
     fn possible_moves(&self) -> Self::Iter<'_> {
         let mut moves = Vec::new();
-        if self.player() == Player::One {
+        if self.player() == ZeroSumPlayer::One {
             for i in 0..HEIGHT {
                 for j in 0..WIDTH - 1 {
                     if *self.board.get(j, i).unwrap() && *self.board.get(j + 1, i).unwrap() {

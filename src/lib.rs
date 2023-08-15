@@ -16,14 +16,24 @@ use std::{
     hash::{BuildHasher, Hash},
 };
 
-/// Represents a player in a two-player combinatorial game.
+/// Represents a player.
+pub trait Player {
+    /// Whether this Player implementation is for a two-player game.
+    fn is_two_player() -> bool;
+}
+
+/// Represents a player in a zero-sum (2-player) game.
+///
+/// Allows for usage of `negamax` instead of minimax.
 #[derive(PartialEq, Eq, Debug, Clone, Copy, Hash)]
-pub enum Player {
+pub enum ZeroSumPlayer {
+    /// The first player.
     One,
+    /// The second player.
     Two,
 }
 
-impl Player {
+impl ZeroSumPlayer {
     /// Get the player opposite to this one.
     #[must_use]
     pub const fn opponent(&self) -> Self {
@@ -31,6 +41,21 @@ impl Player {
             Self::One => Self::Two,
             Self::Two => Self::One,
         }
+    }
+}
+
+impl Player for ZeroSumPlayer {
+    fn is_two_player() -> bool {
+        true
+    }
+}
+
+/// Represents a player in an N-player game.
+pub struct NPlayer(pub usize);
+
+impl Player for NPlayer {
+    fn is_two_player() -> bool {
+        false
     }
 }
 
@@ -44,22 +69,33 @@ pub trait Game {
     where
         Self: 'a;
 
+    /// The type of player this game uses.
+    /// There are two types of players:
+    ///
+    /// - `ZeroSumPlayer` for two-player zero-sum games.
+    /// - `NPlayer` for N-player games.
+    ///
+    /// If your game is a two-player zero-sum game, using `ZeroSumPlayer`
+    /// allows `negamax` to be used instead of minimax.
+    type Player: Player;
+
     /// Returns the player whose turn it is.
-    /// The implementation of this should be:
+    /// The implementation of this should be
+    /// similar to:
     ///
     /// ```rust
-    /// fn player(&self) -> Player {
+    /// fn player(&self) -> Self::Player {
     ///     if game.move_count % 2 == 0 {
-    ///        Player::One
+    ///        ZeroSumPlayer::One
     ///     } else {
-    ///         Player::Two
+    ///         ZeroSumPlayer::Two
     ///     }
     /// }
     /// ```
     ///
     /// However, no implementation is provided
     /// because this does not keep track of the move count.
-    fn player(&self) -> Player;
+    fn player(&self) -> Self::Player;
 
     /// Scores a position. The default implementation uses the size minus the number of moves (for finite games)
     fn score(&self) -> usize;
@@ -148,12 +184,12 @@ impl<K: Eq + Hash + Game + Sync, S: BuildHasher + Default + Clone + Sync + Send>
     }
 }
 
-/// Runs the two-player minimax variant on a game.
+/// Runs the two-player minimax variant on a zero-sum game.
 /// It uses alpha beta pruning (e.g. you can specify \[-1, 1\] to get only win/loss/draw moves).
 ///
 /// This function requires a transposition table. If you only plan on running this function once,
 /// you can use a the in-built `HashMap`.
-fn negamax<T: Game + Clone + Eq + Hash>(
+fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
     mut alpha: isize,
@@ -240,7 +276,7 @@ fn negamax<T: Game + Clone + Eq + Hash>(
 /// In 2 player games, if a score > 0, then the player whose turn it is has a winning strategy.
 /// If a score < 0, then the player whose turn it is has a losing strategy.
 /// Else, the game is a draw (score = 0).
-pub fn solve<T: Game + Clone + Eq + Hash>(
+pub fn solve<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
 ) -> isize {
@@ -269,7 +305,7 @@ pub fn solve<T: Game + Clone + Eq + Hash>(
 /// # Returns
 ///
 /// An iterator of tuples of the form `(move, score)`.
-pub fn move_scores<'a, T: Game + Clone + Eq + Hash>(
+pub fn move_scores<'a, T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     game: &'a T,
     transposition_table: &'a mut dyn TranspositionTable<T>,
 ) -> impl Iterator<Item = (T::Move, isize)> + 'a {
@@ -297,7 +333,7 @@ pub fn par_move_scores_with_hasher<T>(
     hasher: impl BuildHasher + Default + Clone + Sync + Send,
 ) -> Vec<(T::Move, isize)>
 where
-    T: Game + Clone + Eq + Hash + Sync + Send,
+    T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send,
     T::Move: Sync + Send,
 {
     // we need to collect it first as we cant parallelize an already non-parallel iterator
@@ -327,7 +363,7 @@ where
 #[cfg(feature = "rayon")]
 pub fn par_move_scores<T>(game: &T) -> Vec<(T::Move, isize)>
 where
-    T: Game + Clone + Eq + Hash + Sync + Send,
+    T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send,
     T::Move: Sync + Send,
 {
     use std::collections::hash_map::RandomState;

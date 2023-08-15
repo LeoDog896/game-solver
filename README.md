@@ -27,6 +27,7 @@ These are some future features that I've gathered:
 - Games that involve chance
 - Trained move ordering (e.g. via a neural network similar to the likes of Stockfish) ([candle](https://github.com/huggingface/candle) might help)
 - Benchmarks
+- Specialized impartial Nim solver
 
 ### Profiling
 
