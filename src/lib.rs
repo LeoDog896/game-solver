@@ -367,6 +367,9 @@ where
 /// This requires the `rayon` feature to be enabled.
 /// It uses rayon's parallel iterators to evaluate the scores of each move in parallel.
 ///
+/// By default, this uses the cryptograpphically unsecure `XxHash64` hasher.
+/// If you want to use your own hasher, use [`par_move_scores_with_hasher`].
+/// 
 /// # Returns
 ///
 /// A vector of tuples of the form `(move, score)`.
