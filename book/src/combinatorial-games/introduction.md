@@ -8,7 +8,10 @@ Combinatorial games are the most restricted in their feature set, being sequenti
 
 - [Negamax](https://en.wikipedia.org/wiki/Negamax) (2-player only fast scoring)
 - [Transposition Table](https://en.wikipedia.org/wiki/Transposition_table)
-    - both lower bound and upper bound
+    - Both lower bound and upper bound
+    - (Parallelization only):
+      - Concurrent hashmap (with [dashmap](https://github.com/xacrimon/dashmap))
+      - [xxHash](https://github.com/Cyan4973/xxHash) for hashing
 - [Alpha-Beta Pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning) (ignore suboptimal branches)
     - [Iterative Deepening](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search)
     - [Null window search](https://www.chessprogramming.org/Null_Window)
