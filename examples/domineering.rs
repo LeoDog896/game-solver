@@ -171,7 +171,7 @@ mod tests {
     use super::*;
 
     /// Get the winner of a generic configuration of domineering
-    fn winner<const WIDTH: usize, const HEIGHT: usize>() -> Option<Player> {
+    fn winner<const WIDTH: usize, const HEIGHT: usize>() -> Option<ZeroSumPlayer> {
         let game = Domineering::<WIDTH, HEIGHT>::new();
         let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
 
@@ -181,20 +181,20 @@ mod tests {
             move_scores.sort_by_key(|m| m.1);
             move_scores.reverse();
             if move_scores[0].1 > 0 {
-                Some(Player::One)
+                Some(ZeroSumPlayer::One)
             } else {
-                Some(Player::Two)
+                Some(ZeroSumPlayer::Two)
             }
         }
     }
 
     #[test]
     fn test_wins() {
-        assert_eq!(winner::<5, 5>(), Some(Player::Two));
-        assert_eq!(winner::<4, 4>(), Some(Player::One));
-        assert_eq!(winner::<3, 3>(), Some(Player::One));
-        assert_eq!(winner::<13, 2>(), Some(Player::Two));
-        assert_eq!(winner::<11, 2>(), Some(Player::One));
+        assert_eq!(winner::<5, 5>(), Some(ZeroSumPlayer::Two));
+        assert_eq!(winner::<4, 4>(), Some(ZeroSumPlayer::One));
+        assert_eq!(winner::<3, 3>(), Some(ZeroSumPlayer::One));
+        assert_eq!(winner::<13, 2>(), Some(ZeroSumPlayer::Two));
+        assert_eq!(winner::<11, 2>(), Some(ZeroSumPlayer::One));
     }
 
     #[test]

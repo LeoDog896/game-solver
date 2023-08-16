@@ -284,7 +284,7 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
 /// In 2 player games, if a score > 0, then the player whose turn it is has a winning strategy.
 /// If a score < 0, then the player whose turn it is has a losing strategy.
 /// Else, the game is a draw (score = 0).
-/// 
+///
 /// This uses iterative deepening.
 pub fn solve<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     game: &T,
@@ -369,7 +369,7 @@ where
 ///
 /// By default, this uses the cryptograpphically unsecure `XxHash64` hasher.
 /// If you want to use your own hasher, use [`par_move_scores_with_hasher`].
-/// 
+///
 /// # Returns
 ///
 /// A vector of tuples of the form `(move, score)`.
