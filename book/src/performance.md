@@ -17,10 +17,10 @@ The user has most of the control over board representation and evaluation, but `
 
 - [Search algorithms](https://en.wikipedia.org/wiki/Search_algorithm):
   - [Negamax](https://en.wikipedia.org/wiki/Negamax) (for 2-player zero-sum games)
-  - [Alpha-Beta Pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning) (ignore suboptimal branches)
+    - [Principal Variation Search](https://en.wikipedia.org/wiki/Principal_variation_search) (more popularly known as NegaScout)
+  - [Alpha-Beta Pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning) (ignores suboptimal branches, depends on move order)
       - [Iterative Deepening](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search)
       - [Null window search](https://www.chessprogramming.org/Null_Window)
-  - [Principal Variation Search](https://en.wikipedia.org/wiki/Principal_variation_search) (more popularly known as NegaScout)
 - Memoization via [Transposition Table](https://en.wikipedia.org/wiki/Transposition_table)
     - Both lower bound and upper bound
     - (Parallelization only):

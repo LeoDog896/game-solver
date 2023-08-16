@@ -9,8 +9,8 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-# 
-"rayon" = ["dep:rayon", "dep:dashmap", "dep:twox-hash"]
+"xxhash" = ["dep:twox-hash"]
+"rayon" = ["dep:rayon", "dep:dashmap", "xxhash"]
 
 [profile.release]
 lto = true

@@ -379,8 +379,13 @@ where
     T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send,
     T::Move: Sync + Send,
 {
-    use std::hash::BuildHasherDefault;
+    use std::{collections::hash_map::RandomState, hash::BuildHasherDefault};
+    #[cfg(feature = "xxhash")]
     use twox_hash::XxHash64;
 
-    par_move_scores_with_hasher(game, BuildHasherDefault::<XxHash64>::default())
+    if cfg!(feature = "xxhash") {
+        par_move_scores_with_hasher(game, BuildHasherDefault::<XxHash64>::default())
+    } else {
+        par_move_scores_with_hasher(game, RandomState::new())
+    }
 }
