@@ -24,7 +24,8 @@ The user has most of the control over board representation and evaluation, but `
 - Memoization via [Transposition Table](https://en.wikipedia.org/wiki/Transposition_table)
     - Both lower bound and upper bound
     - (Parallelization only):
-      - Concurrent hashmap (with [dashmap](https://github.com/xacrimon/dashmap))
+      - Concurrent HashMap cache via [moka](https://github.com/moka-rs/moka).
+        - Size-aware eviction.
       - [xxHash](https://github.com/Cyan4973/xxHash) for generalized hashing.
         - If you want to use xxHash without parallelization, pass it to your hashmap by using `hasher: std::hash::BuildHasherDefault<xxhash_rust::XxHash64>`.
         - If you don't want xxHash at all, it can be disabled by removing the `xxhash` feature flag.

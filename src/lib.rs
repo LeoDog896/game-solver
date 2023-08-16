@@ -8,10 +8,10 @@ pub mod game;
 pub mod transposition;
 
 #[cfg(feature = "rayon")]
-use {dashmap::DashMap, rayon::prelude::*, std::hash::BuildHasher, std::sync::Arc};
+use std::hash::BuildHasher;
 
 use crate::game::{Game, ZeroSumPlayer};
-use crate::transposition::{TranspositionTable, TranspositionTableScore};
+use crate::transposition::{TranspositionTable, Score};
 use std::hash::Hash;
 
 /// Runs the two-player minimax variant on a zero-sum game.
@@ -42,10 +42,10 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     {
         let score = transposition_table
             .get(game)
-            .unwrap_or_else(|| TranspositionTableScore::UpperBound(game.max_score() as isize));
+            .unwrap_or_else(|| Score::UpperBound(game.max_score() as isize));
 
         match score {
-            TranspositionTableScore::UpperBound(max) => {
+            Score::UpperBound(max) => {
                 if beta > max {
                     beta = max;
                     if alpha >= beta {
@@ -53,7 +53,7 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
                     }
                 }
             }
-            TranspositionTableScore::LowerBound(min) => {
+            Score::LowerBound(min) => {
                 if alpha < min {
                     alpha = min;
                     if alpha >= beta {
@@ -84,7 +84,7 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
 
         // alpha-beta pruning - we can return early
         if score >= beta {
-            transposition_table.insert(game.clone(), TranspositionTableScore::LowerBound(score));
+            transposition_table.insert(game.clone(), Score::LowerBound(score));
             return beta;
         }
 
@@ -95,7 +95,7 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
         first_child = false;
     }
 
-    transposition_table.insert(game.clone(), TranspositionTableScore::UpperBound(alpha));
+    transposition_table.insert(game.clone(), Score::UpperBound(alpha));
 
     alpha
 }
@@ -160,17 +160,21 @@ pub fn move_scores<'a, T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores_with_hasher<T>(
+pub fn par_move_scores_with_hasher<T, S>(
     game: &T,
-    hasher: impl BuildHasher + Default + Clone + Sync + Send,
 ) -> Vec<(T::Move, isize)>
 where
-    T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send,
+    T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send + 'static,
     T::Move: Sync + Send,
+    S: BuildHasher + Default + Sync + Send + Clone + 'static,
 {
+    use std::sync::Arc;
+    use rayon::prelude::*;
+    use crate::transposition::TranspositionCache;
+
     // we need to collect it first as we cant parallelize an already non-parallel iterator
     let all_moves = game.possible_moves().collect::<Vec<_>>();
-    let hashmap = Arc::new(DashMap::with_hasher(hasher));
+    let hashmap = Arc::new(TranspositionCache::<T, S>::new());
 
     all_moves
         .par_iter()
@@ -179,7 +183,7 @@ where
             board.make_move(m);
             // We flip the sign of the score because we want the score from the
             // perspective of the player playing the move, not the player whose turn it is.
-            let mut map = hashmap.clone();
+            let mut map = Arc::clone(&hashmap);
             ((*m).clone(), -solve(&board, &mut map))
         })
         .collect::<Vec<_>>()
@@ -198,16 +202,16 @@ where
 #[cfg(feature = "rayon")]
 pub fn par_move_scores<T>(game: &T) -> Vec<(T::Move, isize)>
 where
-    T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send,
+    T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send + 'static,
     T::Move: Sync + Send,
 {
-    use std::{collections::hash_map::RandomState, hash::BuildHasherDefault};
+    use std::collections::hash_map::RandomState;
     #[cfg(feature = "xxhash")]
-    use twox_hash::XxHash64;
+    use twox_hash::RandomXxHashBuilder64;
 
     if cfg!(feature = "xxhash") {
-        par_move_scores_with_hasher(game, BuildHasherDefault::<XxHash64>::default())
+        par_move_scores_with_hasher::<T, RandomXxHashBuilder64>(game)
     } else {
-        par_move_scores_with_hasher(game, RandomState::new())
+        par_move_scores_with_hasher::<T, RandomState>(game)
     }
 }

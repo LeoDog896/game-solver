@@ -168,6 +168,12 @@ impl Game for TicTacToe {
     }
 
     fn is_winning_move(&self, m: &Self::Move) -> bool {
+        // check if the amount of moves is less than (size * 2) - 1
+        // if it is, then it's impossible to win
+        if self.move_count + 1 < self.size * 2 - 1 {
+            return false;
+        }
+
         let mut board = self.clone();
         board.make_move(m);
 

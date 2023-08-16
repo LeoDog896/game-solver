@@ -10,8 +10,8 @@ use game_solver::{
 };
 use std::{env::args, fmt, hash::Hash};
 
-const WIDTH: usize = 8;
-const HEIGHT: usize = 8;
+const WIDTH: usize = 6;
+const HEIGHT: usize = 6;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Reversi {
