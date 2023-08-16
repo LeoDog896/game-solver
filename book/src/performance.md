@@ -4,14 +4,23 @@
 However, since some games are small (and may run on WASM), all parallelization is optional
 and is behind the `rayon` feature flag.
 
-## List of applied optimizations
+## Internal optimizations
+
+There are a few distinct categories of game optimization:
+- Board Representation
+- Search algorithms
+- Evaluation
+
+The user has most of the control over board representation and evaluation, but `game-solver` does its best to optimize the search algorithms.
+
+### List of applied optimizations
 
 - [Search algorithms](https://en.wikipedia.org/wiki/Search_algorithm):
   - [Negamax](https://en.wikipedia.org/wiki/Negamax) (for 2-player zero-sum games)
   - [Alpha-Beta Pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning) (ignore suboptimal branches)
       - [Iterative Deepening](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search)
       - [Null window search](https://www.chessprogramming.org/Null_Window)
-  - [Principal Variation Search](https://en.wikipedia.org/wiki/Principal_variation_search)
+  - [Principal Variation Search](https://en.wikipedia.org/wiki/Principal_variation_search) (more popularly known as NegaScout)
 - Memoization via [Transposition Table](https://en.wikipedia.org/wiki/Transposition_table)
     - Both lower bound and upper bound
     - (Parallelization only):
@@ -36,6 +45,8 @@ The [Rust Performance Book](https://nnethercote.github.io/perf-book/) gives grea
 Making sure your `Game#possible_moves` function guesses what the best moves are first
 can save a lot of time, since there are multiple tree-pruning related optimizations
 that benefit from good moves being chosen first.
+
+If possible, try to "guess" the score of a move, and sort the moves by that score.
 
 ### Efficient Bitboards
 
