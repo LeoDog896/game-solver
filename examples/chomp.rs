@@ -12,7 +12,10 @@
 //! repeats positions (as it only has nxm - 1 positions).
 
 use array2d::Array2D;
-use game_solver::{move_scores, Game, ZeroSumPlayer};
+use game_solver::{
+    game::{Game, ZeroSumPlayer},
+    move_scores,
+};
 
 use std::{
     collections::HashMap,

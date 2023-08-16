@@ -2,7 +2,10 @@
 //! For the sake of complexity, this allows simulating any n-dimensional 3-in-a-row game
 //! with the same bounds as the traditional game.
 
-use game_solver::{par_move_scores, Game, ZeroSumPlayer};
+use game_solver::{
+    game::{Game, ZeroSumPlayer},
+    par_move_scores,
+};
 use itertools::Itertools;
 use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};
 

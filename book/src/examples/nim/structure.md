@@ -37,6 +37,7 @@ Then, we'll derive the Game trait.
 We'll start with:
 - a `Move` type, which defines how the Game takes in moves
 - an `Iter`, to satisfy Rust by providing the concrete iterator type for our `possible_moves` function
+- a `Player` type to decide whether we're a 2-player or an N-player game
 - `min_score` (lower bound, usually `-max_score`)
 - `max_score` (upper bound, as previously defined)
 - `score` (our scoring algorithm)

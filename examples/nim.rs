@@ -4,7 +4,10 @@
 //! it still makes a great example as an implementation of the `Game` trait.
 //!
 //! Learn more about Nim here: <https://en.wikipedia.org/wiki/Nim>
-use game_solver::{par_move_scores, Game, ZeroSumPlayer};
+use game_solver::{
+    game::{Game, ZeroSumPlayer},
+    par_move_scores,
+};
 use std::{
     env::args,
     fmt::{Display, Formatter},

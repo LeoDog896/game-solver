@@ -5,7 +5,10 @@
 //! Learn more: https://en.wikipedia.org/wiki/Connect_Four
 
 use array2d::Array2D;
-use game_solver::{move_scores, Game, ZeroSumPlayer};
+use game_solver::{
+    game::{Game, ZeroSumPlayer},
+    move_scores,
+};
 
 use std::{
     collections::HashMap,

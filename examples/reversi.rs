@@ -4,7 +4,10 @@
 //! More information: <https://en.wikipedia.org/wiki/Reversi>
 
 use array2d::Array2D;
-use game_solver::{par_move_scores, Game, ZeroSumPlayer};
+use game_solver::{
+    game::{Game, ZeroSumPlayer},
+    par_move_scores,
+};
 use std::{env::args, fmt, hash::Hash};
 
 const WIDTH: usize = 8;
