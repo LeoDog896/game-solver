@@ -5,3 +5,7 @@
 However, computation is still important in mathematics as it helps mathematicians find underlying patterns to build said heuristics.
 
 That is the purpose of `game-solver`. It helps solve various games, and allows users to play against the AI, analyze the game tree, and more.
+
+`game-solver` aims to solve the games surrounding combinatorial game - the main restriction imposed is that these games must be sequential.
+
+As of now, `game-solver` can only solve 2-player perfect information games. However, the goal is to eventually support more players and imperfect information games.
