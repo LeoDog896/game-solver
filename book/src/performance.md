@@ -25,9 +25,10 @@ The user has most of the control over board representation and evaluation, but `
     - Both lower bound and upper bound
     - (Parallelization only):
       - Concurrent hashmap (with [dashmap](https://github.com/xacrimon/dashmap))
-      - [xxHash](https://github.com/Cyan4973/xxHash) for hashing.
+      - [xxHash](https://github.com/Cyan4973/xxHash) for generalized hashing.
         - If you want to use xxHash without parallelization, pass it to your hashmap by using `hasher: std::hash::BuildHasherDefault<xxhash_rust::XxHash64>`.
         - If you don't want xxHash at all, it can be disabled by removing the `xxhash` feature flag.
+          - (More information about this can be found in the [hashing](#hashing) section)
 - Parallelization with [rayon](https://github.com/rayon-rs/rayon)
     - Note that this is under the `rayon` feature flag.
 
@@ -56,3 +57,13 @@ Use efficient bitboards - you can look at the examples for inspiration, but make
 Good starting points:
 - [BitVec](https://github.com/ferrilab/bitvec) for bool-only arrays
 - [ndarray](https://github.com/rust-ndarray/ndarray) for nd arrays (instead of `Vec<Vec<...>>`)
+
+### Hashing
+
+Transposition tables require hashing to store the game board as a key and retrieve it later for efficiency.
+
+Since the type of game board is not known, `game-solver` uses the fastest general-purpose hash function available: [xxHash](https://github.com/Cyan4973/xxHash).
+However, if you know your game board can be hashed faster, you can provide your own hasher to the transposition table.
+
+For example, in Chess, the most common way to hash a board is to use a [Zobrist Hash](https://en.wikipedia.org/wiki/Zobrist_hashing).
+This can be generalized to any type of board, aka [Tabulation Hashing](https://en.wikipedia.org/wiki/Tabulation_hashing).
