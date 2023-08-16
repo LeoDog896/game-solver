@@ -36,6 +36,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: doc
+          args: --all-features
       - name: Make dist folder
         run: |
           mkdir dist
