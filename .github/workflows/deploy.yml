@@ -33,14 +33,16 @@ jobs:
           cd book
           mdbook build
       - name: Build docs
-        run: rustdoc --edition=2021 --crate-type lib --crate-name game_solver src/lib.rs -Z unstable-options -L --enable-index-page
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
       - name: Make dist folder
         run: |
           mkdir dist
       - name: Copy docs
         run: |
           mkdir dist/doc
-          cp -r doc dist
+          cp -r target/doc dist
       - name: Copy book
         run: |
           mkdir dist/book

@@ -7,51 +7,42 @@ use array2d::Array2D;
 use game_solver::{par_move_scores, Game, ZeroSumPlayer};
 use std::{env::args, fmt, hash::Hash};
 
+const WIDTH: usize = 8;
+const HEIGHT: usize = 8;
+
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Reversi {
-    width: usize,
-    height: usize,
     /// None if empty, Some(Player) if occupied
     board: Array2D<Option<ZeroSumPlayer>>,
     move_count: usize,
 }
 
 impl Reversi {
-    fn new(width: usize, height: usize) -> Self {
-        assert!(
-            width >= 2 && height >= 2,
-            "Width and height must be at least 2"
-        );
-        assert!(
-            width % 2 == 0 && height % 2 == 0,
-            "Width and height must be even"
-        );
-        let mut board = Array2D::filled_with(None, width, height);
+    fn new() -> Self {
+        let mut board = Array2D::filled_with(None, WIDTH, HEIGHT);
 
         // set middle squares to occupied:
         board
-            .set(width / 2 - 1, height / 2 - 1, Some(ZeroSumPlayer::One))
+            .set(WIDTH / 2 - 1, HEIGHT / 2 - 1, Some(ZeroSumPlayer::One))
             .unwrap();
         board
-            .set(width / 2, height / 2, Some(ZeroSumPlayer::One))
+            .set(WIDTH / 2, HEIGHT / 2, Some(ZeroSumPlayer::One))
             .unwrap();
         board
-            .set(width / 2 - 1, height / 2, Some(ZeroSumPlayer::Two))
+            .set(WIDTH / 2 - 1, HEIGHT / 2, Some(ZeroSumPlayer::Two))
             .unwrap();
         board
-            .set(width / 2, height / 2 - 1, Some(ZeroSumPlayer::Two))
+            .set(WIDTH / 2, HEIGHT / 2 - 1, Some(ZeroSumPlayer::Two))
             .unwrap();
 
         Self {
-            width,
-            height,
             board,
             move_count: 0,
         }
     }
 
     fn on_board(&self, x: usize, y: usize) -> bool {
-        x < self.width && y < self.height
+        x < WIDTH && y < HEIGHT
     }
 
     fn is_valid_move(&self, m: &<Self as Game>::Move) -> Option<Vec<<Self as Game>::Move>> {
@@ -128,8 +119,8 @@ impl Reversi {
         let mut player_one_count = 0;
         let mut player_two_count = 0;
 
-        for x in 0..self.width {
-            for y in 0..self.height {
+        for x in 0..WIDTH {
+            for y in 0..HEIGHT {
                 match *self.board.get(x, y).unwrap() {
                     Some(ZeroSumPlayer::One) => player_one_count += 1,
                     Some(ZeroSumPlayer::Two) => player_two_count += 1,
@@ -152,11 +143,11 @@ impl Game for Reversi {
     type Player = ZeroSumPlayer;
 
     fn max_score(&self) -> usize {
-        self.width * self.height
+        WIDTH * HEIGHT
     }
 
     fn min_score(&self) -> isize {
-        -(self.width as isize * self.height as isize)
+        -(WIDTH as isize * HEIGHT as isize)
     }
 
     fn player(&self) -> ZeroSumPlayer {
@@ -187,8 +178,8 @@ impl Game for Reversi {
 
     fn possible_moves(&self) -> Self::Iter<'_> {
         let mut moves = Vec::new();
-        for x in 0..self.width {
-            for y in 0..self.height {
+        for x in 0..WIDTH {
+            for y in 0..HEIGHT {
                 if self.is_valid_move(&(x, y)).is_some() {
                     moves.push((x, y));
                 }
@@ -222,8 +213,8 @@ impl fmt::Display for Reversi {
 
         let moves = self.possible_moves().collect::<Vec<_>>();
 
-        for y in 0..self.height {
-            for x in 0..self.width {
+        for y in 0..HEIGHT {
+            for x in 0..WIDTH {
                 let character = if moves.contains(&(x, y)) {
                     '*'
                 } else {
@@ -240,7 +231,7 @@ impl fmt::Display for Reversi {
 }
 
 fn main() {
-    let mut game = Reversi::new(8, 8);
+    let mut game = Reversi::new();
 
     // parse every move in args, e.g. 0-0 1-1 in args
     args().skip(1).for_each(|arg| {

@@ -376,7 +376,8 @@ where
     T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send,
     T::Move: Sync + Send,
 {
-    use std::collections::hash_map::RandomState;
+    use std::hash::BuildHasherDefault;
+    use twox_hash::XxHash64;
 
-    par_move_scores_with_hasher(game, RandomState::new())
+    par_move_scores_with_hasher(game, BuildHasherDefault::<XxHash64>::default())
 }
