@@ -26,7 +26,8 @@ The user has most of the control over board representation and evaluation, but `
     - (Parallelization only):
       - Concurrent hashmap (with [dashmap](https://github.com/xacrimon/dashmap))
       - [xxHash](https://github.com/Cyan4973/xxHash) for hashing.
-        - (if you want to use xxHash without parallelization, pass it to your hashmap by using `hasher: std::hash::BuildHasherDefault<xxhash_rust::XxHash64>`).
+        - If you want to use xxHash without parallelization, pass it to your hashmap by using `hasher: std::hash::BuildHasherDefault<xxhash_rust::XxHash64>`.
+        - If you don't want xxHash at all, it can be disabled by removing the `xxhash` feature flag.
 - Parallelization with [rayon](https://github.com/rayon-rs/rayon)
     - Note that this is under the `rayon` feature flag.
 
