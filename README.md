@@ -3,9 +3,16 @@
 ![Crates.io](https://img.shields.io/crates/v/game-solver)
 [![Discord](https://img.shields.io/discord/1140401094338556009)](https://discord.gg/VjbCyaX29C)
 
-Solve any sequential game (currently only works with [combinatorial games](https://en.wikipedia.org/wiki/Combinatorial_game_theory), aka 2-player perfect-information sequential games).
+Solve any sequential game, including:
+- [Combinatorial Games](https://en.wikipedia.org/wiki/Combinatorial_game_theory) - or 2-player perfect-information games
 
 More in-depth information can be found in [the book](https://leodog896.github.io/game-solver/book).
+
+## Background
+
+[Game Theory](https://en.wikipedia.org/wiki/Game_theory) is a general study of games. Many of these games are solved without rigirous computation (for example, where [impartial](https://en.wikipedia.org/wiki/Impartial_game) [combinatorial games](https://en.wikipedia.org/wiki/Combinatorial_game_theory) are solved by generalizing the game to Nim).
+
+However, in order to apply game theory to more complex games, computation is required. This is where `game-solver` comes in.
 
 ## Contribute
 
