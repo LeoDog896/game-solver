@@ -2,6 +2,11 @@
 
 The [Rust Performance Book](https://nnethercote.github.io/perf-book/) gives great general optimizations, but there are also important steps you can make when working with games.
 
+## General tips:
+
+- **Always remember to compile with --release**.
+- `RUSTFLAGS="--emit=asm -C target-cpu=native"` is a great way to do basic compiler optimizations.
+
 ## Move Ordering
 
 **This is arguably the most important**.
