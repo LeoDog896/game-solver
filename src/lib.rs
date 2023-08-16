@@ -81,7 +81,7 @@ pub trait Game {
 
     /// Returns the player whose turn it is.
     /// The implementation of this should be
-    /// similar to:
+    /// similar to either
     ///
     /// ```rust
     /// fn player(&self) -> Self::Player {
@@ -92,6 +92,16 @@ pub trait Game {
     ///     }
     /// }
     /// ```
+    ///
+    /// or
+    ///
+    /// ```
+    /// fn player(&self) -> Self::Player {
+    ///     NPlayer(game.move_count % game.num_players)
+    /// }
+    /// ```
+    ///
+    /// depending on the type of game.
     ///
     /// However, no implementation is provided
     /// because this does not keep track of the move count.
