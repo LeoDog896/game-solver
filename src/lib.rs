@@ -72,10 +72,10 @@ pub trait Game {
     /// The type of player this game uses.
     /// There are two types of players:
     ///
-    /// - `ZeroSumPlayer` for two-player zero-sum games.
-    /// - `NPlayer` for N-player games.
+    /// - [`ZeroSumPlayer`] for two-player zero-sum games.
+    /// - [`NPlayer`] for N-player games.
     ///
-    /// If your game is a two-player zero-sum game, using `ZeroSumPlayer`
+    /// If your game is a two-player zero-sum game, using [`ZeroSumPlayer`]
     /// allows `negamax` to be used instead of minimax.
     type Player: Player;
 
@@ -138,8 +138,6 @@ pub enum TranspositionTableScore {
 }
 
 /// A memoization strategy for a perfect-information sequential game.
-///
-/// Transposition tables should optimally be a form of hash table.
 pub trait TranspositionTable<T: Eq + Hash + Game> {
     /// Get the score of a board, if it exists.
     fn get(&self, board: &T) -> Option<TranspositionTableScore>;

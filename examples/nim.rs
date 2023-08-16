@@ -1,9 +1,9 @@
-/// Nim is the heart of combinatorial game theory.
-/// Its a game about removing objects from heaps.
-/// Despite its ability to be rigidly analyzed,
-/// it still makes a great example as an implementation of the `Game` trait.
-///
-/// Learn more about Nim here: <https://en.wikipedia.org/wiki/Nim>
+//! Nim is the heart of combinatorial game theory.
+//! Its a game about removing objects from heaps.
+//! Despite its ability to be rigidly analyzed,
+//! it still makes a great example as an implementation of the `Game` trait.
+//!
+//! Learn more about Nim here: <https://en.wikipedia.org/wiki/Nim>
 use game_solver::{par_move_scores, Game, ZeroSumPlayer};
 use std::{
     env::args,
@@ -35,6 +35,7 @@ impl Game for Nim {
     /// where Move is a tuple of the heap index and the number of objects to remove
     type Move = (usize, usize);
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
+    /// Define Nimbers as a zero-sum game
     type Player = ZeroSumPlayer;
 
     fn max_score(&self) -> usize {

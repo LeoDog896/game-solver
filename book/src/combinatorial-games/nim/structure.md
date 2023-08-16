@@ -47,6 +47,8 @@ impl Game for Nim {
     /// where Move is a tuple of the heap index and the number of objects to remove
     type Move = (usize, usize);
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
+    /// Define Nimbers as a zero-sum game
+    type Player = ZeroSumPlayer;
 
     fn max_score(&self) -> usize {
         self.max_score
@@ -56,11 +58,11 @@ impl Game for Nim {
         -(self.max_score as isize)
     }
 
-    fn player(&self) -> Player {
+    fn player(&self) -> ZeroSumPlayer {
         if self.move_count % 2 == 0 {
-            Player::One
+            ZeroSumPlayer::One
         } else {
-            Player::Two
+            ZeroSumPlayer::Two
         }
     }
 
