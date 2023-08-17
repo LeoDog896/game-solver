@@ -117,7 +117,6 @@ pub fn solve<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     while alpha < beta {
         let med = alpha + (beta - alpha) / 2;
         // do a null window search
-        println!("alpha: {}, beta: {}, med: {}", alpha, beta, med);
         let evaluation = negamax(game, transposition_table, med, med + 1);
 
         if evaluation <= med {
