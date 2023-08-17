@@ -31,11 +31,11 @@ These are some future features that I've gathered:
     - [Game complexity](https://en.wikipedia.org/wiki/Game_complexity) information
 - 2+ player games (multiple agents w/ minimax instead of negamax)
   - TODO: there is a second player option, but currently only the `ZeroSumPlayer` works. The `castaway` crate can help with this.
-- Imperfect information games ()
+- Imperfect information games
 - Games that involve chance (Expectiminimax / Expectinegamax)
 - NNUE evaluation ([candle](https://github.com/huggingface/candle) might help)
 - Benchmarks
-- Specialized impartial Nim solver
+- impartial Nim utilities
 
 ### Profiling
 
@@ -52,8 +52,3 @@ CARGO_PROFILE_RELEASE_DEBUG=true cargo flamegraph --example <example> -- <args>
 ```ps
 $env:CARGO_PROFILE_RELEASE_DEBUG='true'; cargo flamegraph --example <example> -- <args>; $env:CARGO_PROFILE_RELEASE_DEBUG=$null
 ```
-
-## Credits
-
-A lot of the algorithms have been inspired by [Pascal Pons's excellent blog](http://blog.gamesolver.org/solving-connect-four/)
-and the general [Chessprogramming wiki](https://www.chessprogramming.org/Main_Page).

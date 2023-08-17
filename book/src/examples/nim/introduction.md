@@ -11,4 +11,4 @@ for demonstration.
 
 Nim is a game about taking objects from "heaps". Two players play, and each turn, one player gets to remove as many items as they want from any one heap. For example, if there are 3 heaps with `(3, 5, 7)`, player 1 can take 4 objects from the second heap, leaving player two with `(3, 1, 7)`.
 
-There are two variants of Nim, but for this implementation, the winning scenario is the last person to move - aka, once there's `(0, 0, 0)`, the last person who moved wins (aka normal play).
+There are two variants of Nim, but for this implementation, the winning scenario is the last person to move - once there's `(0, 0, 0)`, the last person who moved wins (also known as normal play).

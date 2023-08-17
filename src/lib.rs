@@ -11,7 +11,7 @@ pub mod transposition;
 use std::hash::BuildHasher;
 
 use crate::game::{Game, ZeroSumPlayer};
-use crate::transposition::{TranspositionTable, Score};
+use crate::transposition::{Score, TranspositionTable};
 use std::hash::Hash;
 
 /// Runs the two-player minimax variant on a zero-sum game.
@@ -106,8 +106,6 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
 /// In 2 player games, if a score > 0, then the player whose turn it is has a winning strategy.
 /// If a score < 0, then the player whose turn it is has a losing strategy.
 /// Else, the game is a draw (score = 0).
-///
-/// This uses iterative deepening.
 pub fn solve<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
@@ -115,14 +113,17 @@ pub fn solve<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     let mut alpha = game.min_score();
     let mut beta = game.max_score() as isize + 1;
 
+    // we're trying to guess the score of the board via null windows
     while alpha < beta {
         let med = alpha + (beta - alpha) / 2;
-        let r = negamax(game, transposition_table, med, med + 1);
+        // do a null window search
+        println!("alpha: {}, beta: {}, med: {}", alpha, beta, med);
+        let evaluation = negamax(game, transposition_table, med, med + 1);
 
-        if r <= med {
-            beta = r;
+        if evaluation <= med {
+            beta = evaluation;
         } else {
-            alpha = r;
+            alpha = evaluation;
         }
     }
 
@@ -160,17 +161,15 @@ pub fn move_scores<'a, T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores_with_hasher<T, S>(
-    game: &T,
-) -> Vec<(T::Move, isize)>
+pub fn par_move_scores_with_hasher<T, S>(game: &T) -> Vec<(T::Move, isize)>
 where
     T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send + 'static,
     T::Move: Sync + Send,
     S: BuildHasher + Default + Sync + Send + Clone + 'static,
 {
-    use std::sync::Arc;
-    use rayon::prelude::*;
     use crate::transposition::TranspositionCache;
+    use rayon::prelude::*;
+    use std::sync::Arc;
 
     // we need to collect it first as we cant parallelize an already non-parallel iterator
     let all_moves = game.possible_moves().collect::<Vec<_>>();

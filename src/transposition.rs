@@ -1,11 +1,7 @@
 //! Transposition tables for memoization.
 
 #[cfg(feature = "rayon")]
-use {
-    moka::sync::Cache,
-    sysinfo::SystemExt,
-    std::sync::Arc
-};
+use {moka::sync::Cache, std::sync::Arc, sysinfo::SystemExt};
 
 use crate::game::Game;
 
@@ -38,9 +34,7 @@ pub trait TranspositionTable<T: Eq + Hash + Game> {
     fn has(&self, board: &T) -> bool;
 }
 
-impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K>
-    for HashMap<K, Score, S>
-{
+impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for HashMap<K, Score, S> {
     fn get(&self, board: &K) -> Option<Score> {
         self.get(board).copied()
     }
@@ -57,40 +51,54 @@ impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K>
 /// Complex transposition table that uses an underlying concurrent LFU cache,
 /// powered by [moka](https://github.com/moka-rs/moka).
 #[cfg(feature = "rayon")]
-pub struct TranspositionCache<K: Eq + Hash + Game + Send + Sync + 'static, S: BuildHasher + Default>(Cache<K, Score, S>);
+pub struct TranspositionCache<K: Eq + Hash + Game + Send + Sync + 'static, S: BuildHasher + Default>(
+    Cache<K, Score, S>,
+);
 
 #[cfg(feature = "rayon")]
-impl<K: Eq + Hash + Game + Send + Sync, S: BuildHasher + Default + Send + Sync + Clone + 'static> TranspositionCache<K, S> {
+impl<
+        K: Eq + Hash + Game + Send + Sync,
+        S: BuildHasher + Default + Send + Sync + Clone + 'static,
+    > TranspositionCache<K, S>
+{
     /// Create a new transposition cache with the given capacity and hasher.
     pub fn with_capacity(capacity: u64) -> Self {
-        Self(Cache::builder()
-            .weigher(|_key, _value: &Score | -> u32 {
-                // get the memory size of the score
-                std::mem::size_of::<Score>() as u32
-            })
-            .max_capacity(capacity)
-            .build_with_hasher(S::default()))
+        Self(
+            Cache::builder()
+                .max_capacity(capacity)
+                .build_with_hasher(S::default()),
+        )
     }
 
     /// Create a new transposition cache with an estimated 3/4ths of the remaining memory.
     #[must_use]
     pub fn new() -> Self {
+        let score_size = std::mem::size_of::<Score>() as u64;
+
         Self::with_capacity(
-            sysinfo::System::new_all().free_memory() * 3 / 4,
+            // get 3/4ths of the memory, and divide that by the size of a score
+            // to get the number of scores that can fit in the cache
+            (sysinfo::System::new_all().total_memory() * 3 / 4) / score_size,
         )
     }
 }
 
 #[cfg(feature = "rayon")]
-impl<K: Eq + Hash + Game + Send + Sync, S: BuildHasher + Default + Send + Sync + Clone + 'static> Default for TranspositionCache<K, S> {
+impl<
+        K: Eq + Hash + Game + Send + Sync,
+        S: BuildHasher + Default + Send + Sync + Clone + 'static,
+    > Default for TranspositionCache<K, S>
+{
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[cfg(feature = "rayon")]
-impl<K: Eq + Hash + Game + Send + Sync + 'static, S: BuildHasher + Default + Send + Sync + Clone + 'static> TranspositionTable<K>
-    for Arc<TranspositionCache<K, S>>
+impl<
+        K: Eq + Hash + Game + Send + Sync + 'static,
+        S: BuildHasher + Default + Send + Sync + Clone + 'static,
+    > TranspositionTable<K> for Arc<TranspositionCache<K, S>>
 {
     fn get(&self, board: &K) -> Option<Score> {
         self.0.get(board)

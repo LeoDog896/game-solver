@@ -21,11 +21,10 @@ The user has most of the control over board representation and evaluation, but `
   - [Alpha-Beta Pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning) (ignores suboptimal branches, depends on move order)
       - [Iterative Deepening](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search)
       - [Null window search](https://www.chessprogramming.org/Null_Window)
-- Memoization via [Transposition Table](https://en.wikipedia.org/wiki/Transposition_table)
+- Memoization via [Transposition Tables](https://en.wikipedia.org/wiki/Transposition_table).
     - Both lower bound and upper bound
     - (Parallelization only):
       - Concurrent HashMap cache via [moka](https://github.com/moka-rs/moka).
-        - Size-aware eviction.
       - [xxHash](https://github.com/Cyan4973/xxHash) for generalized hashing.
         - If you want to use xxHash without parallelization, pass it to your hashmap by using `hasher: std::hash::BuildHasherDefault<xxhash_rust::XxHash64>`.
         - If you don't want xxHash at all, it can be disabled by removing the `xxhash` feature flag.

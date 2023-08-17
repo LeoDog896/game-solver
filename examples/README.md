@@ -7,5 +7,6 @@ List of examples for `game-solver`.
 - [tic_tac_toe.rs](./tic_tac_toe.rs) - implementation of an [n^d](https://en.wikipedia.org/wiki/Nd_game) game of tic tac toe.
     - (this is also a great example to test real-world perf on!)
 - [reversi.rs](./reversi.rs) - implementation of Reversi, a game that has only been provably weakly solved.
+- [nim.rs](./nim-rs) - implementation of Nim, an impartial combinatorial game.
 
 Feel free to contribute your own examples!
