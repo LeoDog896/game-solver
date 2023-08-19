@@ -48,6 +48,8 @@ Making sure your `Game#possible_moves` function guesses what the best moves are 
 can save a lot of time, since there are multiple tree-pruning related optimizations
 that benefit from good moves being chosen first.
 
+You can also use `game-solver`'s [reinforcement learning](./reinforcement_learning.md) method, which is highly reccomended as it saves time on manual implementation.
+
 If possible, try to "guess" the score of a move, and sort the moves by that score.
 
 ### Efficient Bitboards

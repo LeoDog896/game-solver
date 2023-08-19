@@ -6,6 +6,8 @@
 
 pub mod game;
 pub mod transposition;
+#[cfg(feature = "reinforcement")]
+pub mod reinforcement;
 
 #[cfg(feature = "rayon")]
 use std::hash::BuildHasher;
