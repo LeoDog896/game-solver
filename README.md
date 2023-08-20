@@ -33,7 +33,6 @@ These are some future features that I've gathered:
   - TODO: there is a second player option, but currently only the `ZeroSumPlayer` works. The `castaway` crate can help with this.
 - Imperfect information games
 - Games that involve chance (Expectiminimax / Expectinegamax)
-- NNUE evaluation ([candle](https://github.com/huggingface/candle) might help)
 - Benchmarks
 - impartial Nim utilities
 
