@@ -1,8 +1,8 @@
 # Summary
 
 - [Introduction](./introduction.md)
-- [Reinforcement Learning](./reinforcement_learning.md)
-- [Scoring](./scoring.md)
+- [Features](./features/list.md)
+  - [Reinforcement Learning](./features/reinforcement_learning.md)
 - [Performance](./performance.md)
 - [Examples](./examples/introduction.md)
   - [Nim](./examples/nim/introduction.md)

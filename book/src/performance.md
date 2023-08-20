@@ -1,36 +1,28 @@
 # Performance
 
-`game-solver` takes performance seriously, and demands that all games are as fast as possible.
-However, since some games are small (and may run on WASM), all parallelization is optional
-and is behind the `rayon` feature flag.
+`game-solver` takes performance seriously - any possible generic performance that can be applied should be applied.
 
-## Internal optimizations
-
-There are a few distinct categories of game optimization:
-- Board Representation
-- Search algorithms
-- Evaluation
-
-The user has most of the control over board representation and evaluation, but `game-solver` does its best to optimize the search algorithms.
-
-### List of applied optimizations
+## List of applied optimizations
 
 - [Search algorithms](https://en.wikipedia.org/wiki/Search_algorithm):
   - [Negamax](https://en.wikipedia.org/wiki/Negamax) (for 2-player zero-sum games)
     - [Principal Variation Search](https://en.wikipedia.org/wiki/Principal_variation_search) (more popularly known as NegaScout)
   - [Alpha-Beta Pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning) (ignores suboptimal branches, depends on move order)
-      - [Iterative Deepening](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search)
-      - [Null window search](https://www.chessprogramming.org/Null_Window)
+    - [Iterative Deepening](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search)
+    - [Null window search](https://www.chessprogramming.org/Null_Window)
 - Memoization via [Transposition Tables](https://en.wikipedia.org/wiki/Transposition_table).
-    - Both lower bound and upper bound
-    - (Parallelization only):
-      - Concurrent HashMap cache via [moka](https://github.com/moka-rs/moka).
-      - [xxHash](https://github.com/Cyan4973/xxHash) for generalized hashing.
-        - If you want to use xxHash without parallelization, pass it to your hashmap by using `hasher: std::hash::BuildHasherDefault<xxhash_rust::XxHash64>`.
-        - If you don't want xxHash at all, it can be disabled by removing the `xxhash` feature flag.
-          - (More information about this can be found in the [hashing](#hashing) section)
+  - Both lower bound and upper bound
+  - (Parallelization only):
+    - Concurrent HashMap cache via [moka](https://github.com/moka-rs/moka).
+      - TODO: Use depth-first cache removal
+    - [xxHash](https://github.com/Cyan4973/xxHash) for fast hashing.
+      - If you want to use xxHash without parallelization, pass it to your hashmap by using `hasher: std::hash::BuildHasherDefault<xxhash_rust::XxHash64>`.
+      - You can disable xxhash by removing the `xxhash` feature.
+        - More information about why you may want to do this can be found in the [hashing](#hashing) section
+- ML-based move ordering with [candle](https://github.com/huggingface/candle/)
 - Parallelization with [rayon](https://github.com/rayon-rs/rayon)
-    - Note that this is under the `rayon` feature flag.
+  - Note that this is under the `rayon` feature flag.
+  - TODO: Use Lazy SMP (currently this is using naive parallelization on the `move_scores` level)
 
 ## Optimizing your own Games
 

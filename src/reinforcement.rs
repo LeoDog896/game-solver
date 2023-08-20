@@ -1,5 +1,5 @@
 use candle_core::{DType, Device, Tensor};
-use candle_nn::{linear, Linear, VarBuilder, VarMap, AdamW, ParamsAdamW};
+use candle_nn::{linear, AdamW, Linear, ParamsAdamW, VarBuilder, VarMap};
 use rand::seq::SliceRandom;
 use std::collections::VecDeque;
 
@@ -95,13 +95,16 @@ fn train<T: Game + Clone + Learnable<T::Move>>() {
     let mut target_net = DeepQNetwork::new(num_observations, actions.len());
     // target_net.load_state_dict(policy_net.state_dict())
 
-    let optimizer = AdamW::new(policy_net.parameters(), ParamsAdamW {
-        lr: LR,
-        beta1: 0.9,
-        beta2: 0.999,
-        eps: 1e-8,
-        weight_decay: 0.01,
-    });
+    let optimizer = AdamW::new(
+        policy_net.parameters(),
+        ParamsAdamW {
+            lr: LR,
+            beta1: 0.9,
+            beta2: 0.999,
+            eps: 1e-8,
+            weight_decay: 0.01,
+        },
+    );
 
     let memory = ReplayMemory::with_capacity(10_000);
 }

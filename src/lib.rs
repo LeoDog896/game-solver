@@ -18,9 +18,6 @@ use std::hash::Hash;
 
 /// Runs the two-player minimax variant on a zero-sum game.
 /// It uses alpha beta pruning (e.g. you can specify \[-1, 1\] to get only win/loss/draw moves).
-///
-/// This function requires a transposition table. If you only plan on running this function once,
-/// you can use a the in-built `HashMap`.
 fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
@@ -205,13 +202,11 @@ where
     T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send + 'static,
     T::Move: Sync + Send,
 {
-    use std::collections::hash_map::RandomState;
-    #[cfg(feature = "xxhash")]
-    use twox_hash::RandomXxHashBuilder64;
-
     if cfg!(feature = "xxhash") {
+        use twox_hash::RandomXxHashBuilder64;
         par_move_scores_with_hasher::<T, RandomXxHashBuilder64>(game)
     } else {
+        use std::collections::hash_map::RandomState;
         par_move_scores_with_hasher::<T, RandomState>(game)
     }
 }
