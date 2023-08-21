@@ -103,10 +103,14 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
         moves.into_iter()
     }
 
-    fn is_winning_move(&self, m: &Self::Move) -> bool {
+    fn is_winning_move(&self, m: &Self::Move) -> Option<Self::Player> {
         let mut board = self.clone();
         board.make_move(m);
-        board.possible_moves().next().is_none()
+        if board.possible_moves().next().is_none() {
+            Some(self.player())
+        } else {
+            None
+        }
     }
 
     fn is_draw(&self) -> bool {

@@ -110,8 +110,13 @@ pub trait Game {
     /// This allows alpha-beta pruning to move faster.
     fn possible_moves(&self) -> Self::Iter<'_>;
 
-    /// Returns true if the move is a winning move.
-    fn is_winning_move(&self, m: &Self::Move) -> bool;
+    /// Returns None if the move isn't winning,
+    /// or Some(player) if the move is winning.
+    ///
+    /// This allows you to turn the other player in,
+    /// in the case that this player can purposely
+    /// lose in the next move.
+    fn is_winning_move(&self, m: &Self::Move) -> Option<Self::Player>;
 
     /// Returns true if the game is a draw.
     /// This function must exist for the current game,

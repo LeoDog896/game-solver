@@ -191,10 +191,18 @@ impl Game for Reversi {
         moves.into_iter()
     }
 
-    fn is_winning_move(&self, m: &Self::Move) -> bool {
+    fn is_winning_move(&self, m: &Self::Move) -> Option<Self::Player> {
         let mut board = self.clone();
         board.make_move(m);
-        board.winning_player() == Some(self.player()) && board.possible_moves().next().is_none()
+        if board.possible_moves().next().is_none() {
+            if board.winning_player() == Some(self.player()) {
+                Some(self.player())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 
     fn is_draw(&self) -> bool {

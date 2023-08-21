@@ -167,11 +167,11 @@ impl Game for TicTacToe {
             })
     }
 
-    fn is_winning_move(&self, m: &Self::Move) -> bool {
+    fn is_winning_move(&self, m: &Self::Move) -> Option<Self::Player> {
         // check if the amount of moves is less than (size * 2) - 1
         // if it is, then it's impossible to win
         if self.move_count + 1 < self.size * 2 - 1 {
-            return false;
+            return None;
         }
 
         let mut board = self.clone();
@@ -188,11 +188,11 @@ impl Game for TicTacToe {
         // e.g. (0, 0, 2), (0, 1, 1), (0, 2, 0) wins
         for offset in offsets(m, self.size) {
             if board.winning_line(m, &offset) {
-                return true;
+                return Some(self.player());
             }
         }
 
-        false
+        None
     }
 
     fn is_draw(&self) -> bool {

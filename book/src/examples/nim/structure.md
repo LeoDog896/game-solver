@@ -120,11 +120,16 @@ In our case, `is_draw` is always false (as Nim's winning condition *is* no more 
     }
 
     // a move is winning if the next player
-    // has no possible moves to make
-    fn is_winning_move(&self, m: &Self::Move) -> bool {
+    // has no possible moves to make (normal play for Nim)
+    fn is_winning_move(&self, m: &Self::Move) -> Option<Self::Player> {
         let mut board = self.clone();
         board.make_move(m);
-        board.possible_moves().next().is_none()
+        // next player can't play - this player won!
+        if board.possible_moves().next().is_none() {
+            Some(self.player())
+        } else {
+            None
+        }
     }
 
     // Nim can never be a draw - 
@@ -221,10 +226,15 @@ impl Game for Nim {
 
     // a move is winning if the next player
     // has no possible moves to make (normal play for Nim)
-    fn is_winning_move(&self, m: Self::Move) -> bool {
+    fn is_winning_move(&self, m: &Self::Move) -> Option<Self::Player> {
         let mut board = self.clone();
         board.make_move(m);
-        board.possible_moves().next().is_none()
+        // next player can't play - this player won!
+        if board.possible_moves().next().is_none() {
+            Some(self.player())
+        } else {
+            None
+        }
     }
 
     // Nim can never be a draw -
