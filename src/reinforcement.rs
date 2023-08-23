@@ -1,9 +1,16 @@
-use candle_core::{DType, Device, Tensor};
-use candle_nn::{linear, AdamW, Linear, ParamsAdamW, VarBuilder, VarMap};
+use dfdx::{
+    nn::builders::*,
+    optim::Adam,
+    prelude::{DeviceBuildExt, Linear, ReLU},
+    tensor::{AsArray, AutoDevice, Gradients, Storage, TensorFrom},
+    tensor_ops::{AdamConfig, WeightDecay, Device},
+};
 use rand::seq::SliceRandom;
-use std::collections::VecDeque;
+use std::{collections::VecDeque, f32::consts::E};
 
 use crate::game::Game;
+
+type Dtype = f32;
 
 trait EveryMove<M: Eq> {
     fn every_move(&self) -> Vec<M>;
@@ -14,10 +21,10 @@ trait EveryMove<M: Eq> {
 /// as well as the reward associated with it.
 #[derive(Debug, Clone)]
 struct Transition<S: Clone, A: Clone> {
-    state: S,
-    action: A,
-    next_state: S,
-    reward: usize,
+    state: Vec<S>,
+    action: Vec<A>,
+    next_state: Vec<S>,
+    reward: Vec<usize>,
 }
 
 struct ReplayMemory<S: Clone, A: Clone>(VecDeque<Transition<S, A>>);
@@ -44,67 +51,97 @@ impl<S: Clone, A: Clone> ReplayMemory<S, A> {
     }
 }
 
-struct DeepQNetwork {
-    input_layer: Linear,
-    hidden_layer: Linear,
-    output_layer: Linear,
+const DETAIL: usize = 128;
+type DeepQNetwork<const I: usize, const O: usize> = (
+    (Linear<I, DETAIL>, ReLU),
+    (Linear<DETAIL, DETAIL>, ReLU),
+    Linear<DETAIL, O>,
+);
+
+trait Learnable<T: Clone, const I: usize, const O: usize> {
+    fn all_actions() -> [T; O];
+    fn observations(&self) -> [Dtype; I];
 }
 
-impl DeepQNetwork {
-    const DETAIL: usize = 128;
+type Built<D: Storage<Dtype>, N: BuildOnDevice<D, Dtype>> = N::Built;
 
-    fn new(n_observations: usize, n_actions: usize) -> Self {
-        let varmap = VarMap::new();
-        let var_builder = VarBuilder::from_varmap(&varmap, DType::F32, &Device::Cpu);
+struct Agent<
+    T: Game + Clone + Learnable<T::Move, I, O>,
+    const I: usize,
+    const O: usize,
+    D: Device<Dtype> = AutoDevice,
+> where DeepQNetwork<I, O>: BuildOnDevice<D, f32> {
+    /// List of all possible actions, legal or not given the current state.
+    actions: [T::Move; O],
+    /// The policy network, which is the network that we are training.
+    net: Built<D, DeepQNetwork<I, O>>,
+    optimizer: Adam<Built<D, DeepQNetwork<I, O>>, Dtype, D>,
+    memory: ReplayMemory<T, T::Move>,
+    gradients: Gradients<f32, D>,
+    steps_done: usize,
+    device: D,
+}
 
-        let input_layer = linear(n_observations, Self::DETAIL, var_builder.clone()).unwrap();
-        let hidden_layer = linear(Self::DETAIL, Self::DETAIL, var_builder.clone()).unwrap();
-        let output_layer = linear(Self::DETAIL, n_actions, var_builder).unwrap();
-        DeepQNetwork {
-            input_layer,
-            hidden_layer,
-            output_layer,
+impl<T: Game + Clone + Learnable<T::Move, I, O>, const I: usize, const O: usize> Agent<T, I, O> 
+where T::Move: PartialEq<T::Move>
+{
+    fn new() -> Self {
+        const BATCH_SIZE: usize = 128;
+        const LR: f64 = 1e-4;
+
+        let actions = T::all_actions();
+
+        let device = AutoDevice::default();
+        let net = device.build_module::<DeepQNetwork<I, O>, Dtype>();
+
+        let gradients = net.alloc_grads();
+
+        let optimizer: Adam<_, Dtype, AutoDevice> = Adam::new(
+            &net,
+            AdamConfig {
+                lr: LR,
+                betas: [0.5, 0.25],
+                eps: 1e-6,
+                weight_decay: Some(WeightDecay::Decoupled(1e-2)),
+            },
+        );
+
+        let memory = ReplayMemory::<T, T::Move>::with_capacity(10_000);
+
+        Self {
+            actions,
+            net,
+            optimizer,
+            memory,
+            gradients,
+            steps_done: 0,
+            device
         }
     }
 
-    fn forward(&mut self, image: Tensor) -> Tensor {
-        let mut image = image;
-        image = self.input_layer.forward(&image).unwrap().relu().unwrap();
-        image = self.hidden_layer.forward(&image).unwrap().relu().unwrap();
-        self.output_layer.forward(&image).unwrap()
+    fn act(&mut self, state: &T) -> T::Move {
+        let legal_moves = state.possible_moves().collect::<Vec<_>>();
+        let sample = rand::random::<f32>();
+        const EPS_START: f32 = 0.9;
+        const EPS_END: f32 = 0.05;
+        const EPS_DECAY: usize = 100;
+        let eps_threshold = EPS_END + (EPS_START - EPS_END) * E.powf(-1. * self.steps_done as f32 / EPS_DECAY as f32);
+        self.steps_done += 1;
+        // use the neural network to make a move
+        if sample > eps_threshold {
+            let move_scores = self.net.forward(self.device.tensor(state.observations())).array();
+            let best_move = move_scores
+                .iter()
+                .enumerate()
+                // only legal moves
+                .filter(|(i, _)| legal_moves.contains(&self.actions[*i]))
+                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                .unwrap()
+                .0;
+            self.actions[best_move].clone()
+        } else {
+            legal_moves.choose(&mut rand::thread_rng()).unwrap().clone()
+        }
     }
 }
 
-trait Learnable<T: Clone> {
-    fn observation_as_terser(&self) -> Tensor;
-    fn all_actions() -> Vec<T>;
-}
-
-fn train<T: Game + Clone + Learnable<T::Move>>() {
-    const GAMMA: f32 = 0.99;
-    const EPS_START: f32 = 0.9;
-    const EPS_END: f32 = 0.05;
-    const EPS_DECAY: usize = 1000;
-    const TAU: f32 = 0.005;
-    const LR: f64 = 1e-4;
-
-    let actions = T::all_actions();
-    let num_observations = 5; // TODO: dont hardcode this - get it from the length of the default tensor
-
-    let policy_net = DeepQNetwork::new(num_observations, actions.len());
-    let mut target_net = DeepQNetwork::new(num_observations, actions.len());
-    // target_net.load_state_dict(policy_net.state_dict())
-
-    let optimizer = AdamW::new(
-        policy_net.parameters(),
-        ParamsAdamW {
-            lr: LR,
-            beta1: 0.9,
-            beta2: 0.999,
-            eps: 1e-8,
-            weight_decay: 0.01,
-        },
-    );
-
-    let memory = ReplayMemory::with_capacity(10_000);
-}
