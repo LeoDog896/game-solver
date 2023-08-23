@@ -3,7 +3,7 @@ use dfdx::{
     optim::Adam,
     prelude::{DeviceBuildExt, Linear, ReLU},
     tensor::{AsArray, AutoDevice, Gradients, Storage, TensorFrom},
-    tensor_ops::{AdamConfig, WeightDecay, Device},
+    tensor_ops::{AdamConfig, Device, WeightDecay},
 };
 use rand::seq::SliceRandom;
 use std::{collections::VecDeque, f32::consts::E};
@@ -70,7 +70,9 @@ struct Agent<
     const I: usize,
     const O: usize,
     D: Device<Dtype> = AutoDevice,
-> where DeepQNetwork<I, O>: BuildOnDevice<D, f32> {
+> where
+    DeepQNetwork<I, O>: BuildOnDevice<D, f32>,
+{
     /// List of all possible actions, legal or not given the current state.
     actions: [T::Move; O],
     /// The policy network, which is the network that we are training.
@@ -82,8 +84,9 @@ struct Agent<
     device: D,
 }
 
-impl<T: Game + Clone + Learnable<T::Move, I, O>, const I: usize, const O: usize> Agent<T, I, O> 
-where T::Move: PartialEq<T::Move>
+impl<T: Game + Clone + Learnable<T::Move, I, O>, const I: usize, const O: usize> Agent<T, I, O>
+where
+    T::Move: PartialEq<T::Move>,
 {
     fn new() -> Self {
         const BATCH_SIZE: usize = 128;
@@ -115,7 +118,7 @@ where T::Move: PartialEq<T::Move>
             memory,
             gradients,
             steps_done: 0,
-            device
+            device,
         }
     }
 
@@ -125,11 +128,15 @@ where T::Move: PartialEq<T::Move>
         const EPS_START: f32 = 0.9;
         const EPS_END: f32 = 0.05;
         const EPS_DECAY: usize = 100;
-        let eps_threshold = EPS_END + (EPS_START - EPS_END) * E.powf(-1. * self.steps_done as f32 / EPS_DECAY as f32);
+        let eps_threshold = EPS_END
+            + (EPS_START - EPS_END) * E.powf(-1. * self.steps_done as f32 / EPS_DECAY as f32);
         self.steps_done += 1;
         // use the neural network to make a move
         if sample > eps_threshold {
-            let move_scores = self.net.forward(self.device.tensor(state.observations())).array();
+            let move_scores = self
+                .net
+                .forward(self.device.tensor(state.observations()))
+                .array();
             let best_move = move_scores
                 .iter()
                 .enumerate()
@@ -144,4 +151,3 @@ where T::Move: PartialEq<T::Move>
         }
     }
 }
-
