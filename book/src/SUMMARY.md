@@ -8,4 +8,4 @@
   - [Nim](./examples/nim/introduction.md)
     - [Making Nim](./examples/nim/structure.md)
     - [Solving Nim](./examples/nim/solving.md)
-- [Credits](./credits.md)
+- [Links](./links.md)
