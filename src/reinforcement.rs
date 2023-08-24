@@ -21,10 +21,10 @@ trait EveryMove<M: Eq> {
 /// as well as the reward associated with it.
 #[derive(Debug, Clone)]
 struct Transition<S: Clone, A: Clone> {
-    state: Vec<S>,
-    action: Vec<A>,
-    next_state: Vec<S>,
-    reward: Vec<usize>,
+    state: S,
+    action: A,
+    next_state: S,
+    reward: usize,
 }
 
 struct ReplayMemory<S: Clone, A: Clone>(VecDeque<Transition<S, A>>);
@@ -51,11 +51,13 @@ impl<S: Clone, A: Clone> ReplayMemory<S, A> {
     }
 }
 
-const DETAIL: usize = 128;
 type DeepQNetwork<const I: usize, const O: usize> = (
-    (Linear<I, DETAIL>, ReLU),
-    (Linear<DETAIL, DETAIL>, ReLU),
-    Linear<DETAIL, O>,
+    (Conv2D<I, 32, 8, 4>, ReLU),
+    (Conv2D<32, 64, 4, 2>, ReLU),
+    (Conv2D<64, 64, 3, 1>, ReLU),
+    Flatten2D,
+    (Linear<3136, 512>, ReLU),
+    Linear<512, O>,
 );
 
 trait Learnable<T: Clone, const I: usize, const O: usize> {
@@ -88,8 +90,9 @@ impl<T: Game + Clone + Learnable<T::Move, I, O>, const I: usize, const O: usize>
 where
     T::Move: PartialEq<T::Move>,
 {
+    const BATCH_SIZE: usize = 128;
+
     fn new() -> Self {
-        const BATCH_SIZE: usize = 128;
         const LR: f64 = 1e-4;
 
         let actions = T::all_actions();
