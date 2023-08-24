@@ -15,8 +15,8 @@ A lot of information here would not have been possible without these lovely reso
 
 There are a few notable programs that also aim to solve specific portions of combinatorial games.
 
-- [GamesCrafters](http://gamescrafters.berkeley.edu/), which solves lightweight combinatorial games.
-- [Glop](https://sprouts.tuxfamily.org/wiki/doku.php?id=home), GNU-licensed software that solves impartial combinatorial games (and does a great job at it!).
+- [GamesCrafters](http://gamescrafters.berkeley.edu/), which solves lightweight combinatorial games with lovely graphic visualization.
+- [Glop](https://sprouts.tuxfamily.org/wiki/doku.php?id=home), GNU-licensed software that solves specific combinatorial games by rigirous theory analysis.
 - [cgt-rs](https://github.com/t4ccer/cgt-rs), a combinatorial game *theory* calculator, serving as a CAS for combinatorial game theory notation.
 
 For reference, the purpose of this software is to solve generic but *heavy* combinatorial games as fast as possible.

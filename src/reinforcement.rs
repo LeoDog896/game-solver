@@ -1,9 +1,9 @@
 use dfdx::{
     nn::builders::*,
     optim::Adam,
-    prelude::{DeviceBuildExt, Linear, ReLU},
-    tensor::{AsArray, AutoDevice, Gradients, Storage, TensorFrom},
-    tensor_ops::{AdamConfig, Device, WeightDecay},
+    prelude::DeviceBuildExt,
+    tensor::{AutoDevice, Gradients, Storage, Tensor, AsArray, TensorToArray},
+    tensor_ops::{AdamConfig, Device, WeightDecay}, shapes::{Const, Rank1},
 };
 use rand::seq::SliceRandom;
 use std::{collections::VecDeque, f32::consts::E};
@@ -51,44 +51,58 @@ impl<S: Clone, A: Clone> ReplayMemory<S, A> {
     }
 }
 
-type DeepQNetwork<const I: usize, const O: usize> = (
-    (Conv2D<I, 32, 8, 4>, ReLU),
-    (Conv2D<32, 64, 4, 2>, ReLU),
-    (Conv2D<64, 64, 3, 1>, ReLU),
-    Flatten2D,
-    (Linear<3136, 512>, ReLU),
-    Linear<512, O>,
-);
-
-trait Learnable<T: Clone, const I: usize, const O: usize> {
+trait Learnable<T: Clone, Input, const O: usize> {
     fn all_actions() -> [T; O];
-    fn observations(&self) -> [Dtype; I];
+    fn observations(&self) -> Input;
 }
 
 type Built<D: Storage<Dtype>, N: BuildOnDevice<D, Dtype>> = N::Built;
 
+/// An Agent is a DDQN agent that learns to play a game by playing against itself.
+/// 
+/// This is mainly intended for Move Ordering - essentially,
+/// by training an AI via self-play, you can get a good move ordering for your game.
+/// 
+/// This means less fine tuning, and more focus on analysis.
 struct Agent<
-    T: Game + Clone + Learnable<T::Move, I, O>,
-    const I: usize,
+    T: Game + Clone + Learnable<T::Move, Input, O>,
+    Input,
     const O: usize,
-    D: Device<Dtype> = AutoDevice,
-> where
-    DeepQNetwork<I, O>: BuildOnDevice<D, f32>,
-{
+    NN: BuildOnDevice<D, Dtype> + ZeroSizedModule,
+    D: Device<Dtype> + DeviceBuildExt + TensorToArray<Rank1<O>, Dtype, Array = [Dtype; O]> = AutoDevice,
+> {
     /// List of all possible actions, legal or not given the current state.
     actions: [T::Move; O],
-    /// The policy network, which is the network that we are training.
-    net: Built<D, DeepQNetwork<I, O>>,
-    optimizer: Adam<Built<D, DeepQNetwork<I, O>>, Dtype, D>,
+    /// The online network, which is the network that is used to make moves.
+    online: Built<D, NN>,
+    /// The target network, which is the network that is used to calculate the target values.
+    target: Built<D, NN>,
+    /// The optimizer used to update the online network.
+    optimizer: Adam<Built<D, NN>, Dtype, D>,
+    /// The replay memory used to store transitions.
     memory: ReplayMemory<T, T::Move>,
+    /// The gradients of the online network.
     gradients: Gradients<f32, D>,
+    /// The number of steps that the agent has taken. This is used to decide how much randomness to add to the agent's moves.
     steps_done: usize,
+    /// The device that the agent is on. (CPU or GPU)
     device: D,
+    _phantom: std::marker::PhantomData<Input>,
 }
 
-impl<T: Game + Clone + Learnable<T::Move, I, O>, const I: usize, const O: usize> Agent<T, I, O>
+impl<
+    T: Game + Clone + Learnable<T::Move, Input, O>,
+    Input,
+    const O: usize,
+    NN: BuildOnDevice<D, f32> + ZeroSizedModule,
+    D: Device<Dtype> + DeviceBuildExt + TensorToArray<Rank1<O>, Dtype, Array = [Dtype; O]>,
+> Agent<T, Input, O, NN, D>
 where
+    // moves must be comparable - this allows us to return the actual move instead of the index of the move
     T::Move: PartialEq<T::Move>,
+    // the network must be cloneable (for us to build a policy network and a target network),
+    // and must return a 1d tensor (for the output of the network to be the move scores per move idx)
+    Built<D, NN>: Clone + Module<Input, Output = Tensor<Rank1<O>, Dtype, D>>
 {
     const BATCH_SIZE: usize = 128;
 
@@ -97,13 +111,15 @@ where
 
         let actions = T::all_actions();
 
-        let device = AutoDevice::default();
-        let net = device.build_module::<DeepQNetwork<I, O>, Dtype>();
+        let device: D = Default::default();
+        let online = device.build_module::<NN, Dtype>();
+        let target = online.clone();
+        
+        // we only need gradients for the online network
+        let gradients = online.alloc_grads();
 
-        let gradients = net.alloc_grads();
-
-        let optimizer: Adam<_, Dtype, AutoDevice> = Adam::new(
-            &net,
+        let optimizer: Adam<_, Dtype, _> = Adam::new(
+            &online,
             AdamConfig {
                 lr: LR,
                 betas: [0.5, 0.25],
@@ -116,41 +132,77 @@ where
 
         Self {
             actions,
-            net,
+            online,
+            target,
             optimizer,
             memory,
             gradients,
             steps_done: 0,
             device,
+            _phantom: Default::default(),
         }
     }
 
     fn act(&mut self, state: &T) -> T::Move {
         let legal_moves = state.possible_moves().collect::<Vec<_>>();
         let sample = rand::random::<f32>();
+
+        // small decay function, where f(x) = p + (p_0 - p) * e^(-x / d)
         const EPS_START: f32 = 0.9;
         const EPS_END: f32 = 0.05;
         const EPS_DECAY: usize = 100;
         let eps_threshold = EPS_END
             + (EPS_START - EPS_END) * E.powf(-1. * self.steps_done as f32 / EPS_DECAY as f32);
+
         self.steps_done += 1;
         // use the neural network to make a move
         if sample > eps_threshold {
-            let move_scores = self
-                .net
-                .forward(self.device.tensor(state.observations()))
-                .array();
+            let move_scores = self.online.forward(state.observations())
+                .array().to_vec().iter()
+                // convert idx -> (move, score)
+                .enumerate()
+                .map(|(i, s)| (self.actions[i].clone(), *s))
+                // then filter by legal moves
+                .filter(|(m, _)| legal_moves.contains(m))
+                .collect::<Vec<_>>();
+
+            // get the best move
             let best_move = move_scores
                 .iter()
-                .enumerate()
-                // only legal moves
-                .filter(|(i, _)| legal_moves.contains(&self.actions[*i]))
-                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                .max_by(|(_, s1), (_, s2)| s1.partial_cmp(s2).unwrap())
                 .unwrap()
-                .0;
-            self.actions[best_move].clone()
+                .0
+                .clone();
+            best_move
         } else {
+            // otherwise, choose a random move
             legal_moves.choose(&mut rand::thread_rng()).unwrap().clone()
         }
+    }
+
+    fn cache(&mut self, state: &T, action: &T::Move, next_state: &T, reward: usize) {
+        self.memory.push(Transition {
+            state: state.clone(),
+            action: action.clone(),
+            next_state: next_state.clone(),
+            reward,
+        });
+    }
+
+    fn sync(&mut self) {
+        self.target = self.online.clone();
+    }
+
+    fn td_estimate(&self, state: &T, action: &T::Move) -> f32 {
+        let move_scores = self.online.forward(state.observations());
+        let action_idx = self.actions.iter().position(|a| a == action).unwrap();
+        move_scores.array().to_vec()[action_idx]
+    }
+    
+    fn td_target(&self, reward: usize, next_state: &T, done: bool) -> f32 {
+        let next_state_q = self.online.forward(next_state.observations());
+        let best_action = next_state_q.array().to_vec().iter().enumerate().max_by(|(_, s1), (_, s2)| s1.partial_cmp(s2).unwrap()).unwrap().0;
+        let next_q = self.target.forward(next_state.observations()).array().to_vec()[best_action];
+        (reward as f32 + (1. - done as u8 as f32) * 0.99 * next_q).into()
     }
 }
