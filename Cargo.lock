@@ -160,8 +160,7 @@ checksum = "dc4cab390f4a32340211f015292a4551742a63e528e9ade9e0bde0d1a989d2a1"
 [[package]]
 name = "dfdx"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6dbcb8a7363d8b434ca20bd3808ab9f6ee77e6916ca1d511f8e3c725d0b340e"
+source = "git+https://github.com/coreylowman/dfdx.git#9a208d928b92dd77d4b2fa79144bdc8b872aa7f0"
 dependencies = [
  "cudarc",
  "gemm",

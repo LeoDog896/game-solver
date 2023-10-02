@@ -1,14 +1,23 @@
+mod collate;
+
 use dfdx::{
+    losses,
     nn::builders::*,
     optim::Adam,
-    prelude::DeviceBuildExt,
-    tensor::{AutoDevice, Gradients, Storage, Tensor, AsArray, TensorToArray},
-    tensor_ops::{AdamConfig, Device, WeightDecay}, shapes::{Const, Rank1},
+    prelude::*,
+    shapes::{Const, Rank1, Rank2, Shape},
+    tensor::{AsArray, AutoDevice, Gradients, Storage, Tensor, TensorFrom, TensorToArray, Trace},
+    tensor_ops::{AdamConfig, Device, WeightDecay},
+    data::*
 };
+
+use dfdx::data::IteratorBatchExt;
+use itertools::Itertools;
 use rand::seq::SliceRandom;
 use std::{collections::VecDeque, f32::consts::E};
 
 use crate::game::Game;
+use crate::reinforcement::collate::{Collate, IteratorCollateExt};
 
 type Dtype = f32;
 
@@ -25,9 +34,32 @@ struct Transition<S: Clone, A: Clone> {
     action: A,
     next_state: S,
     reward: usize,
+    done: bool,
+}
+
+impl<S: Clone, A: Clone> Transition<S, A> {
+    fn new(state: S, action: A, next_state: S, reward: usize, done: bool) -> Self {
+        Self {
+            state,
+            action,
+            next_state,
+            reward,
+            done,
+        }
+    }
 }
 
 struct ReplayMemory<S: Clone, A: Clone>(VecDeque<Transition<S, A>>);
+
+impl<S: Clone, A: Clone> ExactSizeDataset for ReplayMemory<S, A> {
+    type Item<'a> = Transition<S, A> where S: 'a, A: 'a;
+    fn get(&self, index: usize) -> Self::Item<'_> {
+        self.0[index].clone()
+    }
+    fn len(&self) -> usize {
+        self.len()
+    }
+}
 
 impl<S: Clone, A: Clone> ReplayMemory<S, A> {
     fn with_capacity(capacity: usize) -> Self {
@@ -38,14 +70,6 @@ impl<S: Clone, A: Clone> ReplayMemory<S, A> {
         self.0.push_back(transition);
     }
 
-    fn sample(&self, batch_size: usize) -> Vec<Transition<S, A>> {
-        let mut rng = rand::thread_rng();
-        let mut samples = self.0.iter().cloned().collect::<Vec<_>>();
-        samples.shuffle(&mut rng);
-        samples.truncate(batch_size);
-        samples
-    }
-
     fn len(&self) -> usize {
         self.0.len()
     }
@@ -53,20 +77,21 @@ impl<S: Clone, A: Clone> ReplayMemory<S, A> {
 
 trait Learnable<T: Clone, Input, const O: usize> {
     fn all_actions() -> [T; O];
-    fn observations(&self) -> Input;
+    fn observe(&self) -> Input;
 }
 
+/// Type utility to build a module on a device.
 type Built<D: Storage<Dtype>, N: BuildOnDevice<D, Dtype>> = N::Built;
 
 /// An Agent is a DDQN agent that learns to play a game by playing against itself.
-/// 
+///
 /// This is mainly intended for Move Ordering - essentially,
 /// by training an AI via self-play, you can get a good move ordering for your game.
-/// 
+///
 /// This means less fine tuning, and more focus on analysis.
 struct Agent<
-    T: Game + Clone + Learnable<T::Move, Input, O>,
-    Input,
+    T: Game + Clone + Learnable<T::Move, Tensor<Input, Dtype, D>, O>,
+    Input: Shape + AddDim<usize>,
     const O: usize,
     NN: BuildOnDevice<D, Dtype> + ZeroSizedModule,
     D: Device<Dtype> + DeviceBuildExt + TensorToArray<Rank1<O>, Dtype, Array = [Dtype; O]> = AutoDevice,
@@ -90,23 +115,27 @@ struct Agent<
     _phantom: std::marker::PhantomData<Input>,
 }
 
+const BATCH_SIZE: usize = 128;
+
 impl<
-    T: Game + Clone + Learnable<T::Move, Input, O>,
-    Input,
-    const O: usize,
-    NN: BuildOnDevice<D, f32> + ZeroSizedModule,
-    D: Device<Dtype> + DeviceBuildExt + TensorToArray<Rank1<O>, Dtype, Array = [Dtype; O]>,
-> Agent<T, Input, O, NN, D>
+        T: Game + Clone + Learnable<T::Move, Tensor<Input, Dtype, D>, O>,
+        Input: Shape + AddDim<usize>,
+        const O: usize,
+        NN: BuildOnDevice<D, f32> + ZeroSizedModule,
+        D: Device<Dtype>
+            + DeviceBuildExt
+            + TensorToArray<Rank1<O>, Dtype, Array = [Dtype; O]>
+            + Storage<Tensor<Input, f32, D>>
+            + TensorFromVec<Tensor<Input, f32, D>>
+    > Agent<T, Input, O, NN, D>
 where
     // moves must be comparable - this allows us to return the actual move instead of the index of the move
     T::Move: PartialEq<T::Move>,
     // the network must be cloneable (for us to build a policy network and a target network),
     // and must return a 1d tensor (for the output of the network to be the move scores per move idx)
-    Built<D, NN>: Clone + Module<Input, Output = Tensor<Rank1<O>, Dtype, D>>
+    Built<D, NN>: Clone + Module<Tensor<Input, Dtype, D>, Output = Tensor<Rank1<O>, Dtype, D>>,
 {
-    const BATCH_SIZE: usize = 128;
-
-    fn new() -> Self {
+    pub fn new() -> Self {
         const LR: f64 = 1e-4;
 
         let actions = T::all_actions();
@@ -114,7 +143,7 @@ where
         let device: D = Default::default();
         let online = device.build_module::<NN, Dtype>();
         let target = online.clone();
-        
+
         // we only need gradients for the online network
         let gradients = online.alloc_grads();
 
@@ -157,8 +186,12 @@ where
         self.steps_done += 1;
         // use the neural network to make a move
         if sample > eps_threshold {
-            let move_scores = self.online.forward(state.observations())
-                .array().to_vec().iter()
+            let move_scores = self
+                .online
+                .forward(state.observe())
+                .array()
+                .to_vec()
+                .iter()
                 // convert idx -> (move, score)
                 .enumerate()
                 .map(|(i, s)| (self.actions[i].clone(), *s))
@@ -186,6 +219,7 @@ where
             action: action.clone(),
             next_state: next_state.clone(),
             reward,
+            done: false,
         });
     }
 
@@ -194,15 +228,101 @@ where
     }
 
     fn td_estimate(&self, state: &T, action: &T::Move) -> f32 {
-        let move_scores = self.online.forward(state.observations());
+        let move_scores = self.online.forward(state.observe());
         let action_idx = self.actions.iter().position(|a| a == action).unwrap();
         move_scores.array().to_vec()[action_idx]
     }
-    
+
     fn td_target(&self, reward: usize, next_state: &T, done: bool) -> f32 {
-        let next_state_q = self.online.forward(next_state.observations());
-        let best_action = next_state_q.array().to_vec().iter().enumerate().max_by(|(_, s1), (_, s2)| s1.partial_cmp(s2).unwrap()).unwrap().0;
-        let next_q = self.target.forward(next_state.observations()).array().to_vec()[best_action];
-        (reward as f32 + (1. - done as u8 as f32) * 0.99 * next_q).into()
+        const GAMMA: f32 = 0.99;
+        let next_state_q = self.online.forward(next_state.observe());
+        let best_action = next_state_q
+            .array()
+            .to_vec()
+            .iter()
+            .enumerate()
+            .max_by(|(_, s1), (_, s2)| s1.partial_cmp(s2).unwrap())
+            .unwrap()
+            .0;
+        let next_q = self.target.forward(next_state.observe()).array().to_vec()[best_action];
+        (reward as f32 + (1. - done as u8 as f32) * GAMMA * next_q).into()
+    }
+
+    fn update_q_online(&mut self, predict: Tensor<Rank1<O>, Dtype, D>, target: Tensor<Rank1<O>, Dtype, D>) -> f32 {
+        let loss = losses::smooth_l1_loss(predict, target, 0.01);
+        self.online.zero_grads(&mut self.gradients);
+        self.gradients = loss.backward();
+    }
+
+    fn save(&self, path: &str) {
+        // TODO: save the agent
+    }
+
+    fn sample(&self) {
+        let mut rng = rand::thread_rng();
+        let data = self
+            .memory
+            .shuffled(&mut rng)
+            .map(|t| {
+                let state = t.state.clone();
+                let action = t.action.clone();
+                let next_state = t.next_state.clone();
+                let reward = t.reward;
+                (
+                    state.observe(),
+                    next_state.observe(),
+                    self.device
+                        .tensor(self.actions.iter().position(|a| a == &action).unwrap() as Dtype),
+                    self.device.tensor(reward as Dtype),
+                )
+            })
+            .batch_exact(Const::<BATCH_SIZE>)
+            .collate()
+            .stack()
+            .collect();
+
+            
+        (a, b, c, d)
+
+    }
+
+    fn learn(&mut self) {
+        const LEARN_EVERY: usize = 3;
+        const SYNC_EVERY: usize = 1000;
+        const SAVE_EVERY: usize = 10000;
+
+        if self.steps_done % SYNC_EVERY == 0 {
+            self.sync();
+        }
+
+        if self.steps_done % SAVE_EVERY == 0 {
+            self.save("");
+        }
+
+        if self.steps_done < BATCH_SIZE {
+            return;
+        }
+
+        if self.steps_done % LEARN_EVERY != 0 {
+            return;
+        }
+
+        let transitions = self.sample();
+
+
+        // let td_est = states
+        //     .iter()
+        //     .zip(actions.iter())
+        //     .map(|(s, a)| self.td_estimate(s, a))
+        //     .collect::<Vec<_>>();
+        // let td_tgt = rewards
+        //     .iter()
+        //     .zip(next_states.iter())
+        //     .map(|(r, ns)| self.td_target(*r, ns, false))
+        //     .collect::<Vec<_>>();
+
+        // let loss = self.update_q_online(td_est, td_tgt);
+
+        // (td_est.mean().item(), loss)
     }
 }
