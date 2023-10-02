@@ -52,12 +52,8 @@ impl Game for Chomp {
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     type Player = ZeroSumPlayer;
 
-    fn max_score(&self) -> usize {
-        self.width * self.height
-    }
-
-    fn min_score(&self) -> isize {
-        -(self.width as isize * self.height as isize)
+    fn max_moves(&self) -> Option<usize> {
+        Some(self.width * self.height)
     }
 
     fn player(&self) -> Self::Player {
@@ -68,8 +64,8 @@ impl Game for Chomp {
         }
     }
 
-    fn score(&self) -> usize {
-        self.max_score() - self.move_count
+    fn move_count(&self) -> usize {
+        self.move_count
     }
 
     fn make_move(&mut self, m: &Self::Move) -> bool {

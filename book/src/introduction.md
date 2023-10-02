@@ -7,3 +7,9 @@ However, computation is still important in mathematics as it helps mathematician
 That is the purpose of `game-solver`. It helps solve various games, and allows users to play against the AI, analyze the game tree, and more. It allows programmers to derive the [God's algorithm](https://en.wikipedia.org/wiki/God%27s_algorithm) for any game, as well as derive meaningful statistics about the game.
 
 As of now, `game-solver` can only solve 2-player perfect information games. However, the goal is to eventually support more players and imperfect information games.
+
+## Capabilities
+
+**This library is not meant to serve as a substitute for complex game engines** (go, chess).
+
+The thing it does right is God's algorithm computation, to find perfect, full play for generic games.

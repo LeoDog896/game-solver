@@ -38,9 +38,8 @@ We'll start with:
 - a `Move` type, which defines how the Game takes in moves
 - an `Iter`, to satisfy Rust by providing the concrete iterator type for our `possible_moves` function
 - a `Player` type to decide whether we're a 2-player or an N-player game
-- `min_score` (lower bound, usually `-max_score`)
-- `max_score` (upper bound, as previously defined)
-- `score` (our scoring algorithm)
+- `max_moves` (upper bound on the amount of moves - optional)
+- `move_count` (the amount of moves we played)
 - `player` (n_moves % 2, defines what player is currently moving)
 
 ```rs
@@ -51,12 +50,8 @@ impl Game for Nim {
     /// Define Nimbers as a zero-sum game
     type Player = ZeroSumPlayer;
 
-    fn max_score(&self) -> usize {
-        self.max_score
-    }
-
-    fn min_score(&self) -> isize {
-        -(self.max_score as isize)
+    fn max_moves(&self) -> Option<usize> {
+        Some(self.max_score)
     }
 
     fn player(&self) -> ZeroSumPlayer {
@@ -67,12 +62,8 @@ impl Game for Nim {
         }
     }
 
-    // to encourage the AI to win as fast as possible,
-    // we want to minimize the amount of moves it takes to win.
-    // thus, we penalize the AI for taking more moves
-    // by removing points for every move it takes.
-    fn score(&self) -> usize {
-        self.max_score() - self.move_count
+    fn move_count(&self) -> usize {
+        self.move_count
     }
 
     // ...
@@ -154,8 +145,8 @@ impl Nim {
         Self {
             heaps: heaps.clone(),
             move_count: 0,
-            // sum of all the heaps is the upper bound for the amount of moves - add 1 to give a positive score
-            max_score: heaps.iter().sum::<usize>() + 1,
+            // sum of all the heaps is the upper bound for the amount of moves
+            max_score: heaps.iter().sum::<usize>(),
         }
     }
 }
@@ -165,12 +156,8 @@ impl Game for Nim {
     type Move = (usize, usize);
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
 
-    fn max_score(&self) -> usize {
-        self.max_score
-    }
-
-    fn min_score(&self) -> isize {
-        -(self.max_score as isize)
+    fn max_moves(&self) -> Option<usize> {
+        Some(self.max_score)
     }
 
     fn player(&self) -> Player {
@@ -181,12 +168,8 @@ impl Game for Nim {
         }
     }
 
-    // to encourage the AI to win as fast as possible,
-    // we want to minimize the amount of moves it takes to win.
-    // thus, we penalize the AI for taking more moves
-    // by removing points for every move it takes.
-    fn score(&self) -> usize {
-        self.max_score() - self.move_count
+    fn move_count(&self) -> usize {
+        self.move_count
     }
 
     fn make_move(&mut self, m: Self::Move) -> bool {

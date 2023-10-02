@@ -119,12 +119,12 @@ impl Game for TicTacToe {
     >;
     type Player = ZeroSumPlayer;
 
-    fn max_score(&self) -> usize {
-        self.size.pow(self.dim as u32)
+    fn max_moves(&self) -> Option<usize> {
+        Some(self.size.pow(self.dim as u32))
     }
 
-    fn min_score(&self) -> isize {
-        -(self.size.pow(self.dim as u32) as isize)
+    fn move_count(&self) -> usize {
+        self.move_count
     }
 
     fn player(&self) -> Self::Player {
@@ -133,10 +133,6 @@ impl Game for TicTacToe {
         } else {
             ZeroSumPlayer::Two
         }
-    }
-
-    fn score(&self) -> usize {
-        self.max_score() - self.move_count
     }
 
     fn make_move(&mut self, m: &Self::Move) -> bool {
