@@ -38,12 +38,8 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     type Player = ZeroSumPlayer;
 
-    fn max_score(&self) -> usize {
-        WIDTH * HEIGHT
-    }
-
-    fn min_score(&self) -> isize {
-        -(WIDTH as isize * HEIGHT as isize)
+    fn max_moves(&self) -> Option<usize> {
+        Some(WIDTH * HEIGHT)
     }
 
     fn player(&self) -> Self::Player {
@@ -54,8 +50,8 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
         }
     }
 
-    fn score(&self) -> usize {
-        self.max_score() - self.move_count
+    fn move_count(&self) -> usize {
+        self.move_count
     }
 
     fn make_move(&mut self, m: &Self::Move) -> bool {

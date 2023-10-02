@@ -12,6 +12,8 @@ pub mod transposition;
 #[cfg(feature = "rayon")]
 use std::hash::BuildHasher;
 
+use game::upper_bound;
+
 use crate::game::{Game, ZeroSumPlayer};
 use crate::transposition::{Score, TranspositionTable};
 use std::hash::Hash;
@@ -34,9 +36,9 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
             let mut board = game.clone();
             board.make_move(&m);
             if player == board.player() {
-                return board.score() as isize;
+                return upper_bound(&board) - game.move_count() as isize - 1;
             } else {
-                return -(board.score() as isize);
+                return -(upper_bound(&board) - game.move_count() as isize - 1);
             }
         }
     }
@@ -45,7 +47,7 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     {
         let score = transposition_table
             .get(game)
-            .unwrap_or_else(|| Score::UpperBound(game.max_score() as isize));
+            .unwrap_or_else(|| Score::UpperBound(upper_bound(game)));
 
         match score {
             Score::UpperBound(max) => {
@@ -113,8 +115,8 @@ pub fn solve<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
 ) -> isize {
-    let mut alpha = game.min_score();
-    let mut beta = game.max_score() as isize + 1;
+    let mut alpha = -upper_bound(game);
+    let mut beta = upper_bound(game) + 1;
 
     // we're trying to guess the score of the board via null windows
     while alpha < beta {

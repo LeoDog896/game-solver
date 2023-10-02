@@ -67,7 +67,9 @@ pub trait Game {
     /// The implementation of this should be
     /// similar to either
     ///
-    /// ```rust
+    /// ```
+    /// use game_solver::game::ZeroSumPlayer;
+    ///
     /// fn player(&self) -> Self::Player {
     ///     if game.move_count % 2 == 0 {
     ///        ZeroSumPlayer::One
@@ -80,6 +82,8 @@ pub trait Game {
     /// or
     ///
     /// ```
+    /// use game_solver::game::NPlayer;
+    ///
     /// fn player(&self) -> Self::Player {
     ///     NPlayer(game.move_count % game.num_players)
     /// }
@@ -91,14 +95,11 @@ pub trait Game {
     /// because this does not keep track of the move count.
     fn player(&self) -> Self::Player;
 
-    /// Scores a position. The default implementation uses the size minus the number of moves (for finite games)
-    fn score(&self) -> usize;
+    /// Returns the amount of moves that have been played
+    fn move_count(&self) -> usize;
 
-    /// Get the max score of a game.
-    fn max_score(&self) -> usize;
-
-    /// Get the min score of a game. This should be negative.
-    fn min_score(&self) -> isize;
+    /// Get the max number of moves in a game, if any.
+    fn max_moves(&self) -> Option<usize>;
 
     /// Returns true if the move was valid, and makes the move if it was.
     fn make_move(&mut self, m: &Self::Move) -> bool;
@@ -122,4 +123,9 @@ pub trait Game {
     /// This function must exist for the current game,
     /// e.g. with tic tac toe, it must check if the board is full.
     fn is_draw(&self) -> bool;
+}
+
+/// Utility function to get the upper bound of a game.
+pub fn upper_bound<T: Game>(game: &T) -> isize {
+    return game.max_moves().map(|m| m as isize).unwrap_or(isize::MAX);
 }

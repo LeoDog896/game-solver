@@ -145,12 +145,12 @@ impl Game for Reversi {
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     type Player = ZeroSumPlayer;
 
-    fn max_score(&self) -> usize {
-        WIDTH * HEIGHT
+    fn max_moves(&self) -> Option<usize> {
+        Some(WIDTH * HEIGHT)
     }
 
-    fn min_score(&self) -> isize {
-        -(WIDTH as isize * HEIGHT as isize)
+    fn move_count(&self) -> usize {
+        self.move_count
     }
 
     fn player(&self) -> ZeroSumPlayer {
@@ -159,10 +159,6 @@ impl Game for Reversi {
         } else {
             ZeroSumPlayer::Two
         }
-    }
-
-    fn score(&self) -> usize {
-        self.max_score() - self.move_count
     }
 
     fn make_move(&mut self, m: &Self::Move) -> bool {

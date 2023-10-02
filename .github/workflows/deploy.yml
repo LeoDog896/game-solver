@@ -50,6 +50,7 @@ jobs:
           cp -r book/book dist
       - name: Copy homepage
         run: |
+          cp book/banner.webp dist/banner.webp
           cp book/landing.html dist/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v2
