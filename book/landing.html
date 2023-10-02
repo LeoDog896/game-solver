@@ -4,16 +4,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        main {
+            padding: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        div#logo {
+            width: 100%;
+            height: 200px;
+            background-image: url("./banner.webp");
+            background-size: cover;
+            background-position: 50% 25%;
+            margin-bottom: 1rem;
+        }
+
+        section#links {
+            display: flex;
+            flex-direction: row;
+            justify-content: left;
+            flex-wrap: wrap;
+        }
+
+        section#links a {
+            padding: 1rem;
+            border: 1px solid black;
+            margin: 0 1rem 0 0;
+            border-radius: 5px;
+            text-decoration: none;
+            color: black;
+            font-weight: bold;
+        }
+
+        section#links a:hover {
+            background-color: black;
+            color: white;
+        }
+        
+    </style>
     <title>game-solver</title>
 </head>
 <body>
-    <h1>game-solver</h1>
-    <h2>Solve any sequential game.</h2>
-    <ul>
-        <li><a href="./book">Read the Book</a></li>
-        <li><a href="./doc/game_solver">Check the docs</a></li>
-    </ul>
+    <main>
+        <!-- image from https://pxhere.com/en/photo/1192211 -->
+        <div id="logo"></div>
+        <h1>game-solver</h1>
+        <p>
+            rigirous analysis of 
+            <a href="https://en.wikipedia.org/wiki/Combinatorial_game_theory">combinatorial games</a>
+            through brute force, to derive <a href="https://en.wikipedia.org/wiki/God%27s_algorithm">God's algorithm</a>.
+        </p>
+        <section id="links">
+            <a href="./book">Read the Book</a>
+            <a href="./doc/game_solver">Check the docs</a>
+            <a href="https://github.com/LeoDog896/game-solver">View on GitHub</a>
+            <a href="https://crates.io/crates/game-solver">View on lib.rs</a>
+        </section>
 
-    <p><a href="https://github.com/LeoDog896/game-solver">source on github</a>. contributions welcome!</p>
+        <footer><p>Contributions welcome! made with &lt;3 by <a href="https://github.com/LeoDog896">leo</a></p></footer>
+    </main>
 </body>
 </html>
