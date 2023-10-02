@@ -59,12 +59,8 @@ impl Game for OrderAndChaos {
     /// Define Nimbers as a zero-sum game
     type Player = ZeroSumPlayer;
 
-    fn max_score(&self) -> usize {
-        WIDTH * HEIGHT
-    }
-
-    fn min_score(&self) -> isize {
-        -(self.max_score() as isize)
+    fn max_moves(&self) -> Option<usize> {
+        Some(WIDTH * HEIGHT)
     }
 
     fn player(&self) -> ZeroSumPlayer {
@@ -75,12 +71,8 @@ impl Game for OrderAndChaos {
         }
     }
 
-    // to encourage the AI to win as fast as possible,
-    // we want to minimize the amount of moves it takes to win.
-    // thus, we penalize the AI for taking more moves
-    // by removing points for every move it takes.
-    fn score(&self) -> usize {
-        self.max_score() - self.move_count
+    fn move_count(&self) -> usize {
+        self.move_count
     }
 
     fn make_move(&mut self, m: &Self::Move) -> bool {
