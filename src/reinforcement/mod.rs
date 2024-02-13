@@ -141,7 +141,7 @@ where
         let actions = T::all_actions();
 
         let device: D = Default::default();
-        let online = device.build_module::<NN, Dtype>();
+        let online = device.build_module::<NN, Dtype>(device);
         let target = online.clone();
 
         // we only need gradients for the online network
