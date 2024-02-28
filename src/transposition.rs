@@ -1,7 +1,7 @@
 //! Transposition tables for memoization.
 
 #[cfg(feature = "rayon")]
-use {moka::sync::Cache, std::sync::Arc, sysinfo::SystemExt};
+use {moka::future::Cache, std::sync::Arc, sysinfo::SystemExt};
 
 use crate::game::Game;
 

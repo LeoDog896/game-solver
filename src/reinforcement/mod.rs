@@ -1,14 +1,12 @@
 mod collate;
 
 use dfdx::{
+    data::*,
     losses,
-    nn::builders::*,
-    optim::Adam,
     prelude::*,
-    shapes::{Const, Rank1, Rank2, Shape},
+    shapes::{Const, Rank1, Shape},
     tensor::{AsArray, AutoDevice, Gradients, Storage, Tensor, TensorFrom, TensorToArray, Trace},
     tensor_ops::{AdamConfig, Device, WeightDecay},
-    data::*
 };
 
 use dfdx::data::IteratorBatchExt;
@@ -17,9 +15,9 @@ use rand::seq::SliceRandom;
 use std::{collections::VecDeque, f32::consts::E};
 
 use crate::game::Game;
-use crate::reinforcement::collate::{Collate, IteratorCollateExt};
+use crate::reinforcement::collate::IteratorCollateExt;
 
-type Dtype = f32;
+type ModelDtype = f32;
 
 trait EveryMove<M: Eq> {
     fn every_move(&self) -> Vec<M>;
@@ -81,7 +79,7 @@ trait Learnable<T: Clone, Input, const O: usize> {
 }
 
 /// Type utility to build a module on a device.
-type Built<D: Storage<Dtype>, N: BuildOnDevice<D, Dtype>> = N::Built;
+type Built<D: Storage<ModelDtype>, N: BuildOnDevice<D, ModelDtype>> = N::Built;
 
 /// An Agent is a DDQN agent that learns to play a game by playing against itself.
 ///
@@ -90,64 +88,60 @@ type Built<D: Storage<Dtype>, N: BuildOnDevice<D, Dtype>> = N::Built;
 ///
 /// This means less fine tuning, and more focus on analysis.
 struct Agent<
-    T: Game + Clone + Learnable<T::Move, Tensor<Input, Dtype, D>, O>,
+    T: Game + Clone + Learnable<T::Move, Tensor<Input, ModelDtype, AutoDevice>, O>,
     Input: Shape + AddDim<usize>,
     const O: usize,
-    NN: BuildOnDevice<D, Dtype> + ZeroSizedModule,
-    D: Device<Dtype> + DeviceBuildExt + TensorToArray<Rank1<O>, Dtype, Array = [Dtype; O]> = AutoDevice,
+    NN: BuildOnDevice<ModelDtype, AutoDevice>,
+
 > {
     /// List of all possible actions, legal or not given the current state.
     actions: [T::Move; O],
     /// The online network, which is the network that is used to make moves.
-    online: Built<D, NN>,
+    online: Built<AutoDevice, NN>,
     /// The target network, which is the network that is used to calculate the target values.
-    target: Built<D, NN>,
+    target: Built<AutoDevice, NN>,
     /// The optimizer used to update the online network.
-    optimizer: Adam<Built<D, NN>, Dtype, D>,
+    optimizer: Adam<Built<AutoDevice, NN>, ModelDtype, AutoDevice>,
     /// The replay memory used to store transitions.
     memory: ReplayMemory<T, T::Move>,
     /// The gradients of the online network.
-    gradients: Gradients<f32, D>,
+    gradients: Gradients<ModelDtype, AutoDevice>,
     /// The number of steps that the agent has taken. This is used to decide how much randomness to add to the agent's moves.
     steps_done: usize,
     /// The device that the agent is on. (CPU or GPU)
-    device: D,
+    device: AutoDevice,
     _phantom: std::marker::PhantomData<Input>,
 }
 
 const BATCH_SIZE: usize = 128;
 
 impl<
-        T: Game + Clone + Learnable<T::Move, Tensor<Input, Dtype, D>, O>,
+        T: Game + Clone + Learnable<T::Move, Tensor<Input, ModelDtype, AutoDevice>, O>,
         Input: Shape + AddDim<usize>,
         const O: usize,
-        NN: BuildOnDevice<D, f32> + ZeroSizedModule,
-        D: Device<Dtype>
-            + DeviceBuildExt
-            + TensorToArray<Rank1<O>, Dtype, Array = [Dtype; O]>
-            + Storage<Tensor<Input, f32, D>>
-            + TensorFromVec<Tensor<Input, f32, D>>
-    > Agent<T, Input, O, NN, D>
+        NN: BuildOnDevice<ModelDtype, AutoDevice>,
+    > Agent<T, Input, O, NN>
 where
     // moves must be comparable - this allows us to return the actual move instead of the index of the move
     T::Move: PartialEq<T::Move>,
     // the network must be cloneable (for us to build a policy network and a target network),
     // and must return a 1d tensor (for the output of the network to be the move scores per move idx)
-    Built<D, NN>: Clone + Module<Tensor<Input, Dtype, D>, Output = Tensor<Rank1<O>, Dtype, D>>,
+    Built<AutoDevice, NN>:
+        Clone + Module<Tensor<Input, ModelDtype, AutoDevice>, Output = Tensor<Rank1<O>, ModelDtype, AutoDevice>>,
 {
     pub fn new() -> Self {
         const LR: f64 = 1e-4;
 
         let actions = T::all_actions();
 
-        let device: D = Default::default();
-        let online = device.build_module::<NN, Dtype>(device);
+        let device = AutoDevice::default();
+        let online = device.build_module::<NN, ModelDtype>(device);
         let target = online.clone();
 
         // we only need gradients for the online network
         let gradients = online.alloc_grads();
 
-        let optimizer: Adam<_, Dtype, _> = Adam::new(
+        let optimizer: Adam<_, ModelDtype, _> = Adam::new(
             &online,
             AdamConfig {
                 lr: LR,
@@ -174,14 +168,14 @@ where
 
     fn act(&mut self, state: &T) -> T::Move {
         let legal_moves = state.possible_moves().collect::<Vec<_>>();
-        let sample = rand::random::<f32>();
+        let sample = rand::random::<ModelDtype>();
 
         // small decay function, where f(x) = p + (p_0 - p) * e^(-x / d)
-        const EPS_START: f32 = 0.9;
-        const EPS_END: f32 = 0.05;
+        const EPS_START: ModelDtype = 0.9;
+        const EPS_END: ModelDtype = 0.05;
         const EPS_DECAY: usize = 100;
         let eps_threshold = EPS_END
-            + (EPS_START - EPS_END) * E.powf(-1. * self.steps_done as f32 / EPS_DECAY as f32);
+            + (EPS_START - EPS_END) * E.powf(-1. * self.steps_done as ModelDtype / EPS_DECAY as ModelDtype);
 
         self.steps_done += 1;
         // use the neural network to make a move
@@ -227,14 +221,14 @@ where
         self.target = self.online.clone();
     }
 
-    fn td_estimate(&self, state: &T, action: &T::Move) -> f32 {
+    fn td_estimate(&self, state: &T, action: &T::Move) -> ModelDtype {
         let move_scores = self.online.forward(state.observe());
         let action_idx = self.actions.iter().position(|a| a == action).unwrap();
         move_scores.array().to_vec()[action_idx]
     }
 
-    fn td_target(&self, reward: usize, next_state: &T, done: bool) -> f32 {
-        const GAMMA: f32 = 0.99;
+    fn td_target(&self, reward: usize, next_state: &T, done: bool) -> ModelDtype {
+        const GAMMA: ModelDtype = 0.99;
         let next_state_q = self.online.forward(next_state.observe());
         let best_action = next_state_q
             .array()
@@ -245,10 +239,14 @@ where
             .unwrap()
             .0;
         let next_q = self.target.forward(next_state.observe()).array().to_vec()[best_action];
-        (reward as f32 + (1. - done as u8 as f32) * GAMMA * next_q).into()
+        (reward as ModelDtype + (1. - done as u8 as ModelDtype) * GAMMA * next_q).into()
     }
 
-    fn update_q_online(&mut self, predict: Tensor<Rank1<O>, Dtype, D>, target: Tensor<Rank1<O>, Dtype, D>) -> f32 {
+    fn update_q_online(
+        &mut self,
+        predict: Tensor<Rank1<O>, ModelDtype, AutoDevice>,
+        target: Tensor<Rank1<O>, ModelDtype, AutoDevice>,
+    ) -> ModelDtype {
         let loss = losses::smooth_l1_loss(predict, target, 0.01);
         self.online.zero_grads(&mut self.gradients);
         self.gradients = loss.backward();
@@ -272,8 +270,8 @@ where
                     state.observe(),
                     next_state.observe(),
                     self.device
-                        .tensor(self.actions.iter().position(|a| a == &action).unwrap() as Dtype),
-                    self.device.tensor(reward as Dtype),
+                        .tensor(self.actions.iter().position(|a| a == &action).unwrap() as ModelDtype),
+                    self.device.tensor(reward as ModelDtype),
                 )
             })
             .batch_exact(Const::<BATCH_SIZE>)
@@ -281,9 +279,7 @@ where
             .stack()
             .collect();
 
-            
         (a, b, c, d)
-
     }
 
     fn learn(&mut self) {
@@ -308,7 +304,6 @@ where
         }
 
         let transitions = self.sample();
-
 
         // let td_est = states
         //     .iter()
