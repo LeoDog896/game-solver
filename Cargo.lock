@@ -185,7 +185,7 @@ checksum = "f1871a911a2b9a3f66a285896a719159985683bf9903aa2cf89e0c9f53e14552"
 [[package]]
 name = "dfdx"
 version = "0.13.0"
-source = "git+https://github.com/coreylowman/dfdx.git?rev=4615ac1#4615ac105a16f45e45d6ccfd403099daf437a944"
+source = "git+https://github.com/coreylowman/dfdx.git?rev=4722a99#4722a99d303f347d6088d95867d007c75ca6dd78"
 dependencies = [
  "dfdx-core",
  "dfdx-derives",
@@ -196,7 +196,7 @@ dependencies = [
 [[package]]
 name = "dfdx-core"
 version = "0.13.0"
-source = "git+https://github.com/coreylowman/dfdx.git?rev=4615ac1#4615ac105a16f45e45d6ccfd403099daf437a944"
+source = "git+https://github.com/coreylowman/dfdx.git?rev=4722a99#4722a99d303f347d6088d95867d007c75ca6dd78"
 dependencies = [
  "cudarc",
  "gemm",
@@ -210,7 +210,7 @@ dependencies = [
 [[package]]
 name = "dfdx-derives"
 version = "0.13.0"
-source = "git+https://github.com/coreylowman/dfdx.git?rev=4615ac1#4615ac105a16f45e45d6ccfd403099daf437a944"
+source = "git+https://github.com/coreylowman/dfdx.git?rev=4722a99#4722a99d303f347d6088d95867d007c75ca6dd78"
 dependencies = [
  "dfdx-core",
  "proc-macro2",
@@ -466,9 +466,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.12.1"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]

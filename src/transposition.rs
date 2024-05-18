@@ -1,7 +1,8 @@
 //! Transposition tables for memoization.
 
 #[cfg(feature = "rayon")]
-use {moka::future::Cache, std::sync::Arc, sysinfo::SystemExt};
+use moka::future::Cache;
+use std::sync::Arc;
 
 use crate::game::Game;
 
@@ -48,7 +49,8 @@ impl<K: Eq + Hash + Game, S: BuildHasher + Default> TranspositionTable<K> for Ha
     }
 }
 
-/// Complex transposition table that uses an underlying concurrent LFU cache,
+/// Powerful transposition table that uses an underlying concurrent
+/// [LFU](https://en.wikipedia.org/wiki/Least_frequently_used) cache,
 /// powered by [moka](https://github.com/moka-rs/moka).
 #[cfg(feature = "rayon")]
 pub struct TranspositionCache<K: Eq + Hash + Game + Send + Sync + 'static, S: BuildHasher + Default>(
@@ -70,7 +72,8 @@ impl<
         )
     }
 
-    /// Create a new transposition cache with an estimated 3/4ths of the remaining memory.
+    /// Create a new transposition cache with
+    /// an estimated 3/4ths of the remaining memory.
     #[must_use]
     pub fn new() -> Self {
         let score_size = std::mem::size_of::<Score>() as u64;

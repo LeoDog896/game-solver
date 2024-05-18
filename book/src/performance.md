@@ -28,7 +28,7 @@
 
 The [Rust Performance Book](https://nnethercote.github.io/perf-book/) gives great general optimizations, but there are also important steps you can make when working with games.
 
-### General tips:
+### General tips
 
 - **Always remember to compile with --release**.
 - `RUSTFLAGS="--emit=asm -C target-cpu=native"` is a great way to do basic compiler optimizations.
@@ -49,6 +49,7 @@ If possible, try to "guess" the score of a move, and sort the moves by that scor
 Use efficient bitboards - you can look at the examples for inspiration, but make sure your board representation is fast, and *preferably* doesn't need allocation.
 
 Good starting points:
+
 - [BitVec](https://github.com/ferrilab/bitvec) for bool-only arrays
 - [ndarray](https://github.com/rust-ndarray/ndarray) for nd arrays (instead of `Vec<Vec<...>>`)
 
