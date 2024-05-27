@@ -13,11 +13,6 @@ edition = "2021"
 "rayon" = ["dep:rayon", "xxhash", "dep:sysinfo", "dep:moka"]
 "reinforcement" = ["dep:rand", "dep:dfdx", "dep:itertools"]
 
-[dev-dependencies]
-anyhow = "1.0.72"
-array2d = "0.3.0"
-ndarray = "0.15.6"
-
 [dependencies]
 dfdx = { git = "https://github.com/coreylowman/dfdx.git", rev = "4722a99", optional = true }
 moka = { version = "0.12", optional = true, features = ["future"] }

@@ -200,9 +200,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.75"
+version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
+checksum = "b3d1d046238990b9cf5bcde22a3fb3584ee5cf65fb2765f454ed428c7a0063da"
 
 [[package]]
 name = "arboard"
@@ -221,9 +221,9 @@ dependencies = [
 
 [[package]]
 name = "array2d"
-version = "0.3.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79093d31d0a9c7832c71ad74dd945b7861f721e6f242aa67be253a5eecbac937"
+checksum = "d8b39cb2c1bf5a7c0dd097aa95ab859cf87dab5a4328900f5388942dc1889f74"
 
 [[package]]
 name = "as-raw-xcb-connection"
@@ -1481,13 +1481,10 @@ dependencies = [
 name = "game-solver"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "array2d",
  "dfdx",
  "futures",
  "itertools",
  "moka",
- "ndarray",
  "rand",
  "rayon",
  "sysinfo",
@@ -1496,6 +1493,17 @@ dependencies = [
 
 [[package]]
 name = "games"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "array2d",
+ "game-solver",
+ "itertools",
+ "ndarray",
+]
+
+[[package]]
+name = "games-ui"
 version = "0.0.0"
 dependencies = [
  "eframe",
@@ -2180,11 +2188,10 @@ dependencies = [
 
 [[package]]
 name = "num-integer"
-version = "0.1.45"
+version = "0.1.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "225d3389fb3509a24c93f5c29eb6bde2586b98d9f016636dff58d7c6f7569cd9"
+checksum = "7969661fd2958a5cb096e56c8e1ad0444ac2bbcd0061bd28660485a44879858f"
 dependencies = [
- "autocfg",
  "num-traits",
 ]
 
