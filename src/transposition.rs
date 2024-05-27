@@ -104,11 +104,11 @@ impl<
     > TranspositionTable<K> for Arc<TranspositionCache<K, S>>
 {
     fn get(&self, board: &K) -> Option<Score> {
-        self.0.get(board)
+        futures::executor::block_on(self.0.get(board))
     }
 
     fn insert(&mut self, board: K, score: Score) {
-        self.0.insert(board, score);
+        futures::executor::block_on(self.0.insert(board, score));
     }
 
     fn has(&self, board: &K) -> bool {
