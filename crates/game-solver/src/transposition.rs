@@ -2,6 +2,7 @@
 
 #[cfg(feature = "rayon")]
 use moka::future::Cache;
+#[cfg(feature = "rayon")]
 use std::sync::Arc;
 
 use crate::game::Game;

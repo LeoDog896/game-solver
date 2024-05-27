@@ -1,0 +1,22 @@
+[package]
+name = "games"
+description = "List of games and their UI counterparts for game-solver."
+license = "MPL"
+edition = "2021"
+
+[dependencies]
+eframe = { version = "0.27.2", default-features = false, features = [
+    "accesskit",
+    "default_fonts",
+    "glow",
+    "persistence"
+]}
+egui = "0.27.2"
+game-solver = { path = "../game-solver", features = ["rayon", "reinforcement"] }
+serde = { version = "1.0.203", features = ["derive"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+env_logger = "0.11"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-futures = "0.4"

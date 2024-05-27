@@ -1,6 +1,6 @@
 # Examples
 
-List of examples for `game-solver`.
+List of games for `game-solver`.
 
 - [chomp.rs](./chomp.rs) - implementation of [Chomp](https://en.wikipedia.org/wiki/Chomp).
 - [domineering.rs](./domineering.rs) - implementation of [Domineering](https://en.wikipedia.org/wiki/Domineering).

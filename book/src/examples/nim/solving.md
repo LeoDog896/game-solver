@@ -78,7 +78,7 @@ And to use the CLI, do:
 cargo run --features rayon --example nim 3,5,7
 ```
 
-```
+```txt
 Heap 0: 3
 Heap 1: 5
 Heap 2: 7

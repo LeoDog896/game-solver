@@ -1,0 +1,32 @@
+[package]
+name = "game-solver"
+description = "Solve any combinatorial game"
+license = "MPL"
+repository = "https://github.com/LeoDog896/game-solver"
+keywords = ["combinatorial-game", "negamax", "minimax", "game-theory"]
+categories = ["game", "algorithm"]
+version = "0.1.0"
+edition = "2021"
+
+[features]
+"xxhash" = ["dep:twox-hash"]
+"rayon" = ["dep:rayon", "xxhash", "dep:sysinfo", "dep:moka"]
+"reinforcement" = ["dep:rand", "dep:dfdx", "dep:itertools"]
+
+[dev-dependencies]
+anyhow = "1.0.72"
+array2d = "0.3.0"
+ndarray = "0.15.6"
+
+[dependencies]
+dfdx = { git = "https://github.com/coreylowman/dfdx.git", rev = "4722a99", optional = true }
+moka = { version = "0.12", optional = true, features = ["future"] }
+rand = { version = "0.8", optional = true }
+rayon = { version = "1.8", optional = true }
+sysinfo = { version = "0.30", optional = true }
+twox-hash = { version = "1.6", optional = true }
+itertools = { version = "0.13", optional = true }
+futures = "0.3.30"
+
+[package.metadata.docs.rs]
+all-features = true
