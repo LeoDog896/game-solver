@@ -1,3 +1,5 @@
+pub mod util;
+
 pub mod chomp;
 pub mod domineering;
 pub mod nim;

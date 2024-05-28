@@ -1541,6 +1541,7 @@ dependencies = [
  "game-solver",
  "itertools",
  "ndarray",
+ "ordinal",
 ]
 
 [[package]]
@@ -2456,6 +2457,15 @@ checksum = "9aa2b01e1d916879f73a53d01d1d6cee68adbb31d6d9177a8cfce093cced1d50"
 dependencies = [
  "futures-core",
  "pin-project-lite",
+]
+
+[[package]]
+name = "ordinal"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c80c1530f46e9d8985706d7deb80b83172b250538902f607dea6cd6028851083"
+dependencies = [
+ "num-integer",
 ]
 
 [[package]]

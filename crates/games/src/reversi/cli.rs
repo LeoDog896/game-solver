@@ -1,7 +1,7 @@
 use std::fmt;
 
 use clap::Args;
-use crate::reversi::{Reversi, ReversiMove};
+use crate::{reversi::{Reversi, ReversiMove}, util::move_natural::NaturalMove};
 use game_solver::{game::{Game, ZeroSumPlayer}, par_move_scores};
 
 use super::{HEIGHT, WIDTH};
@@ -29,7 +29,7 @@ impl fmt::Display for Reversi {
 
         for y in 0..HEIGHT {
             for x in 0..WIDTH {
-                let character = if moves.contains(&ReversiMove((x, y))) {
+                let character = if moves.contains(&NaturalMove([x, y])) {
                     '*'
                 } else {
                     player_to_char(*self.board.get(x, y).unwrap())

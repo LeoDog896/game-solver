@@ -3,17 +3,18 @@
 //!
 //! More information: <https://en.wikipedia.org/wiki/Reversi>
 
-pub mod mv;
 pub mod cli;
 
 use array2d::Array2D;
 use game_solver::game::{Game, ZeroSumPlayer};
 use std::hash::Hash;
 
-use self::mv::ReversiMove;
+use crate::util::move_natural::NaturalMove;
 
 pub const WIDTH: usize = 6;
 pub const HEIGHT: usize = 6;
+
+pub type ReversiMove = NaturalMove<2>;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Reversi {
@@ -51,7 +52,7 @@ impl Reversi {
     }
 
     fn is_valid_move(&self, m: &<Self as Game>::Move) -> Option<Vec<<Self as Game>::Move>> {
-        let cell = *self.board.get(m.0.0, m.0.1).unwrap();
+        let cell = *self.board.get(m.0[0], m.0[1]).unwrap();
 
         if cell.is_some() {
             return None;
@@ -73,8 +74,8 @@ impl Reversi {
         ];
 
         for (x_dir, y_dir) in directions {
-            let mut x = m.0.0;
-            let mut y = m.0.1;
+            let mut x = m.0[0];
+            let mut y = m.0[1];
 
             x = x.wrapping_add_signed(*x_dir);
             y = y.wrapping_add_signed(*y_dir);
@@ -104,11 +105,11 @@ impl Reversi {
                     x = x.checked_add_signed(-*x_dir).unwrap();
                     y = y.checked_add_signed(-*y_dir).unwrap();
 
-                    if x == m.0.0 && y == m.0.1 {
+                    if x == m.0[0] && y == m.0[1] {
                         break;
                     }
 
-                    tiles_to_flip.push(ReversiMove((x, y)));
+                    tiles_to_flip.push(NaturalMove([x, y]));
                 }
             }
         }
@@ -166,10 +167,10 @@ impl Game for Reversi {
     fn make_move(&mut self, m: &Self::Move) -> bool {
         let move_set = self.is_valid_move(m).unwrap();
 
-        self.board.set(m.0.0, m.0.1, Some(self.player())).unwrap();
+        self.board.set(m.0[0], m.0[1], Some(self.player())).unwrap();
 
         for idx in move_set {
-            self.board.set(idx.0.0, idx.0.1, Some(self.player())).unwrap();
+            self.board.set(idx.0[0], idx.0[1], Some(self.player())).unwrap();
         }
 
         self.move_count += 1;
@@ -181,8 +182,8 @@ impl Game for Reversi {
         let mut moves = Vec::new();
         for x in 0..WIDTH {
             for y in 0..HEIGHT {
-                if self.is_valid_move(&ReversiMove((x, y))).is_some() {
-                    moves.push(ReversiMove((x, y)));
+                if self.is_valid_move(&NaturalMove([x, y])).is_some() {
+                    moves.push(NaturalMove([x, y]));
                 }
             }
         }
