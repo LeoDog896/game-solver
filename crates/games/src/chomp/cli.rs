@@ -1,20 +1,30 @@
-use std::{collections::HashMap, env::args};
+use std::collections::HashMap;
 
+use clap::Args;
 use game_solver::{game::Game, move_scores};
 
 use crate::chomp::Chomp;
 
-pub fn main() {
-    let mut game = Chomp::new(6, 4);
+use super::ChompMove;
+
+#[derive(Args)]
+pub struct ChompArgs {
+    // TODO: width default = 6, height default = 4
+    /// The height of the game
+    height: usize,
+    /// The width of the game
+    width: usize,
+    /// Chomp moves, ordered as x1-y1 x2-y2 ...
+    #[arg(value_parser = clap::value_parser!(ChompMove))]
+    moves: Vec<ChompMove>
+}
+
+pub fn main(args: ChompArgs) {
+    let mut game = Chomp::new(args.width, args.height);
 
     // parse every move in args, e.g. 0-0 1-1 in args
-    args().skip(1).for_each(|arg| {
-        let numbers: Vec<usize> = arg
-            .split('-')
-            .map(|num| num.parse::<usize>().expect("Not a number!"))
-            .collect();
-
-        game.make_move(&(numbers[0], numbers[1]));
+    args.moves.iter().for_each(|arg| {
+        game.make_move(arg);
     });
 
     print!("{}", game);
@@ -34,7 +44,7 @@ pub fn main() {
                 println!("\n\nBest moves @ score {}:", score);
                 current_move_score = Some(score);
             }
-            print!("({}, {}), ", game_move.0, game_move.1);
+            print!("({}), ", game_move);
         }
         println!();
     }

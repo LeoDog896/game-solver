@@ -1,29 +1,31 @@
-use std::env::args;
-
+use clap::Args;
 use game_solver::{game::Game, par_move_scores};
 use ndarray::IntoDimension;
 
 use crate::tic_tac_toe::{format_dim, TicTacToe};
 
-pub fn main() {
-    // get the amount of dimensions from the first argument
-    let dim = args()
-        .nth(1)
-        .expect("Please provide a dimension!")
-        .parse::<usize>()
-        .expect("Not a number!");
+#[derive(Args)]
+pub struct TicTacToeArgs {
+    /// The amount of dimensions in the game.
+    dimensions: usize,
+    /// The size of the board - i.e. with two dimensions
+    /// and a size of three, the board would look like
+    /// 
+    /// ```txt
+    /// * * *
+    /// * * *
+    /// * * *
+    /// ```
+    size: usize,
+    /// The moves to make in the game, by dimension and index in that dimension.
+    moves: Vec<String>
+}
 
-    // get the size of the board from the second argument
-    let size = args()
-        .nth(2)
-        .expect("Please provide a game size")
-        .parse::<usize>()
-        .expect("Not a number!");
-
-    let mut game = TicTacToe::new(dim, size);
+pub fn main(args: TicTacToeArgs) {
+    let mut game = TicTacToe::new(args.dimensions, args.size);
 
     // parse every move in args, e.g. 0-0 1-1 in args
-    args().skip(3).for_each(|arg| {
+    args.moves.iter().for_each(|arg| {
         let numbers: Vec<usize> = arg
             .split('-')
             .map(|num| num.parse::<usize>().expect("Not a number!"))

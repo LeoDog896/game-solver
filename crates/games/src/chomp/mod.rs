@@ -2,7 +2,7 @@
 //! The bottom right square is poisoned, and the players take turns eating squares.
 //! Every square they eat, every square to the right and above it is also eaten (inclusively)
 //!
-//! This is a flipped version of the traiditional [Chomp](https://en.wikipedia.org/wiki/Chomp) game.
+//! This is a flipped version of the traditional [Chomp](https://en.wikipedia.org/wiki/Chomp) game.
 //!
 //! This is not the best example for analysis via a combinatorial game, as not only is it
 //! impartial (making it analyzable via the Sprague-Grundy theorem), but it is also trivially
@@ -20,6 +20,8 @@ use std::{
     fmt::{Display, Formatter},
     hash::Hash,
 };
+
+use crate::util::move_natural::NaturalMove;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Chomp {
@@ -44,8 +46,10 @@ impl Chomp {
     }
 }
 
+pub type ChompMove = NaturalMove<2>;
+
 impl Game for Chomp {
-    type Move = (usize, usize);
+    type Move = ChompMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     type Player = ZeroSumPlayer;
 
@@ -66,9 +70,9 @@ impl Game for Chomp {
     }
 
     fn make_move(&mut self, m: &Self::Move) -> bool {
-        if *self.board.get(m.0, m.1).unwrap() {
-            for i in m.0..self.width {
-                for j in 0..=m.1 {
+        if *self.board.get(m.0[0], m.0[1]).unwrap() {
+            for i in m.0[0]..self.width {
+                for j in 0..=m.0[1] {
                     self.board.set(i, j, false).unwrap();
                 }
             }
@@ -84,7 +88,7 @@ impl Game for Chomp {
         for i in (0..self.height).rev() {
             for j in 0..self.width {
                 if *self.board.get(j, i).unwrap() {
-                    moves.push((j, i));
+                    moves.push(NaturalMove([j, i]));
                 }
             }
         }
@@ -137,29 +141,29 @@ mod tests {
         move_scores.sort();
 
         let mut new_scores = vec![
-            ((2, 2), 13),
-            ((5, 0), -12),
-            ((4, 0), -12),
-            ((3, 0), -12),
-            ((2, 0), -12),
-            ((0, 0), -12),
-            ((5, 1), -12),
-            ((4, 1), -12),
-            ((3, 1), -12),
-            ((2, 1), -12),
-            ((0, 1), -12),
-            ((5, 2), -12),
-            ((4, 2), -12),
-            ((3, 2), -12),
-            ((5, 3), -12),
-            ((1, 0), -16),
-            ((1, 1), -16),
-            ((1, 2), -16),
-            ((4, 3), -16),
-            ((3, 3), -16),
-            ((2, 3), -16),
-            ((0, 2), -22),
-            ((1, 3), -22),
+            (NaturalMove([2, 2]), 13),
+            (NaturalMove([5, 0]), -12),
+            (NaturalMove([4, 0]), -12),
+            (NaturalMove([3, 0]), -12),
+            (NaturalMove([2, 0]), -12),
+            (NaturalMove([0, 0]), -12),
+            (NaturalMove([5, 1]), -12),
+            (NaturalMove([4, 1]), -12),
+            (NaturalMove([3, 1]), -12),
+            (NaturalMove([2, 1]), -12),
+            (NaturalMove([0, 1]), -12),
+            (NaturalMove([5, 2]), -12),
+            (NaturalMove([4, 2]), -12),
+            (NaturalMove([3, 2]), -12),
+            (NaturalMove([5, 3]), -12),
+            (NaturalMove([1, 0]), -16),
+            (NaturalMove([1, 1]), -16),
+            (NaturalMove([1, 2]), -16),
+            (NaturalMove([4, 3]), -16),
+            (NaturalMove([3, 3]), -16),
+            (NaturalMove([2, 3]), -16),
+            (NaturalMove([0, 2]), -22),
+            (NaturalMove([1, 3]), -22),
         ];
 
         new_scores.sort();

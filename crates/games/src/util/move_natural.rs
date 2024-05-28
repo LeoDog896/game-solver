@@ -4,7 +4,7 @@ use std::{fmt::Display, iter, str::FromStr};
 
 use itertools::Itertools;
 
-#[derive(Clone, Debug, Copy, PartialEq)]
+#[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct NaturalMove<const LENGTH: usize>(pub [usize; LENGTH]);
 
 impl<const LENGTH: usize> FromStr for NaturalMove<LENGTH> {

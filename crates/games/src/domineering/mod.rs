@@ -9,10 +9,7 @@ pub mod cli;
 use array2d::Array2D;
 use game_solver::game::{Game, ZeroSumPlayer};
 
-use std::{
-    fmt::{Display, Formatter},
-    hash::Hash,
-};
+use std::hash::Hash;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Domineering<const WIDTH: usize, const HEIGHT: usize> {
@@ -108,22 +105,6 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
 
     fn is_draw(&self) -> bool {
         self.move_count == WIDTH * HEIGHT
-    }
-}
-
-impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEIGHT> {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
-        for i in 0..HEIGHT {
-            for j in 0..WIDTH {
-                if *self.board.get(j, i).unwrap() {
-                    write!(f, "X")?;
-                } else {
-                    write!(f, ".")?;
-                }
-            }
-            writeln!(f)?;
-        }
-        Ok(())
     }
 }
 

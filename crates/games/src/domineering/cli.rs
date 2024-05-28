@@ -1,8 +1,26 @@
-use std::{collections::HashMap, env::args};
+use std::{collections::HashMap, env::args, fmt::{Display, Formatter}};
 
 use game_solver::{game::Game, move_scores};
 
 use crate::domineering::DomineeringGame;
+
+use super::Domineering;
+
+impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEIGHT> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+        for i in 0..HEIGHT {
+            for j in 0..WIDTH {
+                if *self.board.get(j, i).unwrap() {
+                    write!(f, "X")?;
+                } else {
+                    write!(f, ".")?;
+                }
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
+}
 
 pub fn main() {
     let mut game = DomineeringGame::new();
