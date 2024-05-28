@@ -2,7 +2,7 @@ use std::{env::args, fmt::{Display, Formatter}};
 
 use game_solver::{game::Game, par_move_scores};
 
-use crate::nim::Nim;
+use crate::{nim::Nim, util::move_natural::NaturalMove};
 
 impl Display for Nim {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
@@ -33,7 +33,7 @@ pub fn main() {
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
-        game.make_move(&(numbers[0], numbers[1]));
+        game.make_move(&NaturalMove([numbers[0], numbers[1]]));
     });
 
     print!("{}", game);
@@ -55,7 +55,7 @@ pub fn main() {
                 println!("\n\nBest moves @ score {}:", score);
                 current_move_score = Some(score);
             }
-            print!("({}, {}), ", game_move.0, game_move.1);
+            print!("({}), ", game_move);
         }
         println!();
     }

@@ -10,12 +10,16 @@ pub mod cli;
 use game_solver::game::{Game, ZeroSumPlayer};
 use std::hash::Hash;
 
+use crate::util::move_natural::NaturalMove;
+
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Nim {
     heaps: Vec<usize>,
     move_count: usize,
     max_score: usize,
 }
+
+type NimMove = NaturalMove<2>;
 
 impl Nim {
     /// Create a new game of Nim with the given heaps,
@@ -32,7 +36,7 @@ impl Nim {
 
 impl Game for Nim {
     /// where Move is a tuple of the heap index and the number of objects to remove
-    type Move = (usize, usize);
+    type Move = NimMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     /// Define Nimbers as a zero-sum game
     type Player = ZeroSumPlayer;
@@ -54,7 +58,7 @@ impl Game for Nim {
     }
 
     fn make_move(&mut self, m: &Self::Move) -> bool {
-        let (heap, amount) = *m;
+        let [heap, amount] = m.0;
         // check for indexing OOB
         if heap >= self.heaps.len() {
             return false;
@@ -76,7 +80,7 @@ impl Game for Nim {
         // loop through every heap and add every possible move
         for (i, &heap) in self.heaps.iter().enumerate() {
             for j in 1..=heap {
-                moves.push((i, j));
+                moves.push(NaturalMove([i, j]));
             }
         }
 
