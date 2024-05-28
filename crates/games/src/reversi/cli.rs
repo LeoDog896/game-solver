@@ -1,9 +1,10 @@
-use std::str::FromStr;
+use std::fmt;
 
 use clap::Args;
-use itertools::Itertools;
 use crate::reversi::{Reversi, ReversiMove};
-use game_solver::{game::Game, par_move_scores};
+use game_solver::{game::{Game, ZeroSumPlayer}, par_move_scores};
+
+use super::{HEIGHT, WIDTH};
 
 #[derive(Args)]
 pub struct ReversiArgs {
@@ -12,34 +13,34 @@ pub struct ReversiArgs {
     moves: Vec<ReversiMove>
 }
 
-impl FromStr for ReversiMove {
-    type Err = String;
+fn player_to_char(player: Option<ZeroSumPlayer>) -> char {
+    match player {
+        Some(ZeroSumPlayer::One) => 'X',
+        Some(ZeroSumPlayer::Two) => 'O',
+        None => '-',
+    }
+}
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let numbers = s.split("-").collect::<Vec<_>>();
+impl fmt::Display for Reversi {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Current player: {}", player_to_char(Some(self.player())))?;
 
-        if numbers.len() != 2 {
-            return Err("Must be two numbers separated by a hyphen (x-y), i.e. 2-6".to_string());
+        let moves = self.possible_moves().collect::<Vec<_>>();
+
+        for y in 0..HEIGHT {
+            for x in 0..WIDTH {
+                let character = if moves.contains(&ReversiMove((x, y))) {
+                    '*'
+                } else {
+                    player_to_char(*self.board.get(x, y).unwrap())
+                };
+
+                write!(f, "{}", character)?;
+            }
+            writeln!(f)?;
         }
 
-        let numbers = numbers.iter()
-            .map(|num| num.parse::<usize>())
-            .collect::<Vec<_>>();
-
-        if let Some((position, _)) = numbers.iter().find_position(|x| x.is_err()) {
-            let position = if position == 0 {
-                "first"
-            } else {
-                "second"
-            };
-            
-            return Err(format!("The {} number is not a number.", position));
-        }
-        
-        Ok(ReversiMove((
-            numbers[0].clone().unwrap(),
-            numbers[1].clone().unwrap()
-        )))
+        Ok(())
     }
 }
 
@@ -75,7 +76,7 @@ pub fn main(args: ReversiArgs) {
                 println!("\n\nBest moves @ score {}:", score);
                 current_move_score = Some(score);
             }
-            print!("{:?}, ", game_move);
+            print!("{}, ", game_move);
         }
         println!();
     }

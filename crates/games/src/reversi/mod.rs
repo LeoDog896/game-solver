@@ -3,11 +3,14 @@
 //!
 //! More information: <https://en.wikipedia.org/wiki/Reversi>
 
+pub mod mv;
 pub mod cli;
 
 use array2d::Array2D;
 use game_solver::game::{Game, ZeroSumPlayer};
-use std::{fmt, hash::Hash};
+use std::hash::Hash;
+
+use self::mv::ReversiMove;
 
 pub const WIDTH: usize = 6;
 pub const HEIGHT: usize = 6;
@@ -139,9 +142,6 @@ impl Reversi {
     }
 }
 
-#[derive(Clone, Debug, Copy, PartialEq)]
-pub struct ReversiMove((usize, usize));
-
 impl Game for Reversi {
     type Move = ReversiMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
@@ -205,36 +205,5 @@ impl Game for Reversi {
 
     fn is_draw(&self) -> bool {
         self.winning_player().is_none() && self.possible_moves().next().is_none()
-    }
-}
-
-fn player_to_char(player: Option<ZeroSumPlayer>) -> char {
-    match player {
-        Some(ZeroSumPlayer::One) => 'X',
-        Some(ZeroSumPlayer::Two) => 'O',
-        None => '-',
-    }
-}
-
-impl fmt::Display for Reversi {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "Current player: {}", player_to_char(Some(self.player())))?;
-
-        let moves = self.possible_moves().collect::<Vec<_>>();
-
-        for y in 0..HEIGHT {
-            for x in 0..WIDTH {
-                let character = if moves.contains(&ReversiMove((x, y))) {
-                    '*'
-                } else {
-                    player_to_char(*self.board.get(x, y).unwrap())
-                };
-
-                write!(f, "{}", character)?;
-            }
-            writeln!(f)?;
-        }
-
-        Ok(())
     }
 }

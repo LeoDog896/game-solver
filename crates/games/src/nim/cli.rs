@@ -1,8 +1,17 @@
-use std::env::args;
+use std::{env::args, fmt::{Display, Formatter}};
 
 use game_solver::{game::Game, par_move_scores};
 
 use crate::nim::Nim;
+
+impl Display for Nim {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+        for (i, &heap) in self.heaps.iter().enumerate() {
+            writeln!(f, "Heap {}: {}", i, heap)?;
+        }
+        Ok(())
+    }
+}
 
 pub fn main() {
     // parse the original configuration of the game from args

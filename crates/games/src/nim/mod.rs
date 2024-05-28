@@ -8,10 +8,7 @@
 pub mod cli;
 
 use game_solver::game::{Game, ZeroSumPlayer};
-use std::{
-    fmt::{Display, Formatter},
-    hash::Hash,
-};
+use std::hash::Hash;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Nim {
@@ -103,14 +100,5 @@ impl Game for Nim {
     // if there are no possible moves, the game is already won
     fn is_draw(&self) -> bool {
         false
-    }
-}
-
-impl Display for Nim {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
-        for (i, &heap) in self.heaps.iter().enumerate() {
-            writeln!(f, "Heap {}: {}", i, heap)?;
-        }
-        Ok(())
     }
 }
