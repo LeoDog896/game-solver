@@ -2,10 +2,10 @@ use std::{collections::HashMap, env::args};
 
 use game_solver::{game::Game, move_scores};
 
-use crate::games::domineering::DomineeringGame;
+use crate::chomp::Chomp;
 
 pub fn main() {
-    let mut game = DomineeringGame::new();
+    let mut game = Chomp::new(6, 4);
 
     // parse every move in args, e.g. 0-0 1-1 in args
     args().skip(1).for_each(|arg| {
@@ -22,7 +22,9 @@ pub fn main() {
 
     let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
 
-    if !move_scores.is_empty() {
+    if move_scores.is_empty() {
+        println!("Player {:?} won!", game.player().opponent());
+    } else {
         move_scores.sort_by_key(|m| m.1);
         move_scores.reverse();
 
@@ -35,7 +37,5 @@ pub fn main() {
             print!("({}, {}), ", game_move.0, game_move.1);
         }
         println!();
-    } else {
-        println!("Player {:?} won!", game.player().opponent());
     }
 }

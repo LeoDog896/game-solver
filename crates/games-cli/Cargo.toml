@@ -1,12 +1,10 @@
 [package]
-name = "games"
+name = "games-cli"
 license = "MPL"
 edition = "2021"
 
 [dependencies]
 game-solver = { path = "../game-solver", features = ["rayon", "reinforcement"] }
+games = { path = "../games" }
 anyhow = "1"
-array2d = "0.3"
-ndarray = "0.15"
-itertools = "0.13"
 clap = { version = "4.5", features = ["derive"] }

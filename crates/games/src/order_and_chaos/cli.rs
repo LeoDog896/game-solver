@@ -2,7 +2,7 @@ use std::env::args;
 
 use game_solver::{game::Game, par_move_scores};
 
-use crate::games::order_and_chaos::{CellType, OrderAndChaos};
+use crate::order_and_chaos::{CellType, OrderAndChaos};
 
 pub fn main() {
     // create a new game of Nim with the given configuration

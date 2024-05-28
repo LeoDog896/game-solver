@@ -9,8 +9,8 @@ use array2d::Array2D;
 use game_solver::game::{Game, ZeroSumPlayer};
 use std::{fmt, hash::Hash};
 
-const WIDTH: usize = 6;
-const HEIGHT: usize = 6;
+pub const WIDTH: usize = 6;
+pub const HEIGHT: usize = 6;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 struct Reversi {
@@ -48,7 +48,7 @@ impl Reversi {
     }
 
     fn is_valid_move(&self, m: &<Self as Game>::Move) -> Option<Vec<<Self as Game>::Move>> {
-        let cell = *self.board.get(m.0, m.1).unwrap();
+        let cell = *self.board.get(m.0.0, m.0.1).unwrap();
 
         if cell.is_some() {
             return None;
@@ -70,8 +70,8 @@ impl Reversi {
         ];
 
         for (x_dir, y_dir) in directions {
-            let mut x = m.0;
-            let mut y = m.1;
+            let mut x = m.0.0;
+            let mut y = m.0.1;
 
             x = x.wrapping_add_signed(*x_dir);
             y = y.wrapping_add_signed(*y_dir);
@@ -101,11 +101,11 @@ impl Reversi {
                     x = x.checked_add_signed(-*x_dir).unwrap();
                     y = y.checked_add_signed(-*y_dir).unwrap();
 
-                    if x == m.0 && y == m.1 {
+                    if x == m.0.0 && y == m.0.1 {
                         break;
                     }
 
-                    tiles_to_flip.push((x, y));
+                    tiles_to_flip.push(ReversiMove((x, y)));
                 }
             }
         }
@@ -139,8 +139,11 @@ impl Reversi {
     }
 }
 
+#[derive(Clone, Debug, Copy, PartialEq)]
+pub struct ReversiMove((usize, usize));
+
 impl Game for Reversi {
-    type Move = (usize, usize);
+    type Move = ReversiMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     type Player = ZeroSumPlayer;
 
@@ -163,10 +166,10 @@ impl Game for Reversi {
     fn make_move(&mut self, m: &Self::Move) -> bool {
         let move_set = self.is_valid_move(m).unwrap();
 
-        self.board.set(m.0, m.1, Some(self.player())).unwrap();
+        self.board.set(m.0.0, m.0.1, Some(self.player())).unwrap();
 
         for idx in move_set {
-            self.board.set(idx.0, idx.1, Some(self.player())).unwrap();
+            self.board.set(idx.0.0, idx.0.1, Some(self.player())).unwrap();
         }
 
         self.move_count += 1;
@@ -178,8 +181,8 @@ impl Game for Reversi {
         let mut moves = Vec::new();
         for x in 0..WIDTH {
             for y in 0..HEIGHT {
-                if self.is_valid_move(&(x, y)).is_some() {
-                    moves.push((x, y));
+                if self.is_valid_move(&ReversiMove((x, y))).is_some() {
+                    moves.push(ReversiMove((x, y)));
                 }
             }
         }
@@ -221,7 +224,7 @@ impl fmt::Display for Reversi {
 
         for y in 0..HEIGHT {
             for x in 0..WIDTH {
-                let character = if moves.contains(&(x, y)) {
+                let character = if moves.contains(&ReversiMove((x, y))) {
                     '*'
                 } else {
                     player_to_char(*self.board.get(x, y).unwrap())

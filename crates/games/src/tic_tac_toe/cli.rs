@@ -1,30 +1,35 @@
 use std::env::args;
 
 use game_solver::{game::Game, par_move_scores};
+use ndarray::IntoDimension;
 
-use crate::games::nim::Nim;
+use crate::tic_tac_toe::{format_dim, TicTacToe};
 
 pub fn main() {
-    // parse the original configuration of the game from args
-    // e.g. 3,5,7 for 3 heaps with 3, 5, and 7 objects respectively
-    let config = args()
+    // get the amount of dimensions from the first argument
+    let dim = args()
         .nth(1)
-        .expect("Please provide a configuration of the game, e.g. 3,5,7")
-        .split(',')
-        .map(|num| num.parse::<usize>().expect("Not a number!"))
-        .collect::<Vec<_>>();
+        .expect("Please provide a dimension!")
+        .parse::<usize>()
+        .expect("Not a number!");
 
-    // create a new game of Nim with the given configuration
-    let mut game = Nim::new(config);
+    // get the size of the board from the second argument
+    let size = args()
+        .nth(2)
+        .expect("Please provide a game size")
+        .parse::<usize>()
+        .expect("Not a number!");
+
+    let mut game = TicTacToe::new(dim, size);
 
     // parse every move in args, e.g. 0-0 1-1 in args
-    args().skip(2).for_each(|arg| {
+    args().skip(3).for_each(|arg| {
         let numbers: Vec<usize> = arg
             .split('-')
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
-        game.make_move(&(numbers[0], numbers[1]));
+        game.make_move(&numbers.into_dimension());
     });
 
     print!("{}", game);
@@ -32,11 +37,11 @@ pub fn main() {
 
     let mut move_scores = par_move_scores(&game);
 
-    // check for the win condition
-    if move_scores.is_empty() {
+    if game.won() {
         println!("Player {:?} won!", game.player().opponent());
+    } else if move_scores.is_empty() {
+        println!("No moves left! Game tied!");
     } else {
-        // sort for the best moves first
         move_scores.sort_by_key(|m| m.1);
         move_scores.reverse();
 
@@ -46,7 +51,7 @@ pub fn main() {
                 println!("\n\nBest moves @ score {}:", score);
                 current_move_score = Some(score);
             }
-            print!("({}, {}), ", game_move.0, game_move.1);
+            print!("{}, ", format_dim(&game_move));
         }
         println!();
     }

@@ -1,9 +1,11 @@
-use crate::games::reversi::Reversi;
-use game_solver::{game::Game, par_move_scores};
-use std::env::args;
+use std::{collections::HashMap, env::args};
+
+use game_solver::{game::Game, move_scores};
+
+use crate::domineering::DomineeringGame;
 
 pub fn main() {
-    let mut game = Reversi::new();
+    let mut game = DomineeringGame::new();
 
     // parse every move in args, e.g. 0-0 1-1 in args
     args().skip(1).for_each(|arg| {
@@ -18,18 +20,9 @@ pub fn main() {
     print!("{}", game);
     println!("Player {:?} to move", game.player());
 
-    let mut move_scores = par_move_scores(&game);
+    let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
 
-    if move_scores.is_empty() {
-        game.winning_player().map_or_else(
-            || {
-                println!("Game tied!");
-            },
-            |player| {
-                println!("Player {:?} won!", player.opponent());
-            },
-        )
-    } else {
+    if !move_scores.is_empty() {
         move_scores.sort_by_key(|m| m.1);
         move_scores.reverse();
 
@@ -39,8 +32,10 @@ pub fn main() {
                 println!("\n\nBest moves @ score {}:", score);
                 current_move_score = Some(score);
             }
-            print!("{:?}, ", game_move);
+            print!("({}, {}), ", game_move.0, game_move.1);
         }
         println!();
+    } else {
+        println!("Player {:?} won!", game.player().opponent());
     }
 }
