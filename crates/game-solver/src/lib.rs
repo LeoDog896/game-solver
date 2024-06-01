@@ -121,7 +121,7 @@ pub fn solve<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
     // we're trying to guess the score of the board via null windows
     while alpha < beta {
         let med = alpha + (beta - alpha) / 2;
-        
+
         // do a null window search
         let evaluation = negamax(game, transposition_table, med, med + 1);
 

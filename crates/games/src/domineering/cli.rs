@@ -1,5 +1,9 @@
-use std::{collections::HashMap, env::args, fmt::{Display, Formatter}};
+use std::{
+    collections::HashMap,
+    fmt::{Display, Formatter},
+};
 
+use clap::Args;
 use game_solver::{game::Game, move_scores};
 
 use crate::domineering::DomineeringGame;
@@ -22,11 +26,16 @@ impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEI
     }
 }
 
-pub fn main() {
+#[derive(Args)]
+pub struct DomineeringArgs {
+    moves: Vec<String>,
+}
+
+pub fn main(args: DomineeringArgs) {
     let mut game = DomineeringGame::new();
 
     // parse every move in args, e.g. 0-0 1-1 in args
-    args().skip(1).for_each(|arg| {
+    args.moves.iter().for_each(|arg| {
         let numbers: Vec<usize> = arg
             .split('-')
             .map(|num| num.parse::<usize>().expect("Not a number!"))

@@ -9,7 +9,7 @@ pub trait State: Eq + Hash + Clone {
     type A: Eq + Hash + Clone;
 
     /// The reward for when an `Agent` arrives at this `State`.
-    /// 
+    ///
     /// Rewards are relative to each other, and are traditionally smaller integers.
     fn reward(&self) -> f64;
     /// The set of actions that can be taken from this `State`, to arrive in another `State`.
@@ -19,6 +19,9 @@ pub trait State: Eq + Hash + Clone {
     /// to improve the performance by only generating the necessary action.
     fn random_action(&self) -> Self::A {
         let actions = self.actions();
-        actions.choose(&mut rand::thread_rng()).cloned().expect("No actions available; perhaps use the SinkStates termination strategy?")
+        actions
+            .choose(&mut rand::thread_rng())
+            .cloned()
+            .expect("No actions available; perhaps use the SinkStates termination strategy?")
     }
 }

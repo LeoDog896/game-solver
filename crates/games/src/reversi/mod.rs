@@ -170,7 +170,9 @@ impl Game for Reversi {
         self.board.set(m.0[0], m.0[1], Some(self.player())).unwrap();
 
         for idx in move_set {
-            self.board.set(idx.0[0], idx.0[1], Some(self.player())).unwrap();
+            self.board
+                .set(idx.0[0], idx.0[1], Some(self.player()))
+                .unwrap();
         }
 
         self.move_count += 1;

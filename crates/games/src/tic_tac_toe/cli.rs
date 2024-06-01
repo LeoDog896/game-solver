@@ -10,7 +10,7 @@ pub struct TicTacToeArgs {
     dimensions: usize,
     /// The size of the board - i.e. with two dimensions
     /// and a size of three, the board would look like
-    /// 
+    ///
     /// ```txt
     /// * * *
     /// * * *
@@ -18,7 +18,7 @@ pub struct TicTacToeArgs {
     /// ```
     size: usize,
     /// The moves to make in the game, by dimension and index in that dimension.
-    moves: Vec<String>
+    moves: Vec<String>,
 }
 
 pub fn main(args: TicTacToeArgs) {

@@ -1,4 +1,3 @@
-
 use super::state::State;
 
 /// An `Agent` is something which hold a certain state, and is able to take actions from that
@@ -13,7 +12,7 @@ pub trait Agent<S: State> {
     /// determine the action to be taken.
     fn pick_random_action(&mut self) -> S::A {
         let action = self.current_state().random_action();
-        
+
         self.take_action(&action);
 
         action

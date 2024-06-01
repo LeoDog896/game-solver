@@ -1,8 +1,14 @@
 use std::fmt;
 
+use crate::{
+    reversi::{Reversi, ReversiMove},
+    util::move_natural::NaturalMove,
+};
 use clap::Args;
-use crate::{reversi::{Reversi, ReversiMove}, util::move_natural::NaturalMove};
-use game_solver::{game::{Game, ZeroSumPlayer}, par_move_scores};
+use game_solver::{
+    game::{Game, ZeroSumPlayer},
+    par_move_scores,
+};
 
 use super::{HEIGHT, WIDTH};
 
@@ -10,7 +16,7 @@ use super::{HEIGHT, WIDTH};
 pub struct ReversiArgs {
     /// Reversi moves, ordered as x1-y1 x2-y2 ...
     #[arg(value_parser = clap::value_parser!(ReversiMove))]
-    moves: Vec<ReversiMove>
+    moves: Vec<ReversiMove>,
 }
 
 fn player_to_char(player: Option<ZeroSumPlayer>) -> char {

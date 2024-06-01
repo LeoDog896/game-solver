@@ -12,7 +12,7 @@ impl Display for Nim {
         for (i, &heap) in self.heaps.iter().enumerate() {
             writeln!(f, "Heap {}: {}", i, heap)?;
         }
-        
+
         Ok(())
     }
 }
@@ -25,13 +25,14 @@ pub struct NimArgs {
     configuration: String,
     /// Nim moves, ordered as x1-y1 x2-y2 ...
     #[arg(value_parser = clap::value_parser!(NimMove))]
-    moves: Vec<NimMove>
+    moves: Vec<NimMove>,
 }
 
 pub fn main(args: NimArgs) {
     // parse the original configuration of the game from args
     // e.g. 3,5,7 for 3 heaps with 3, 5, and 7 objects respectively
-    let config = args.configuration
+    let config = args
+        .configuration
         .split(',')
         .map(|num| num.parse::<usize>().expect("Not a number!"))
         .collect::<Vec<_>>();

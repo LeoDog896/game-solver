@@ -1,15 +1,19 @@
-use std::env::args;
-
+use clap::Args;
 use game_solver::{game::Game, par_move_scores};
 
 use crate::order_and_chaos::{CellType, OrderAndChaos};
 
-pub fn main() {
+#[derive(Args)]
+pub struct OrderAndChaosArgs {
+    moves: Vec<String>,
+}
+
+pub fn main(args: OrderAndChaosArgs) {
     // create a new game of Nim with the given configuration
     let mut game = OrderAndChaos::new();
 
     // parse every move in args, e.g. 0-0-x 1-1-o in args
-    args().skip(1).for_each(|arg| {
+    args.moves.iter().for_each(|arg| {
         let args: Vec<&str> = arg.split('-').collect();
 
         let numbers = args[0..2]

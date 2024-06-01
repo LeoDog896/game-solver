@@ -9,14 +9,15 @@ use super::ChompMove;
 
 #[derive(Args)]
 pub struct ChompArgs {
-    // TODO: width default = 6, height default = 4
-    /// The height of the game
-    height: usize,
     /// The width of the game
+    #[arg(default_value_t = 6)]
     width: usize,
+    /// The height of the game
+    #[arg(default_value_t = 4)]
+    height: usize,
     /// Chomp moves, ordered as x1-y1 x2-y2 ...
     #[arg(value_parser = clap::value_parser!(ChompMove))]
-    moves: Vec<ChompMove>
+    moves: Vec<ChompMove>,
 }
 
 pub fn main(args: ChompArgs) {

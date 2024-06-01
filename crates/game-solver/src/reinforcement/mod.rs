@@ -3,14 +3,14 @@ use dfdx::prelude::*;
 #[cfg(feature = "save")]
 use dfdx::safetensors::SafeTensorError;
 
-use self::state::State;
 use self::agent::Agent;
+use self::state::State;
 
 use self::strategy::explore::ExplorationStrategy;
 use self::strategy::terminate::TerminationStrategy;
 
-pub mod state;
 pub mod agent;
+pub mod state;
 pub mod strategy;
 
 const BATCH: usize = 64;
@@ -22,7 +22,7 @@ struct QNetWorkConfig<const STATE_SIZE: usize, const ACTION_SIZE: usize, const I
     act1: ReLU,
     linear2: LinearConstConfig<INNER_SIZE, INNER_SIZE>,
     act2: ReLU,
-    linear3: LinearConstConfig<INNER_SIZE, ACTION_SIZE>
+    linear3: LinearConstConfig<INNER_SIZE, ACTION_SIZE>,
 }
 
 /// An `DQNAgentTrainer` can be trained for using a certain [Agent](mdp/trait.Agent.html). After
@@ -115,17 +115,24 @@ where
     }
 
     /// Returns a clone of the entire learned state to be saved or used elsewhere.
-    pub fn export_learned_values(&self) -> QNetwork<STATE_SIZE, ACTION_SIZE, INNER_SIZE, f32, AutoDevice> {
+    pub fn export_learned_values(
+        &self,
+    ) -> QNetwork<STATE_SIZE, ACTION_SIZE, INNER_SIZE, f32, AutoDevice> {
         self.learned_values().clone()
     }
 
     // Returns a reference to the learned state.
-    pub fn learned_values(&self) -> &QNetwork<STATE_SIZE, ACTION_SIZE, INNER_SIZE, f32, AutoDevice> {
+    pub fn learned_values(
+        &self,
+    ) -> &QNetwork<STATE_SIZE, ACTION_SIZE, INNER_SIZE, f32, AutoDevice> {
         &self.q_network
     }
 
     /// Imports a model, completely replacing any learned progress
-    pub fn import_model(&mut self, model: QNetwork<STATE_SIZE, ACTION_SIZE, INNER_SIZE, f32, AutoDevice>) {
+    pub fn import_model(
+        &mut self,
+        model: QNetwork<STATE_SIZE, ACTION_SIZE, INNER_SIZE, f32, AutoDevice>,
+    ) {
         self.q_network.clone_from(&model);
         self.target_q_net.clone_from(&self.q_network);
     }

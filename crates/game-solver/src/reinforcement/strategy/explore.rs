@@ -7,7 +7,6 @@ pub trait ExplorationStrategy<S: State> {
     fn pick_action(&self, agent: &mut dyn Agent<S>) -> S::A;
 }
 
-
 /// The random exploration strategy.
 /// This strategy always takes a random action, as defined for the
 /// Agent by
