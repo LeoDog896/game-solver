@@ -32,14 +32,10 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
 
     // check if this is a winning configuration
     for m in &mut game.possible_moves() {
-        if let Some(player) = game.is_winning_move(&m) {
+        if game.is_winning_move(&m).is_some() {
             let mut board = game.clone();
             board.make_move(&m);
-            if player == board.player() {
-                return upper_bound(&board) - game.move_count() as isize - 1;
-            } else {
-                return -(upper_bound(&board) - game.move_count() as isize - 1);
-            }
+            return upper_bound(&board) - game.move_count() as isize - 1;
         }
     }
 

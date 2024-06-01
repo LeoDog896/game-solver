@@ -67,7 +67,7 @@ pub trait Game {
     /// The implementation of this should be
     /// similar to either
     ///
-    /// ```
+    /// ```ignore
     /// use game_solver::game::ZeroSumPlayer;
     ///
     /// fn player(&self) -> Self::Player {
@@ -81,7 +81,7 @@ pub trait Game {
     ///
     /// or
     ///
-    /// ```
+    /// ```ignore
     /// use game_solver::game::NPlayer;
     ///
     /// fn player(&self) -> Self::Player {
