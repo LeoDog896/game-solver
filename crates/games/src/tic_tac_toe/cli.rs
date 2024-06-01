@@ -4,6 +4,9 @@ use ndarray::IntoDimension;
 
 use crate::tic_tac_toe::{format_dim, TicTacToe};
 
+/// Analyzes Tic Tac Toe.
+/// 
+#[doc = include_str!("./README.md")]
 #[derive(Args)]
 pub struct TicTacToeArgs {
     /// The amount of dimensions in the game.

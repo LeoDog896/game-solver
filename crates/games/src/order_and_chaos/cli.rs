@@ -3,6 +3,9 @@ use game_solver::{game::Game, par_move_scores};
 
 use crate::order_and_chaos::{CellType, OrderAndChaos};
 
+/// Analyzes Order and Chaos.
+/// 
+#[doc = include_str!("./README.md")]
 #[derive(Args)]
 pub struct OrderAndChaosArgs {
     moves: Vec<String>,

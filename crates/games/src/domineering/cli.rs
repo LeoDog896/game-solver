@@ -1,3 +1,5 @@
+#[doc = include_str!("./README.md")]
+
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter},
@@ -26,6 +28,9 @@ impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEI
     }
 }
 
+/// Analyzes Domineering.
+/// 
+#[doc = include_str!("./README.md")]
 #[derive(Args)]
 pub struct DomineeringArgs {
     moves: Vec<String>,

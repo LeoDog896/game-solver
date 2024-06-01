@@ -17,6 +17,9 @@ impl Display for Nim {
     }
 }
 
+/// Analyzes Nim.
+/// 
+#[doc = include_str!("./README.md")]
 #[derive(Args)]
 pub struct NimArgs {
     /// The configuration of the game. For example, 3,5,7

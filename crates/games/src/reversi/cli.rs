@@ -12,6 +12,9 @@ use game_solver::{
 
 use super::{HEIGHT, WIDTH};
 
+/// Analyzes Reversi.
+/// 
+#[doc = include_str!("./README.md")]
 #[derive(Args)]
 pub struct ReversiArgs {
     /// Reversi moves, ordered as x1-y1 x2-y2 ...

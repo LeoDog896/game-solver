@@ -7,6 +7,9 @@ use crate::chomp::Chomp;
 
 use super::ChompMove;
 
+/// Analyzes Chomp.
+/// 
+#[doc = include_str!("./README.md")]
 #[derive(Args)]
 pub struct ChompArgs {
     /// The width of the game
