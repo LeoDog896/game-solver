@@ -127,5 +127,5 @@ pub trait Game {
 
 /// Utility function to get the upper bound of a game.
 pub fn upper_bound<T: Game>(game: &T) -> isize {
-    return game.max_moves().map(|m| m as isize).unwrap_or(isize::MAX);
+    game.max_moves().map_or(isize::MAX, |m| m as isize)
 }

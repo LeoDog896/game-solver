@@ -45,7 +45,7 @@ pub fn main(args: NimArgs) {
 
     // parse every move in args, e.g. 0-0 1-1 in args
     args.moves.iter().for_each(|nim_move| {
-        game.make_move(&nim_move);
+        game.make_move(nim_move);
     });
 
     print!("{}", game);

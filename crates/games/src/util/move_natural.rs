@@ -11,7 +11,7 @@ impl<const LENGTH: usize> FromStr for NaturalMove<LENGTH> {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         assert!(LENGTH > 0, "Length must be greater than 0");
 
-        let numbers = s.split("-").collect::<Vec<_>>();
+        let numbers = s.split('-').collect::<Vec<_>>();
 
         if numbers.len() != LENGTH {
             return Err(format!(
@@ -38,7 +38,7 @@ impl<const LENGTH: usize> FromStr for NaturalMove<LENGTH> {
             .collect::<Vec<_>>()
             .try_into()
             .map_err(|_| "Could not convert Vec to fixed array; this is a bug.".to_string())
-            .map(|x| NaturalMove(x))
+            .map(NaturalMove)
     }
 }
 
