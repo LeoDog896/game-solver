@@ -53,6 +53,7 @@ jobs:
           cp book/banner.webp dist/banner.webp
           cp book/landing.html dist/index.html
       - name: Download and install Trunk binary
+        working-directory: crates/games-ui
         run: wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
       - name: Build Web App
         run: ./trunk build --release --public-url $public_url
