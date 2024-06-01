@@ -74,13 +74,13 @@ impl<
     }
 
     /// Create a new transposition cache with
-    /// an estimated 3/4ths of the remaining memory.
+    /// an estimated three fourths of the remaining memory.
     #[must_use]
     pub fn new() -> Self {
         let score_size = std::mem::size_of::<Score>() as u64;
 
         Self::with_capacity(
-            // get 3/4ths of the memory, and divide that by the size of a score
+            // get three fourths of the memory, and divide that by the size of a score
             // to get the number of scores that can fit in the cache
             (sysinfo::System::new_all().total_memory() * 3 / 4) / score_size,
         )

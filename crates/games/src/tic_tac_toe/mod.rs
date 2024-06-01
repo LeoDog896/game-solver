@@ -1,4 +1,5 @@
-#[doc = include_str!("./README.md")]
+#![doc = include_str!("./README.md")]
+
 pub mod cli;
 
 use game_solver::game::{Game, ZeroSumPlayer};

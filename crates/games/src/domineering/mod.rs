@@ -1,3 +1,5 @@
+#![doc = include_str!("./README.md")]
+
 pub mod cli;
 
 use array2d::Array2D;

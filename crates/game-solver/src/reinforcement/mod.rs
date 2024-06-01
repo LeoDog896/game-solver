@@ -30,8 +30,8 @@ struct QNetWorkConfig<const STATE_SIZE: usize, const ACTION_SIZE: usize, const I
 /// for this. For example, you can ask the `DQNAgentTrainer` the expected values of all possible
 /// actions in a given state.
 ///
-/// The code is partially taken from https://github.com/coreylowman/dfdx/blob/main/dfdx/examples/advanced-rl-dqn.rs.
-/// and https://github.com/milanboers/rurel.
+/// The code is partially taken from <https://github.com/coreylowman/dfdx/blob/main/dfdx/examples/advanced-rl-dqn.rs>.
+/// and <https://github.com/milanboers/rurel>.
 pub struct DQNAgentTrainer<
     S,
     const STATE_SIZE: usize,
