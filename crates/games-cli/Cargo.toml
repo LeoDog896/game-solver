@@ -2,6 +2,7 @@
 name = "games-cli"
 license = "MPL"
 edition = "2021"
+version = "0.1.0"
 
 [dependencies]
 game-solver = { path = "../game-solver", features = ["rayon", "reinforcement"] }

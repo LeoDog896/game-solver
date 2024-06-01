@@ -1533,7 +1533,7 @@ dependencies = [
 
 [[package]]
 name = "games"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "array2d",
@@ -1546,7 +1546,7 @@ dependencies = [
 
 [[package]]
 name = "games-cli"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1556,7 +1556,7 @@ dependencies = [
 
 [[package]]
 name = "games-ui"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "eframe",
  "egui",
