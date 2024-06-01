@@ -18,7 +18,7 @@ impl Display for Nim {
 }
 
 /// Analyzes Nim.
-/// 
+///
 #[doc = include_str!("./README.md")]
 #[derive(Args)]
 pub struct NimArgs {
