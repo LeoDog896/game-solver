@@ -12,6 +12,7 @@ edition = "2021"
 "xxhash" = ["dep:twox-hash"]
 "rayon" = ["dep:rayon", "xxhash", "dep:sysinfo", "dep:moka"]
 "reinforcement" = ["dep:rand", "dep:dfdx", "dep:itertools"]
+"js" = ["moka/js"]
 
 [dependencies]
 dfdx = { git = "https://github.com/coreylowman/dfdx.git", rev = "4722a99", optional = true }

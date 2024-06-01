@@ -12,11 +12,19 @@ eframe = { version = "0.27.2", default-features = false, features = [
     "persistence"
 ]}
 egui = "0.27"
-game-solver = { path = "../game-solver", features = ["rayon", "reinforcement"] }
 serde = { version = "1", features = ["derive"] }
+log = "0.4"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures = "0.4"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies.game-solver]
+path = "../game-solver"
+features = ["rayon", "reinforcement"]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies.game-solver]
+path = "../game-solver"
+features = ["rayon", "reinforcement", "js"]
