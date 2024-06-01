@@ -64,7 +64,7 @@ jobs:
       - name: Copy Web App
         run: |
           mkdir dist/app
-          cp -r ./crates/games-ui/dist/* 
+          cp -r ./crates/games-ui/dist/* dist/app
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
