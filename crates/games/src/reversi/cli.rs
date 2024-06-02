@@ -25,9 +25,7 @@ pub struct ReversiArgs {
 
 impl Default for ReversiArgs {
     fn default() -> Self {
-        Self {
-            moves: vec![]
-        }
+        Self { moves: vec![] }
     }
 }
 

@@ -14,9 +14,7 @@ pub struct OrderAndChaosArgs {
 
 impl Default for OrderAndChaosArgs {
     fn default() -> Self {
-        Self {
-            moves: vec![]
-        }
+        Self { moves: vec![] }
     }
 }
 

@@ -1,11 +1,8 @@
 use clap::Parser;
 use games::{
-    chomp::cli::main as chomp_main,
-    domineering::cli::main as domineering_main,
-    nim::cli::main as nim_main,
-    order_and_chaos::cli::main as order_and_chaos_main,
-    reversi::cli::main as reversi_main,
-    tic_tac_toe::cli::main as tic_tac_toe_main, Games,
+    chomp::cli::main as chomp_main, domineering::cli::main as domineering_main,
+    nim::cli::main as nim_main, order_and_chaos::cli::main as order_and_chaos_main,
+    reversi::cli::main as reversi_main, tic_tac_toe::cli::main as tic_tac_toe_main, Games,
 };
 
 #[derive(Parser)]

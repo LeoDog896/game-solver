@@ -29,7 +29,7 @@ impl Default for ChompArgs {
         Self {
             width: 6,
             height: 4,
-            moves: vec![]
+            moves: vec![],
         }
     }
 }

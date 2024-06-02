@@ -30,7 +30,7 @@ impl Default for TicTacToeArgs {
         Self {
             dimensions: 2,
             size: 3,
-            moves: vec![]
+            moves: vec![],
         }
     }
 }

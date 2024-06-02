@@ -36,7 +36,7 @@ impl Default for NimArgs {
     fn default() -> Self {
         Self {
             configuration: "3,5,7".to_string(),
-            moves: vec![]
+            moves: vec![],
         }
     }
 }

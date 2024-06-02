@@ -38,9 +38,7 @@ pub struct DomineeringArgs {
 
 impl Default for DomineeringArgs {
     fn default() -> Self {
-        Self {
-            moves: vec![]
-        }
+        Self { moves: vec![] }
     }
 }
 
