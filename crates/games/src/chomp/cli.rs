@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use clap::Args;
 use game_solver::{game::Game, move_scores};
+use serde::{Deserialize, Serialize};
 
 use crate::chomp::Chomp;
 
@@ -10,7 +11,7 @@ use super::ChompMove;
 /// Analyzes Chomp.
 ///
 #[doc = include_str!("./README.md")]
-#[derive(Args)]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct ChompArgs {
     /// The width of the game
     #[arg(short, long, default_value_t = 6)]
@@ -21,6 +22,16 @@ pub struct ChompArgs {
     /// Chomp moves, ordered as x1-y1 x2-y2 ...
     #[arg(value_parser = clap::value_parser!(ChompMove))]
     moves: Vec<ChompMove>,
+}
+
+impl Default for ChompArgs {
+    fn default() -> Self {
+        Self {
+            width: 6,
+            height: 4,
+            moves: vec![]
+        }
+    }
 }
 
 pub fn main(args: ChompArgs) {

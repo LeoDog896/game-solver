@@ -1541,7 +1541,10 @@ dependencies = [
  "game-solver",
  "itertools",
  "ndarray",
+ "once_cell",
  "ordinal",
+ "serde",
+ "serde-big-array",
 ]
 
 [[package]]
@@ -1562,6 +1565,7 @@ dependencies = [
  "egui",
  "env_logger",
  "game-solver",
+ "games",
  "log",
  "serde",
  "wasm-bindgen-futures",
@@ -2933,6 +2937,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7253ab4de971e72fb7be983802300c30b5a7f0c2e56fab8abfc6a214307c0094"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-big-array"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11fc7cc2c76d73e0f27ee52abbd64eec84d46f370c88371120433196934e4b7f"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

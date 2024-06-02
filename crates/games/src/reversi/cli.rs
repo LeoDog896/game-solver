@@ -9,17 +9,26 @@ use game_solver::{
     game::{Game, ZeroSumPlayer},
     par_move_scores,
 };
+use serde::{Deserialize, Serialize};
 
 use super::{HEIGHT, WIDTH};
 
 /// Analyzes Reversi.
 ///
 #[doc = include_str!("./README.md")]
-#[derive(Args)]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct ReversiArgs {
     /// Reversi moves, ordered as x1-y1 x2-y2 ...
     #[arg(value_parser = clap::value_parser!(ReversiMove))]
     moves: Vec<ReversiMove>,
+}
+
+impl Default for ReversiArgs {
+    fn default() -> Self {
+        Self {
+            moves: vec![]
+        }
+    }
 }
 
 fn player_to_char(player: Option<ZeroSumPlayer>) -> char {

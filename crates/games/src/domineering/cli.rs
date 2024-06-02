@@ -6,6 +6,7 @@ use std::{
 
 use clap::Args;
 use game_solver::{game::Game, move_scores};
+use serde::{Deserialize, Serialize};
 
 use crate::domineering::DomineeringGame;
 
@@ -30,9 +31,17 @@ impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEI
 /// Analyzes Domineering.
 ///
 #[doc = include_str!("./README.md")]
-#[derive(Args)]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct DomineeringArgs {
     moves: Vec<String>,
+}
+
+impl Default for DomineeringArgs {
+    fn default() -> Self {
+        Self {
+            moves: vec![]
+        }
+    }
 }
 
 pub fn main(args: DomineeringArgs) {

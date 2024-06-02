@@ -1,15 +1,18 @@
 use std::{fmt::Display, iter, str::FromStr};
 
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
+use serde_big_array::BigArray;
 
-#[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct NaturalMove<const LENGTH: usize>(pub [usize; LENGTH]);
+#[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct NaturalMove<const LENGTH: usize>(#[serde(with = "BigArray")] pub [usize; LENGTH]);
 
 impl<const LENGTH: usize> FromStr for NaturalMove<LENGTH> {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         assert!(LENGTH > 0, "Length must be greater than 0");
+        assert!(LENGTH < 32, "Length must be less than 32.");
 
         let numbers = s.split('-').collect::<Vec<_>>();
 

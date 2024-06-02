@@ -1,13 +1,14 @@
 use clap::Args;
 use game_solver::{game::Game, par_move_scores};
 use ndarray::IntoDimension;
+use serde::{Deserialize, Serialize};
 
 use crate::tic_tac_toe::{format_dim, TicTacToe};
 
 /// Analyzes Tic Tac Toe.
 ///
 #[doc = include_str!("./README.md")]
-#[derive(Args)]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct TicTacToeArgs {
     /// The amount of dimensions in the game.
     dimensions: usize,
@@ -22,6 +23,16 @@ pub struct TicTacToeArgs {
     size: usize,
     /// The moves to make in the game, by dimension and index in that dimension.
     moves: Vec<String>,
+}
+
+impl Default for TicTacToeArgs {
+    fn default() -> Self {
+        Self {
+            dimensions: 2,
+            size: 3,
+            moves: vec![]
+        }
+    }
 }
 
 pub fn main(args: TicTacToeArgs) {

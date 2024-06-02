@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter};
 
 use clap::Args;
 use game_solver::{game::Game, par_move_scores};
+use serde::{Deserialize, Serialize};
 
 use crate::nim::Nim;
 
@@ -20,7 +21,7 @@ impl Display for Nim {
 /// Analyzes Nim.
 ///
 #[doc = include_str!("./README.md")]
-#[derive(Args)]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct NimArgs {
     /// The configuration of the game. For example, 3,5,7
     /// creates a Nimbers game that has three heaps, where each
@@ -29,6 +30,15 @@ pub struct NimArgs {
     /// Nim moves, ordered as x1-y1 x2-y2 ...
     #[arg(value_parser = clap::value_parser!(NimMove))]
     moves: Vec<NimMove>,
+}
+
+impl Default for NimArgs {
+    fn default() -> Self {
+        Self {
+            configuration: "3,5,7".to_string(),
+            moves: vec![]
+        }
+    }
 }
 
 pub fn main(args: NimArgs) {
