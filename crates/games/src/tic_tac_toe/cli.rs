@@ -1,9 +1,12 @@
 use clap::Args;
-use game_solver::{game::Game, par_move_scores};
+use game_solver::game::Game;
 use ndarray::IntoDimension;
 use serde::{Deserialize, Serialize};
 
-use crate::tic_tac_toe::{format_dim, TicTacToe};
+use crate::{
+    tic_tac_toe::{TicTacToe, TicTacToeMove},
+    util::cli::play::play,
+};
 
 /// Analyzes Tic Tac Toe.
 ///
@@ -45,30 +48,9 @@ pub fn main(args: TicTacToeArgs) {
             .map(|num| num.parse::<usize>().expect("Not a number!"))
             .collect();
 
-        game.make_move(&numbers.into_dimension());
+        game.make_move(&TicTacToeMove(numbers.into_dimension()));
     });
 
     print!("{}", game);
-    println!("Player {:?} to move", game.player());
-
-    let mut move_scores = par_move_scores(&game);
-
-    if game.won() {
-        println!("Player {:?} won!", game.player().opponent());
-    } else if move_scores.is_empty() {
-        println!("No moves left! Game tied!");
-    } else {
-        move_scores.sort_by_key(|m| m.1);
-        move_scores.reverse();
-
-        let mut current_move_score = None;
-        for (game_move, score) in move_scores {
-            if current_move_score != Some(score) {
-                println!("\n\nBest moves @ score {}:", score);
-                current_move_score = Some(score);
-            }
-            print!("{}, ", format_dim(&game_move));
-        }
-        println!();
-    }
+    play(game);
 }

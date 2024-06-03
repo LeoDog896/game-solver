@@ -73,6 +73,9 @@ impl eframe::App for TemplateApp {
 
             if let Some(game) = &self.selected_game {
                 ui.heading(game.name());
+                ui.collapsing("See game description", |ui| {
+                    ui.label(game.description());
+                });
             } else {
                 ui.label("To get started, select a game from the above dropdown.");
             }

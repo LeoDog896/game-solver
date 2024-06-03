@@ -12,6 +12,8 @@ use std::{
     iter::FilterMap,
 };
 
+use crate::util::state::{GameState, State};
+
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
 enum Square {
     Empty,
@@ -27,6 +29,9 @@ struct TicTacToe {
     board: ArrayD<Square>,
     move_count: usize,
 }
+
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub struct TicTacToeMove(pub Dim<IxDynImpl>);
 
 fn add_checked(a: Dim<IxDynImpl>, b: Vec<i32>) -> Option<Dim<IxDynImpl>> {
     let mut result = a;
@@ -87,8 +92,10 @@ impl TicTacToe {
 
         n >= self.size
     }
+}
 
-    fn won(&self) -> bool {
+impl GameState for TicTacToe {
+    fn state(&self) -> State {
         // check every move
         for (index, square) in self.board.indexed_iter() {
             if square == &Square::Empty {
@@ -98,20 +105,25 @@ impl TicTacToe {
             let point = index.into_dimension();
             for offset in offsets(&point, self.size) {
                 if self.winning_line(&point, &offset) {
-                    return true;
+                    return State::Player(self.player().opponent());
                 }
             }
         }
 
-        false
+        // check if tie
+        if Some(self.move_count()) == self.max_moves() {
+            return State::Tie;
+        }
+
+        State::Continuing
     }
 }
 
 impl Game for TicTacToe {
-    type Move = Dim<IxDynImpl>;
+    type Move = TicTacToeMove;
     type Iter<'a> = FilterMap<
-        IndexedIter<'a, Square, Self::Move>,
-        fn((Self::Move, &Square)) -> Option<Self::Move>,
+        IndexedIter<'a, Square, Dim<IxDynImpl>>,
+        fn((Dim<IxDynImpl>, &Square)) -> Option<Self::Move>,
     >;
     type Player = ZeroSumPlayer;
 
@@ -132,14 +144,14 @@ impl Game for TicTacToe {
     }
 
     fn make_move(&mut self, m: &Self::Move) -> bool {
-        if *self.board.get(m.clone()).unwrap() == Square::Empty {
+        if *self.board.get(m.0.clone()).unwrap() == Square::Empty {
             let square = if self.player() == ZeroSumPlayer::One {
                 Square::X
             } else {
                 Square::O
             };
 
-            *self.board.get_mut(m).unwrap() = square;
+            *self.board.get_mut(m.0.clone()).unwrap() = square;
             self.move_count += 1;
             true
         } else {
@@ -152,7 +164,7 @@ impl Game for TicTacToe {
             .indexed_iter()
             .filter_map(move |(index, square)| {
                 if square == &Square::Empty {
-                    Some(index)
+                    Some(TicTacToeMove(index))
                 } else {
                     None
                 }
@@ -178,8 +190,8 @@ impl Game for TicTacToe {
         // - it increases
         // - it decreases
         // e.g. (0, 0, 2), (0, 1, 1), (0, 2, 0) wins
-        for offset in offsets(m, self.size) {
-            if board.winning_line(m, &offset) {
+        for offset in offsets(&m.0, self.size) {
+            if board.winning_line(&m.0, &offset) {
                 return Some(self.player());
             }
         }
@@ -215,14 +227,16 @@ fn offsets(dim: &Dim<IxDynImpl>, size: usize) -> Vec<Vec<i32>> {
         .collect()
 }
 
-fn format_dim(dim: &Dim<IxDynImpl>) -> String {
-    format!("{:?}", dim.as_array_view().as_slice().unwrap())
+impl Display for TicTacToeMove {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.0.as_array_view().as_slice().unwrap())
+    }
 }
 
 impl Display for TicTacToe {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         for (index, square) in self.board.indexed_iter() {
-            writeln!(f, "{:?} @ {}", square, format_dim(&index))?;
+            writeln!(f, "{:?} @ {}", square, TicTacToeMove(index))?;
         }
         Ok(())
     }
@@ -237,13 +251,13 @@ mod tests {
     fn best_moves(game: &TicTacToe) -> Option<Dim<IxDynImpl>> {
         move_scores(game, &mut HashMap::new())
             .max_by(|(_, a), (_, b)| a.cmp(b))
-            .map(|(m, _)| m)
+            .map(|(m, _)| m.0)
     }
 
     #[test]
     fn test_middle_move() {
         let mut game = TicTacToe::new(2, 3);
-        game.make_move(&vec![0, 0].into_dimension());
+        game.make_move(&TicTacToeMove(vec![0, 0].into_dimension()));
 
         let best_move = best_moves(&game).unwrap();
 
@@ -261,28 +275,40 @@ mod tests {
     fn test_win() {
         let mut game = TicTacToe::new(2, 3);
 
-        game.make_move(&vec![0, 2].into_dimension()); // X
-        game.make_move(&vec![0, 1].into_dimension()); // O
-        game.make_move(&vec![1, 1].into_dimension()); // X
-        game.make_move(&vec![0, 0].into_dimension()); // O
-        game.make_move(&vec![2, 0].into_dimension()); // X
+        game.make_move(&TicTacToeMove(vec![0, 2].into_dimension())); // X
+        game.make_move(&TicTacToeMove(vec![0, 1].into_dimension())); // O
+        game.make_move(&TicTacToeMove(vec![1, 1].into_dimension())); // X
+        game.make_move(&TicTacToeMove(vec![0, 0].into_dimension())); // O
+        game.make_move(&TicTacToeMove(vec![2, 0].into_dimension())); // X
 
-        assert!(game.won());
+        assert!(game.state() == State::Player(ZeroSumPlayer::One));
+    }
+
+    #[test]
+    fn test_no_win() {
+        let mut game = TicTacToe::new(2, 3);
+
+        game.make_move(&TicTacToeMove(vec![0, 2].into_dimension())); // X
+        game.make_move(&TicTacToeMove(vec![0, 1].into_dimension())); // O
+        game.make_move(&TicTacToeMove(vec![1, 1].into_dimension())); // X
+        game.make_move(&TicTacToeMove(vec![0, 0].into_dimension())); // O
+
+        assert!(game.state() == State::Continuing);
     }
 
     #[test]
     fn test_win_3d() {
         let mut game = TicTacToe::new(3, 3);
 
-        game.make_move(&vec![0, 0, 0].into_dimension()); // X
-        game.make_move(&vec![0, 0, 1].into_dimension()); // O
-        game.make_move(&vec![0, 1, 1].into_dimension()); // X
-        game.make_move(&vec![0, 0, 2].into_dimension()); // O
-        game.make_move(&vec![0, 2, 2].into_dimension()); // X
-        game.make_move(&vec![0, 1, 0].into_dimension()); // O
-        game.make_move(&vec![0, 2, 0].into_dimension()); // X
+        game.make_move(&TicTacToeMove(vec![0, 0, 0].into_dimension())); // X
+        game.make_move(&TicTacToeMove(vec![0, 0, 1].into_dimension())); // O
+        game.make_move(&TicTacToeMove(vec![0, 1, 1].into_dimension())); // X
+        game.make_move(&TicTacToeMove(vec![0, 0, 2].into_dimension())); // O
+        game.make_move(&TicTacToeMove(vec![0, 2, 2].into_dimension())); // X
+        game.make_move(&TicTacToeMove(vec![0, 1, 0].into_dimension())); // O
+        game.make_move(&TicTacToeMove(vec![0, 2, 0].into_dimension())); // X
 
-        assert!(game.won());
+        assert!(game.state() == State::Player(ZeroSumPlayer::One));
     }
 
     #[test]

@@ -6,7 +6,10 @@ use array2d::Array2D;
 use game_solver::game::{Game, ZeroSumPlayer};
 use std::hash::Hash;
 
-use crate::util::move_natural::NaturalMove;
+use crate::util::{
+    move_natural::NaturalMove,
+    state::{GameState, State},
+};
 
 pub const WIDTH: usize = 6;
 pub const HEIGHT: usize = 6;
@@ -117,8 +120,14 @@ impl Reversi {
             Some(tiles_to_flip)
         }
     }
+}
 
-    fn winning_player(&self) -> Option<ZeroSumPlayer> {
+impl GameState for Reversi {
+    fn state(&self) -> State {
+        if self.possible_moves().len() > 0 {
+            return State::Continuing;
+        }
+
         let mut player_one_count = 0;
         let mut player_two_count = 0;
 
@@ -133,9 +142,9 @@ impl Reversi {
         }
 
         match player_one_count.cmp(&player_two_count) {
-            std::cmp::Ordering::Greater => Some(ZeroSumPlayer::One),
-            std::cmp::Ordering::Less => Some(ZeroSumPlayer::Two),
-            std::cmp::Ordering::Equal => None,
+            std::cmp::Ordering::Greater => State::Player(ZeroSumPlayer::One),
+            std::cmp::Ordering::Less => State::Player(ZeroSumPlayer::Two),
+            std::cmp::Ordering::Equal => State::Tie,
         }
     }
 }
@@ -193,7 +202,7 @@ impl Game for Reversi {
         let mut board = self.clone();
         board.make_move(m);
         if board.possible_moves().next().is_none() {
-            if board.winning_player() == Some(self.player()) {
+            if board.state() == State::Player(self.player()) {
                 Some(self.player())
             } else {
                 None
@@ -204,6 +213,6 @@ impl Game for Reversi {
     }
 
     fn is_draw(&self) -> bool {
-        self.winning_player().is_none() && self.possible_moves().next().is_none()
+        self.state() == State::Tie
     }
 }

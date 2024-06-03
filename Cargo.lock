@@ -1538,6 +1538,7 @@ dependencies = [
  "anyhow",
  "array2d",
  "clap",
+ "egui",
  "game-solver",
  "itertools",
  "ndarray",

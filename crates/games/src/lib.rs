@@ -48,4 +48,15 @@ impl Games {
             &Self::Chomp(_) => "Chomp".to_string(),
         }
     }
+
+    pub fn description(&self) -> &str {
+        match self {
+            &Self::Reversi(_) => include_str!("./reversi/README.md"),
+            &Self::TicTacToe(_) => include_str!("./tic_tac_toe/README.md"),
+            &Self::OrderAndChaos(_) => include_str!("./order_and_chaos/README.md"),
+            &Self::Nim(_) => include_str!("./nim/README.md"),
+            &Self::Domineering(_) => include_str!("./domineering/README.md"),
+            &Self::Chomp(_) => include_str!("./chomp/README.md"),
+        }
+    }
 }
