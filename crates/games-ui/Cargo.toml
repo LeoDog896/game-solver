@@ -15,7 +15,7 @@ eframe = { version = "0.27.2", default-features = false, features = [
 egui = "0.27"
 serde = { version = "1", features = ["derive"] }
 log = "0.4"
-games = { path = "../games"}
+games = { path = "../games", features = ["egui"] }
 game-solver = { path = "../game-solver" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

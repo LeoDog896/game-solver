@@ -1,4 +1,4 @@
-use games::{Games, DEFAULT_GAMES};
+use games::{nim, Games, DEFAULT_GAMES};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -76,6 +76,8 @@ impl eframe::App for TemplateApp {
                 ui.collapsing("See game description", |ui| {
                     ui.label(game.description());
                 });
+
+                nim::gui::display(&nim::Nim::new(vec![5, 3, 1]), ui);
             } else {
                 ui.label("To get started, select a game from the above dropdown.");
             }

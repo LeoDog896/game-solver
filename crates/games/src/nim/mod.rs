@@ -1,6 +1,7 @@
 #![doc = include_str!("./README.md")]
 
 pub mod cli;
+pub mod gui;
 
 use game_solver::game::{Game, ZeroSumPlayer};
 use std::hash::Hash;
@@ -8,7 +9,7 @@ use std::hash::Hash;
 use crate::util::move_natural::NaturalMove;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
-struct Nim {
+pub struct Nim {
     heaps: Vec<usize>,
     move_count: usize,
     max_score: usize,
@@ -19,7 +20,7 @@ type NimMove = NaturalMove<2>;
 impl Nim {
     /// Create a new game of Nim with the given heaps,
     /// where heaps is a list of the number of objects in each heap.
-    fn new(heaps: Vec<usize>) -> Self {
+    pub fn new(heaps: Vec<usize>) -> Self {
         Self {
             heaps: heaps.clone(),
             move_count: 0,
