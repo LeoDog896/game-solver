@@ -2,6 +2,9 @@
 
 pub mod cli;
 
+#[cfg(feature = "egui")]
+pub mod gui;
+
 use array2d::Array2D;
 use game_solver::game::{Game, ZeroSumPlayer};
 use std::hash::Hash;

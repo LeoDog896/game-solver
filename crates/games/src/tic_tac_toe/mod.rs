@@ -2,6 +2,9 @@
 
 pub mod cli;
 
+#[cfg(feature = "egui")]
+pub mod gui;
+
 use game_solver::game::{Game, ZeroSumPlayer};
 use itertools::Itertools;
 use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};

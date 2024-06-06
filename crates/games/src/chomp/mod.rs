@@ -1,6 +1,8 @@
 #![doc = include_str!("./README.md")]
 
 pub mod cli;
+#[cfg(feature = "egui")]
+pub mod gui;
 
 use array2d::Array2D;
 use game_solver::game::{Game, ZeroSumPlayer};
