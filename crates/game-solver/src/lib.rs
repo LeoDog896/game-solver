@@ -5,8 +5,9 @@
 //! a great place to start.
 
 pub mod game;
-#[cfg(feature = "reinforcement")]
-pub mod reinforcement;
+// TODO: reinforcement
+// #[cfg(feature = "reinforcement")]
+// pub mod reinforcement;
 pub mod transposition;
 
 #[cfg(feature = "rayon")]
@@ -65,7 +66,7 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
         };
     }
 
-    // for principal variation search
+    // for [principal variation search](https://www.chessprogramming.org/Principal_Variation_Search)
     let mut first_child = true;
 
     for m in &mut game.possible_moves() {
