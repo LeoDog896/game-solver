@@ -22,19 +22,8 @@ If you want to contribute, new game implementations would be greately appreciate
 The more examples of games that are provided, the more examples that can be used
 for benchmarks, analysis, and further optimization.
 
-### Future Plans (Contributions Welcome!)
-
-These are some future features that I've gathered:
-
-- Game Tree Analysis
-  - Visualization
-  - [Game complexity](https://en.wikipedia.org/wiki/Game_complexity) information
-- 2+ player games (multiple agents w/ minimax instead of negamax)
-  - TODO: there is a second player option, but currently only the `ZeroSumPlayer` works. The `castaway` crate can help with this.
-- Imperfect information games
-- Games that involve chance (Expectiminimax / Expectinegamax)
-- Benchmarks
-- impartial Nim utilities
+Any new visual representations for games that don't exist on the [app](https://leodog896.github.io/game-solver/app/)
+would also be great!
 
 ### Profiling
 
@@ -44,9 +33,13 @@ Recommended profiling tools:
 
 `cargo install flamegraph` (requires linux `perf` or windows `dtrace`)
 
+### Unix
+
 ```sh
 CARGO_PROFILE_RELEASE_DEBUG=true cargo flamegraph --example <example> -- <args>
 ```
+
+### Windows
 
 ```ps
 $env:CARGO_PROFILE_RELEASE_DEBUG='true'; cargo flamegraph --example <example> -- <args>; $env:CARGO_PROFILE_RELEASE_DEBUG=$null
