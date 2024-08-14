@@ -13,9 +13,9 @@ fn main() -> eframe::Result<()> {
         ..Default::default()
     };
     eframe::run_native(
-        "eframe template",
+        "game-solver",
         native_options,
-        Box::new(|cc| Box::new(games_ui::TemplateApp::new(cc))),
+        Box::new(|cc| Ok(Box::new(games_ui::TemplateApp::new(cc)))),
     )
 }
 

@@ -1,4 +1,4 @@
-use games::{nim, Games, DEFAULT_GAMES};
+use games::{nim, util::gui::egui_display::EguiDisplay, Games, DEFAULT_GAMES};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -38,7 +38,7 @@ impl eframe::App for TemplateApp {
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 // NOTE: no File->Quit on web pages!
@@ -74,10 +74,12 @@ impl eframe::App for TemplateApp {
             if let Some(game) = &self.selected_game {
                 ui.heading(game.name());
                 ui.collapsing("See game description", |ui| {
-                    ui.label(game.description());
+                    game.description_egui(ui)
                 });
 
-                nim::gui::display(&nim::Nim::new(vec![5, 3, 1]), ui);
+                let game = nim::Nim::new(vec![5, 3, 1]);
+                
+                game.display(ui);
             } else {
                 ui.label("To get started, select a game from the above dropdown.");
             }
@@ -85,7 +87,7 @@ impl eframe::App for TemplateApp {
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                 ui.horizontal(|ui| {
                     ui.add(egui::github_link_file!(
-                        "https://github.com/LeoDog896/game-solver/",
+                        "https://github.com/LeoDog896/game-solver/blob/master",
                         "Source code."
                     ));
                     powered_by_egui_and_eframe(ui);

@@ -6,17 +6,18 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-eframe = { version = "0.27.2", default-features = false, features = [
+eframe = { version = "0.28.1", default-features = false, features = [
     "accesskit",
     "default_fonts",
     "glow",
     "persistence"
 ]}
-egui = "0.27"
+egui = "0.28.1"
 serde = { version = "1", features = ["derive"] }
 log = "0.4"
 games = { path = "../games", features = ["egui"] }
 game-solver = { path = "../game-solver" }
+egui_commonmark = "0.17.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11"
@@ -26,8 +27,8 @@ wasm-bindgen-futures = "0.4"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies.game-solver]
 path = "../game-solver"
-features = ["rayon", "reinforcement"]
+features = ["rayon"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies.game-solver]
 path = "../game-solver"
-features = ["rayon", "reinforcement", "js"]
+features = ["rayon", "js"]
