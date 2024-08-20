@@ -3,8 +3,7 @@
 ![Crates.io](https://img.shields.io/crates/v/game-solver)
 [![Discord](https://img.shields.io/discord/1140401094338556009)](https://discord.gg/VjbCyaX29C)
 
-Solve any sequential game, including:
-- [Combinatorial Games](https://en.wikipedia.org/wiki/Combinatorial_game_theory) - or 2-player perfect-information games
+Solve any sequential game. These are currently restricted to [Combinatorial Games](https://en.wikipedia.org/wiki/Combinatorial_game_theory) - or n-player perfect-information games.
 
 More in-depth information can be found in [the book](https://leodog896.github.io/game-solver/book).
 
