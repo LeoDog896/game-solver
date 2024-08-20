@@ -13,7 +13,7 @@ pub mod transposition;
 #[cfg(feature = "rayon")]
 use std::hash::BuildHasher;
 
-use game::upper_bound;
+use game::{upper_bound, GameState};
 
 use crate::game::{Game, ZeroSumPlayer};
 use crate::transposition::{Score, TranspositionTable};
@@ -21,22 +21,24 @@ use std::hash::Hash;
 
 /// Runs the two-player minimax variant on a zero-sum game.
 /// It uses alpha beta pruning (e.g. you can specify \[-1, 1\] to get only win/loss/draw moves).
-fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
+fn negamax<T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
     mut alpha: isize,
     mut beta: isize,
-) -> isize {
-    if game.is_draw() {
-        return 0;
-    }
+) -> Result<isize, T::MoveError> {
+    match game.state() {
+        GameState::Playable => (),
+        GameState::Tie => return Ok(0),
+        GameState::Win(_) => return Ok(0),
+    };
 
     // check if this is a winning configuration
     for m in &mut game.possible_moves() {
-        if game.is_winning_move(&m).is_some() {
+        if let GameState::Win(_) = game.next_state(&m)? {
             let mut board = game.clone();
-            board.make_move(&m);
-            return upper_bound(&board) - game.move_count() as isize - 1;
+            board.make_move(&m)?;
+            return Ok(upper_bound(&board) - game.move_count() as isize - 1);
         }
     }
 
@@ -51,7 +53,7 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
                 if beta > max {
                     beta = max;
                     if alpha >= beta {
-                        return beta;
+                        return Ok(beta);
                     }
                 }
             }
@@ -59,7 +61,7 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
                 if alpha < min {
                     alpha = min;
                     if alpha >= beta {
-                        return alpha;
+                        return Ok(alpha);
                     }
                 }
             }
@@ -71,14 +73,14 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
 
     for m in &mut game.possible_moves() {
         let mut board = game.clone();
-        board.make_move(&m);
+        board.make_move(&m)?;
 
         let score = if first_child {
-            -negamax(&board, transposition_table, -beta, -alpha)
+            -negamax(&board, transposition_table, -beta, -alpha)?
         } else {
-            let score = -negamax(&board, transposition_table, -alpha - 1, -alpha);
+            let score = -negamax(&board, transposition_table, -alpha - 1, -alpha)?;
             if score > alpha {
-                -negamax(&board, transposition_table, -beta, -alpha)
+                -negamax(&board, transposition_table, -beta, -alpha)?
             } else {
                 score
             }
@@ -87,7 +89,7 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
         // alpha-beta pruning - we can return early
         if score >= beta {
             transposition_table.insert(game.clone(), Score::LowerBound(score));
-            return beta;
+            return Ok(beta);
         }
 
         if score > alpha {
@@ -99,7 +101,7 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
 
     transposition_table.insert(game.clone(), Score::UpperBound(alpha));
 
-    alpha
+    Ok(alpha)
 }
 
 /// Solves a game, returning the evaluated score.
@@ -108,10 +110,10 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
 /// In 2 player games, if a score > 0, then the player whose turn it is has a winning strategy.
 /// If a score < 0, then the player whose turn it is has a losing strategy.
 /// Else, the game is a draw (score = 0).
-pub fn solve<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
+pub fn solve<T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
-) -> isize {
+) -> Result<isize, T::MoveError> {
     let mut alpha = -upper_bound(game);
     let mut beta = upper_bound(game) + 1;
 
@@ -120,7 +122,7 @@ pub fn solve<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
         let med = alpha + (beta - alpha) / 2;
 
         // do a null window search
-        let evaluation = negamax(game, transposition_table, med, med + 1);
+        let evaluation = negamax(game, transposition_table, med, med + 1)?;
 
         if evaluation <= med {
             beta = evaluation;
@@ -129,7 +131,7 @@ pub fn solve<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
         }
     }
 
-    alpha
+    Ok(alpha)
 }
 
 /// Utility function to get a list of the move scores of a certain game.
@@ -140,16 +142,16 @@ pub fn solve<T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
 /// # Returns
 ///
 /// An iterator of tuples of the form `(move, score)`.
-pub fn move_scores<'a, T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
+pub fn move_scores<'a, T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
     game: &'a T,
     transposition_table: &'a mut dyn TranspositionTable<T>,
-) -> impl Iterator<Item = (T::Move, isize)> + 'a {
+) -> impl Iterator<Item = Result<(T::Move, isize), T::MoveError>> + 'a {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
-        board.make_move(&m);
+        board.make_move(&m)?;
         // We flip the sign of the score because we want the score from the
         // perspective of the player playing the move, not the player whose turn it is.
-        (m, -solve(&board, transposition_table))
+        Ok((m, -solve(&board, transposition_table)?))
     })
 }
 
@@ -163,10 +165,11 @@ pub fn move_scores<'a, T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash>(
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores_with_hasher<T, S>(game: &T) -> Vec<(T::Move, isize)>
+pub fn par_move_scores_with_hasher<T, S>(game: &T) -> Vec<Result<(T::Move, isize), T::MoveError>>
 where
-    T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send + 'static,
+    T: Game<Player = ZeroSumPlayer> + Eq + Hash + Sync + Send + 'static,
     T::Move: Sync + Send,
+    T::MoveError: Sync + Send,
     S: BuildHasher + Default + Sync + Send + Clone + 'static,
 {
     use crate::transposition::TranspositionCache;
@@ -181,11 +184,11 @@ where
         .par_iter()
         .map(move |m| {
             let mut board = game.clone();
-            board.make_move(m);
+            board.make_move(m)?;
             // We flip the sign of the score because we want the score from the
-            // perspective of the player playing the move, not the player whose turn it is.
+            // perspective of the player pla`ying the move, not the player whose turn it is.
             let mut map = Arc::clone(&hashmap);
-            ((*m).clone(), -solve(&board, &mut map))
+            Ok(((*m).clone(), -solve(&board, &mut map)?))
         })
         .collect::<Vec<_>>()
 }
@@ -201,10 +204,11 @@ where
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores<T>(game: &T) -> Vec<(T::Move, isize)>
+pub fn par_move_scores<T>(game: &T) -> Vec<Result<(T::Move, isize), T::MoveError>>
 where
-    T: Game<Player = ZeroSumPlayer> + Clone + Eq + Hash + Sync + Send + 'static,
+    T: Game<Player = ZeroSumPlayer> + Eq + Hash + Sync + Send + 'static,
     T::Move: Sync + Send,
+    T::MoveError: Sync + Send,
 {
     if cfg!(feature = "xxhash") {
         use twox_hash::RandomXxHashBuilder64;

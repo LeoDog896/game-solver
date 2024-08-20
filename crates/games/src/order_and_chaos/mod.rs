@@ -1,27 +1,42 @@
 #![doc = include_str!("./README.md")]
 
-pub mod cli;
-
 #[cfg(feature = "egui")]
 pub mod gui;
-
+use anyhow::{anyhow, Error};
 use array2d::Array2D;
-use game_solver::game::{Game, ZeroSumPlayer};
+use clap::Args;
+use game_solver::game::{Game, GameState, ZeroSumPlayer};
+use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Display, Formatter},
     hash::Hash,
 };
+use thiserror::Error;
 
-#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+use crate::util::cli::move_failable;
+
+#[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
 pub enum CellType {
     X,
     O,
-    Empty,
+}
+
+impl Display for CellType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::O => "O",
+                Self::X => "X",
+            }
+        )
+    }
 }
 
 #[derive(Clone, Hash, Eq, PartialEq)]
-struct OrderAndChaos {
-    board: Array2D<CellType>,
+pub struct OrderAndChaos {
+    board: Array2D<Option<CellType>>,
     move_count: usize,
 }
 
@@ -32,21 +47,43 @@ const WIN_LENGTH: usize = 5;
 impl OrderAndChaos {
     /// Create a new game of Nim with the given heaps,
     /// where heaps is a list of the number of objects in each heap.
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            board: Array2D::filled_with(CellType::Empty, HEIGHT, WIDTH),
+            board: Array2D::filled_with(None, HEIGHT, WIDTH),
             move_count: 0,
         }
+    }
+}
+
+#[derive(Error, Clone, Debug)]
+pub enum OrderAndChaosMoveError {
+    #[error("Can not make move {played:?} as it is out of bounds of (w:{width},h:{height})")]
+    OutOfBounds {
+        played: (usize, usize),
+        width: usize,
+        height: usize,
+    },
+    #[error("There is already a filled in value present at {0:?}.")]
+    AlreadyPresent((usize, usize)),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct OrderAndChaosMove(((usize, usize), CellType));
+
+impl Display for OrderAndChaosMove {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} @ ({}, {})", self.0 .1, self.0 .0 .0, self.0 .0 .1)
     }
 }
 
 impl Game for OrderAndChaos {
     /// where Move is a tuple of:
     /// ((row, column), player)
-    type Move = ((usize, usize), CellType);
+    type Move = OrderAndChaosMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     /// Define Nimbers as a zero-sum game
     type Player = ZeroSumPlayer;
+    type MoveError = OrderAndChaosMoveError;
 
     fn max_moves(&self) -> Option<usize> {
         Some(WIDTH * HEIGHT)
@@ -64,23 +101,27 @@ impl Game for OrderAndChaos {
         self.move_count
     }
 
-    fn make_move(&mut self, m: &Self::Move) -> bool {
-        let ((row, column), player) = *m;
+    fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError> {
+        let ((row, column), player) = m.0;
         // check for indexing OOB
         if row >= HEIGHT || column >= WIDTH {
-            return false;
+            return Err(OrderAndChaosMoveError::OutOfBounds {
+                played: m.0 .0.clone(),
+                width: self.board.num_columns(),
+                height: self.board.num_rows(),
+            });
         }
 
         // check if the cell is empty
-        if self.board[(row, column)] != CellType::Empty {
-            return false;
+        if self.board[(row, column)] != None {
+            return Err(OrderAndChaosMoveError::AlreadyPresent(m.0 .0.clone()));
         }
 
         // make the move
-        self.board[(row, column)] = player;
+        self.board[(row, column)] = Some(player);
         self.move_count += 1;
 
-        true
+        Ok(())
     }
 
     fn possible_moves(&self) -> Self::Iter<'_> {
@@ -88,9 +129,9 @@ impl Game for OrderAndChaos {
 
         for row in 0..HEIGHT {
             for column in 0..WIDTH {
-                if self.board[(row, column)] == CellType::Empty {
-                    moves.push(((row, column), CellType::X));
-                    moves.push(((row, column), CellType::O));
+                if self.board[(row, column)] == None {
+                    moves.push(OrderAndChaosMove(((row, column), CellType::X)));
+                    moves.push(OrderAndChaosMove(((row, column), CellType::O)));
                 }
             }
         }
@@ -100,17 +141,17 @@ impl Game for OrderAndChaos {
 
     // a move is winning if the next player
     // has no possible moves to make (normal play for Nim)
-    fn is_winning_move(&self, m: &Self::Move) -> Option<Self::Player> {
+    fn next_state(&self, m: &Self::Move) -> Result<GameState<Self::Player>, Self::MoveError> {
         let mut board = self.clone();
-        board.make_move(m);
+        board.make_move(m)?;
         let found = 'found: {
-            let ((row, column), square) = *m;
+            let ((row, column), square) = m.0;
 
             // check for horizontal win
             let mut count = 0;
             let mut mistakes = 0;
             'horiz: for i in 0..WIDTH {
-                if board.board[(row, i)] == square {
+                if board.board[(row, i)] == Some(square) {
                     count += 1;
                     if count == WIN_LENGTH {
                         break 'found true;
@@ -128,7 +169,7 @@ impl Game for OrderAndChaos {
             let mut count = 0;
             let mut mistakes = 0;
             'vert: for i in 0..HEIGHT {
-                if board.board[(i, column)] == square {
+                if board.board[(i, column)] == Some(square) {
                     count += 1;
                     if count == WIN_LENGTH {
                         break 'found true;
@@ -151,7 +192,7 @@ impl Game for OrderAndChaos {
                 let mut row = *row;
                 let mut column = *column;
                 while row < HEIGHT && column < WIDTH {
-                    if board.board[(row, column)] == square {
+                    if board.board[(row, column)] == Some(square) {
                         count += 1;
                         if count == WIN_LENGTH {
                             break 'found true;
@@ -177,7 +218,7 @@ impl Game for OrderAndChaos {
                 let mut row = *row;
                 let mut column = *column;
                 while row < HEIGHT {
-                    if board.board[(row, column)] == square {
+                    if board.board[(row, column)] == Some(square) {
                         count += 1;
                         if count == WIN_LENGTH {
                             break 'found true;
@@ -200,26 +241,17 @@ impl Game for OrderAndChaos {
             false
         };
 
-        if self.player() == ZeroSumPlayer::One {
-            // order
-            if found {
-                Some(ZeroSumPlayer::One)
-            } else {
-                None
-            }
-        } else if found {
-            Some(ZeroSumPlayer::One)
+        Ok(if found {
+            GameState::Win(ZeroSumPlayer::One)
         } else if board.possible_moves().next().is_none() {
-            Some(ZeroSumPlayer::Two)
+            GameState::Win(ZeroSumPlayer::Two)
         } else {
-            None
-        }
+            GameState::Playable
+        })
     }
 
-    // Nim can never be a draw -
-    // if there are no possible moves, the game is already won
-    fn is_draw(&self) -> bool {
-        false
+    fn state(&self) -> GameState<Self::Player> {
+        unimplemented!()
     }
 }
 
@@ -228,13 +260,58 @@ impl Display for OrderAndChaos {
         for row in 0..HEIGHT {
             for column in 0..WIDTH {
                 match self.board[(row, column)] {
-                    CellType::X => write!(f, "X")?,
-                    CellType::O => write!(f, "O")?,
-                    CellType::Empty => write!(f, "-")?,
+                    Some(CellType::X) => write!(f, "X")?,
+                    Some(CellType::O) => write!(f, "O")?,
+                    None => write!(f, "-")?,
                 }
             }
             writeln!(f)?;
         }
         Ok(())
+    }
+}
+
+/// Analyzes Order and Chaos.
+///
+#[doc = include_str!("./README.md")]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub struct OrderAndChaosArgs {
+    moves: Vec<String>,
+}
+
+impl Default for OrderAndChaosArgs {
+    fn default() -> Self {
+        Self { moves: vec![] }
+    }
+}
+
+impl TryFrom<OrderAndChaosArgs> for OrderAndChaos {
+    type Error = Error;
+
+    fn try_from(value: OrderAndChaosArgs) -> Result<Self, Self::Error> {
+        let mut game = OrderAndChaos::new();
+
+        // parse every move in args, e.g. 0-0-x 1-1-o in args
+        for arg in value.moves {
+            let args: Vec<&str> = arg.split('-').collect();
+
+            let numbers = args[0..2]
+                .iter()
+                .map(|num| num.parse::<usize>().expect("Not a number!"))
+                .collect::<Vec<_>>();
+
+            let player = match args[2] {
+                "x" => Ok(CellType::X),
+                "o" => Ok(CellType::O),
+                _ => Err(anyhow!("Invalid player!")),
+            }?;
+
+            assert_eq!(args.len(), 3);
+
+            let move_to_make = OrderAndChaosMove(((numbers[0], numbers[1]), player));
+            move_failable(&mut game, &move_to_make)?;
+        }
+
+        Ok(game)
     }
 }

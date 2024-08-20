@@ -1,13 +1,15 @@
 #![doc = include_str!("./README.md")]
 
-pub mod cli;
 #[cfg(feature = "egui")]
 pub mod gui;
+use anyhow::Error;
+use clap::Args;
+use game_solver::game::{Game, GameState, Player, ZeroSumPlayer};
+use serde::{Deserialize, Serialize};
+use std::{fmt::Display, hash::Hash};
+use thiserror::Error;
 
-use game_solver::game::{Game, ZeroSumPlayer};
-use std::hash::Hash;
-
-use crate::util::move_natural::NaturalMove;
+use crate::util::{cli::move_failable, move_natural::NaturalMove};
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 pub struct Nim {
@@ -31,18 +33,31 @@ impl Nim {
     }
 }
 
+#[derive(Error, Debug, Clone)]
+pub enum NimMoveError {
+    #[error("chosen heap {heap} is out of bounds of the amount of heaps {heap_count}.")]
+    HeapOutOfBounds { heap: usize, heap_count: usize },
+    #[error("can't remove {removal_count} when there is only {actual_count} in {heap}.")]
+    TooManyObjectsRemoval {
+        heap: usize,
+        removal_count: usize,
+        actual_count: usize,
+    },
+}
+
 impl Game for Nim {
     /// where Move is a tuple of the heap index and the number of objects to remove
     type Move = NimMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     /// Define Nimbers as a zero-sum game
     type Player = ZeroSumPlayer;
+    type MoveError = NimMoveError;
 
     fn max_moves(&self) -> Option<usize> {
         Some(self.max_score)
     }
 
-    fn player(&self) -> ZeroSumPlayer {
+    fn player(&self) -> Self::Player {
         if self.move_count % 2 == 0 {
             ZeroSumPlayer::One
         } else {
@@ -54,21 +69,28 @@ impl Game for Nim {
         self.move_count
     }
 
-    fn make_move(&mut self, m: &Self::Move) -> bool {
+    fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError> {
         let [heap, amount] = m.0;
         // check for indexing OOB
         if heap >= self.heaps.len() {
-            return false;
+            return Err(NimMoveError::HeapOutOfBounds {
+                heap,
+                heap_count: self.heaps.len(),
+            });
         }
 
         // check for removing too many objects
         if amount > self.heaps[heap] {
-            return false;
+            return Err(NimMoveError::TooManyObjectsRemoval {
+                heap,
+                removal_count: amount,
+                actual_count: self.heaps[heap],
+            });
         }
 
         self.heaps[heap] -= amount;
         self.move_count += 1;
-        true
+        Ok(())
     }
 
     fn possible_moves(&self) -> Self::Iter<'_> {
@@ -84,22 +106,68 @@ impl Game for Nim {
         moves.into_iter()
     }
 
-    // a move is winning if the next player
-    // has no possible moves to make (normal play for Nim)
-    fn is_winning_move(&self, m: &Self::Move) -> Option<Self::Player> {
-        let mut board = self.clone();
-        board.make_move(m);
-        // next player can't play - this player won!
-        if board.possible_moves().next().is_none() {
-            Some(self.player())
+    fn state(&self) -> GameState<Self::Player> {
+        if self.possible_moves().len() == 0 {
+            GameState::Win(self.player().next())
         } else {
-            None
+            GameState::Playable
         }
     }
+}
 
-    // Nim can never be a draw -
-    // if there are no possible moves, the game is already won
-    fn is_draw(&self) -> bool {
-        false
+impl Display for Nim {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (i, heap) in self.heaps.iter().enumerate() {
+            write!(f, "heap {i}: {heap}")?;
+        }
+
+        Ok(())
+    }
+}
+
+/// Analyzes Nim.
+///
+#[doc = include_str!("./README.md")]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub struct NimArgs {
+    /// The configuration of the game. For example, 3,5,7
+    /// creates a Nimbers game that has three heaps, where each
+    /// heap has 3, 5, and 7 objects respectively
+    configuration: String,
+    /// Nim moves, ordered as x1-y1 x2-y2 ...
+    #[arg(value_parser = clap::value_parser!(NimMove))]
+    moves: Vec<NimMove>,
+}
+
+impl Default for NimArgs {
+    fn default() -> Self {
+        Self {
+            configuration: "3,5,7".to_string(),
+            moves: vec![],
+        }
+    }
+}
+
+impl TryFrom<NimArgs> for Nim {
+    type Error = Error;
+
+    fn try_from(args: NimArgs) -> Result<Self, Self::Error> {
+        // parse the original configuration of the game from args
+        // e.g. 3,5,7 for 3 heaps with 3, 5, and 7 objects respectively
+        let config = args
+            .configuration
+            .split(',')
+            .map(|num| num.parse::<usize>().expect("Not a number!"))
+            .collect::<Vec<_>>();
+
+        // create a new game of Nim with the given configuration
+        let mut game = Nim::new(config);
+
+        // parse every move in args, e.g. 0-0 1-1 in args
+        for nim_move in args.moves {
+            move_failable(&mut game, &nim_move)?;
+        }
+
+        Ok(game)
     }
 }

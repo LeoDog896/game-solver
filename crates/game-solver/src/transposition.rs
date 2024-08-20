@@ -79,6 +79,7 @@ impl<
     pub fn new() -> Self {
         let score_size = std::mem::size_of::<Score>() as u64;
 
+        // FIXME: this is bad to hardcode and should instead be configurable
         Self::with_capacity(
             // get three fourths of the memory, and divide that by the size of a score
             // to get the number of scores that can fit in the cache

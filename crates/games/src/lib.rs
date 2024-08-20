@@ -8,9 +8,8 @@ pub mod reversi;
 pub mod tic_tac_toe;
 
 use crate::{
-    chomp::cli::ChompArgs, domineering::cli::DomineeringArgs, nim::cli::NimArgs,
-    order_and_chaos::cli::OrderAndChaosArgs, reversi::cli::ReversiArgs,
-    tic_tac_toe::cli::TicTacToeArgs,
+    chomp::ChompArgs, domineering::DomineeringArgs, nim::NimArgs,
+    order_and_chaos::OrderAndChaosArgs, reversi::ReversiArgs, tic_tac_toe::TicTacToeArgs,
 };
 use clap::Subcommand;
 use once_cell::sync::Lazy;
@@ -59,17 +58,47 @@ impl Games {
             &Self::Chomp(_) => include_str!("./chomp/README.md"),
         }
     }
-    
+
     #[cfg(feature = "egui")]
     pub fn description_egui(&self, ui: &mut egui::Ui) {
         let mut cache = egui_commonmark::CommonMarkCache::default();
         match self {
-            &Self::Reversi(_) => egui_commonmark::commonmark_str!("reversi", ui, &mut cache, "crates/games/src/reversi/README.md"),
-            &Self::TicTacToe(_) => egui_commonmark::commonmark_str!("tic_tac_toe", ui, &mut cache, "crates/games/src/tic_tac_toe/README.md"),
-            &Self::OrderAndChaos(_) => egui_commonmark::commonmark_str!("order_and_chaos", ui, &mut cache, "crates/games/src/order_and_chaos/README.md"),
-            &Self::Nim(_) => egui_commonmark::commonmark_str!("nim", ui, &mut cache, "crates/games/src/nim/README.md"),
-            &Self::Domineering(_) => egui_commonmark::commonmark_str!("domineering", ui, &mut cache, "crates/games/src/domineering/README.md"),
-            &Self::Chomp(_) => egui_commonmark::commonmark_str!("chomp", ui, &mut cache, "crates/games/src/chomp/README.md"),
+            &Self::Reversi(_) => egui_commonmark::commonmark_str!(
+                "reversi",
+                ui,
+                &mut cache,
+                "crates/games/src/reversi/README.md"
+            ),
+            &Self::TicTacToe(_) => egui_commonmark::commonmark_str!(
+                "tic_tac_toe",
+                ui,
+                &mut cache,
+                "crates/games/src/tic_tac_toe/README.md"
+            ),
+            &Self::OrderAndChaos(_) => egui_commonmark::commonmark_str!(
+                "order_and_chaos",
+                ui,
+                &mut cache,
+                "crates/games/src/order_and_chaos/README.md"
+            ),
+            &Self::Nim(_) => egui_commonmark::commonmark_str!(
+                "nim",
+                ui,
+                &mut cache,
+                "crates/games/src/nim/README.md"
+            ),
+            &Self::Domineering(_) => egui_commonmark::commonmark_str!(
+                "domineering",
+                ui,
+                &mut cache,
+                "crates/games/src/domineering/README.md"
+            ),
+            &Self::Chomp(_) => egui_commonmark::commonmark_str!(
+                "chomp",
+                ui,
+                &mut cache,
+                "crates/games/src/chomp/README.md"
+            ),
         };
     }
 }

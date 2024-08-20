@@ -1,24 +1,30 @@
 #![doc = include_str!("./README.md")]
 
-pub mod cli;
-
 #[cfg(feature = "egui")]
 pub mod gui;
-
+use anyhow::Error;
 use array2d::Array2D;
-use game_solver::game::{Game, ZeroSumPlayer};
+use clap::Args;
+use game_solver::game::{Game, GameState, Player, ZeroSumPlayer};
+use serde::{Deserialize, Serialize};
+use std::{
+    fmt::{Debug, Display, Formatter},
+    hash::Hash,
+};
+use thiserror::Error;
 
-use std::hash::Hash;
+use crate::util::cli::move_failable;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
-struct Domineering<const WIDTH: usize, const HEIGHT: usize> {
+pub struct Domineering<const WIDTH: usize, const HEIGHT: usize> {
     /// True represents a square - true if empty, false otherwise
+    // TODO: bit array 2d
     board: Array2D<bool>,
     move_count: usize,
 }
 
 impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             board: Array2D::filled_with(true, WIDTH, HEIGHT),
             move_count: 0,
@@ -26,10 +32,28 @@ impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
     }
 }
 
+#[derive(Error, Debug, Clone)]
+pub enum DomineeringMoveError {
+    #[error("While no domino is present at {0}, player {1:?} can not move at {0} because a domino is in way of placement.")]
+    BlockingAdjacent(DomineeringMove, ZeroSumPlayer),
+    #[error("Player {1:?} can not move at {0} because a domino is already at {0}.")]
+    BlockingCurrent(DomineeringMove, ZeroSumPlayer),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct DomineeringMove(usize, usize);
+
+impl Display for DomineeringMove {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(&self, f)
+    }
+}
+
 impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT> {
-    type Move = (usize, usize);
+    type Move = DomineeringMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     type Player = ZeroSumPlayer;
+    type MoveError = DomineeringMoveError;
 
     fn max_moves(&self) -> Option<usize> {
         Some(WIDTH * HEIGHT)
@@ -47,26 +71,35 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
         self.move_count
     }
 
-    fn make_move(&mut self, m: &Self::Move) -> bool {
+    fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError> {
         if *self.board.get(m.0, m.1).unwrap() {
             if self.player() == ZeroSumPlayer::One {
                 if m.0 == WIDTH - 1 {
-                    return false;
+                    return Err(DomineeringMoveError::BlockingAdjacent(
+                        m.clone(),
+                        self.player(),
+                    ));
                 }
                 self.board.set(m.0, m.1, false).unwrap();
                 self.board.set(m.0 + 1, m.1, false).unwrap();
             } else {
                 if m.1 == HEIGHT - 1 {
-                    return false;
+                    return Err(DomineeringMoveError::BlockingAdjacent(
+                        m.clone(),
+                        self.player(),
+                    ));
                 }
                 self.board.set(m.0, m.1, false).unwrap();
                 self.board.set(m.0, m.1 + 1, false).unwrap();
             }
 
             self.move_count += 1;
-            true
+            Ok(())
         } else {
-            false
+            Err(DomineeringMoveError::BlockingCurrent(
+                m.clone(),
+                self.player(),
+            ))
         }
     }
 
@@ -76,7 +109,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
             for i in 0..HEIGHT {
                 for j in 0..WIDTH - 1 {
                     if *self.board.get(j, i).unwrap() && *self.board.get(j + 1, i).unwrap() {
-                        moves.push((j, i));
+                        moves.push(DomineeringMove(j, i));
                     }
                 }
             }
@@ -84,7 +117,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
             for i in 0..HEIGHT - 1 {
                 for j in 0..WIDTH {
                     if *self.board.get(j, i).unwrap() && *self.board.get(j, i + 1).unwrap() {
-                        moves.push((j, i));
+                        moves.push(DomineeringMove(j, i));
                     }
                 }
             }
@@ -92,23 +125,66 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
         moves.into_iter()
     }
 
-    fn is_winning_move(&self, m: &Self::Move) -> Option<Self::Player> {
-        let mut board = self.clone();
-        board.make_move(m);
-        if board.possible_moves().next().is_none() {
-            Some(self.player())
+    fn state(&self) -> GameState<Self::Player> {
+        if self.possible_moves().len() == 0 {
+            GameState::Win(self.player().next())
         } else {
-            None
+            GameState::Playable
         }
-    }
-
-    fn is_draw(&self) -> bool {
-        self.move_count == WIDTH * HEIGHT
     }
 }
 
-// n, m
-type DomineeringGame = Domineering<5, 5>;
+impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEIGHT> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+        for i in 0..HEIGHT {
+            for j in 0..WIDTH {
+                if *self.board.get(j, i).unwrap() {
+                    write!(f, "X")?;
+                } else {
+                    write!(f, ".")?;
+                }
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
+}
+
+/// Analyzes Domineering.
+///
+#[doc = include_str!("./README.md")]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub struct DomineeringArgs {
+    moves: Vec<String>,
+}
+
+impl Default for DomineeringArgs {
+    fn default() -> Self {
+        Self { moves: vec![] }
+    }
+}
+
+impl<const WIDTH: usize, const HEIGHT: usize> TryFrom<DomineeringArgs>
+    for Domineering<WIDTH, HEIGHT>
+{
+    type Error = Error;
+
+    fn try_from(args: DomineeringArgs) -> Result<Self, Self::Error> {
+        let mut game = Domineering::new();
+
+        // parse every move in args, e.g. 0-0 1-1 in args
+        for arg in args.moves {
+            let numbers: Vec<usize> = arg
+                .split('-')
+                .map(|num| num.parse::<usize>().expect("Not a number!"))
+                .collect();
+
+            move_failable(&mut game, &DomineeringMove(numbers[0], numbers[1]))?;
+        }
+
+        Ok(game)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -121,7 +197,9 @@ mod tests {
     /// Get the winner of a generic configuration of domineering
     fn winner<const WIDTH: usize, const HEIGHT: usize>() -> Option<ZeroSumPlayer> {
         let game = Domineering::<WIDTH, HEIGHT>::new();
-        let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
+        let mut move_scores = move_scores(&game, &mut HashMap::new())
+            .collect::<Result<Vec<_>, DomineeringMoveError>>()
+            .unwrap();
 
         if move_scores.is_empty() {
             None
@@ -148,33 +226,35 @@ mod tests {
     #[test]
     fn test_domineering() {
         let game = Domineering::<5, 5>::new();
-        let mut move_scores = move_scores(&game, &mut HashMap::new()).collect::<Vec<_>>();
+        let mut move_scores = move_scores(&game, &mut HashMap::new())
+            .collect::<Result<Vec<_>, DomineeringMoveError>>()
+            .unwrap();
 
         assert_eq!(move_scores.len(), game.possible_moves().len());
 
         move_scores.sort();
 
         let mut current_scores = vec![
-            ((3, 4), -13),
-            ((0, 4), -13),
-            ((3, 3), -13),
-            ((2, 3), -13),
-            ((1, 3), -13),
-            ((0, 3), -13),
-            ((3, 2), -13),
-            ((0, 2), -13),
-            ((3, 1), -13),
-            ((2, 1), -13),
-            ((1, 1), -13),
-            ((0, 1), -13),
-            ((3, 0), -13),
-            ((0, 0), -13),
-            ((2, 4), -15),
-            ((1, 4), -15),
-            ((2, 2), -15),
-            ((1, 2), -15),
-            ((2, 0), -15),
-            ((1, 0), -15),
+            (DomineeringMove(3, 4), -13),
+            (DomineeringMove(0, 4), -13),
+            (DomineeringMove(3, 3), -13),
+            (DomineeringMove(2, 3), -13),
+            (DomineeringMove(1, 3), -13),
+            (DomineeringMove(0, 3), -13),
+            (DomineeringMove(3, 2), -13),
+            (DomineeringMove(0, 2), -13),
+            (DomineeringMove(3, 1), -13),
+            (DomineeringMove(2, 1), -13),
+            (DomineeringMove(1, 1), -13),
+            (DomineeringMove(0, 1), -13),
+            (DomineeringMove(3, 0), -13),
+            (DomineeringMove(0, 0), -13),
+            (DomineeringMove(2, 4), -15),
+            (DomineeringMove(1, 4), -15),
+            (DomineeringMove(2, 2), -15),
+            (DomineeringMove(1, 2), -15),
+            (DomineeringMove(2, 0), -15),
+            (DomineeringMove(1, 0), -15),
         ];
 
         current_scores.sort();

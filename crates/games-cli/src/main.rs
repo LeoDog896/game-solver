@@ -1,8 +1,8 @@
+use anyhow::Result;
 use clap::Parser;
 use games::{
-    chomp::cli::main as chomp_main, domineering::cli::main as domineering_main,
-    nim::cli::main as nim_main, order_and_chaos::cli::main as order_and_chaos_main,
-    reversi::cli::main as reversi_main, tic_tac_toe::cli::main as tic_tac_toe_main, Games,
+    chomp::Chomp, domineering::Domineering, nim::Nim, order_and_chaos::OrderAndChaos,
+    reversi::Reversi, tic_tac_toe::TicTacToe, util::cli::play, Games,
 };
 
 #[derive(Parser)]
@@ -12,15 +12,17 @@ struct Cli {
     command: Games,
 }
 
-fn main() {
+fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Games::Reversi(args) => reversi_main(args),
-        Games::TicTacToe(args) => tic_tac_toe_main(args),
-        Games::OrderAndChaos(args) => order_and_chaos_main(args),
-        Games::Nim(args) => nim_main(args),
-        Games::Domineering(args) => domineering_main(args),
-        Games::Chomp(args) => chomp_main(args),
-    }
+        Games::Reversi(args) => play::<Reversi>(args.try_into().unwrap()),
+        Games::TicTacToe(args) => play::<TicTacToe>(args.try_into().unwrap()),
+        Games::OrderAndChaos(args) => play::<OrderAndChaos>(args.try_into().unwrap()),
+        Games::Nim(args) => play::<Nim>(args.try_into().unwrap()),
+        Games::Domineering(args) => play::<Domineering<5, 5>>(args.try_into().unwrap()),
+        Games::Chomp(args) => play::<Chomp>(args.try_into().unwrap()),
+    };
+
+    Ok(())
 }

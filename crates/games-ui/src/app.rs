@@ -6,16 +6,12 @@ use games::{nim, util::gui::egui_display::EguiDisplay, Games, DEFAULT_GAMES};
 pub struct TemplateApp {
     /// The currently selected game
     selected_game: Option<Games>,
-
-    #[serde(skip)] // This how you opt-out of serialization of a field
-    value: f32,
 }
 
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
             selected_game: None,
-            value: 2.7,
         }
     }
 }
@@ -78,7 +74,7 @@ impl eframe::App for TemplateApp {
                 });
 
                 let game = nim::Nim::new(vec![5, 3, 1]);
-                
+
                 game.display(ui);
             } else {
                 ui.label("To get started, select a game from the above dropdown.");

@@ -2,8 +2,27 @@
 
 /// Represents a player.
 pub trait Player {
-    /// Whether this Player implementation is for a two-player game.
-    fn is_two_player() -> bool;
+    /// The max player count.
+    #[must_use]
+    fn count() -> usize;
+    /// The current index of this player starting at 0.
+    #[must_use]
+    fn idx(&self) -> usize;
+    /// The next player to play
+    #[must_use]
+    fn next(self) -> Self;
+}
+
+/// Represents a move outcome
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash)]
+pub enum GameState<P: Player> {
+    /// It is still a player's turn - the game continues.
+    Playable,
+    /// The game ended in a tie - no players won
+    Tie,
+    // TODO: handling non-unique player wins.
+    /// A player won.
+    Win(P),
 }
 
 /// Represents a player in a zero-sum (2-player) game.
@@ -17,34 +36,58 @@ pub enum ZeroSumPlayer {
     Two,
 }
 
-impl ZeroSumPlayer {
-    /// Get the player opposite to this one.
-    #[must_use]
-    pub const fn opponent(&self) -> Self {
+impl Player for ZeroSumPlayer {
+    fn count() -> usize {
+        2
+    }
+
+    fn idx(&self) -> usize {
         match self {
-            Self::One => Self::Two,
-            Self::Two => Self::One,
+            Self::One => 0,
+            Self::Two => 1,
+        }
+    }
+
+    fn next(self) -> Self {
+        match self {
+            ZeroSumPlayer::One => ZeroSumPlayer::Two,
+            ZeroSumPlayer::Two => ZeroSumPlayer::One,
         }
     }
 }
 
-impl Player for ZeroSumPlayer {
-    fn is_two_player() -> bool {
-        true
+/// Represents a player in an N-player game.
+pub struct NPlayer<const N: usize>(usize);
+
+impl<const N: usize> NPlayer<N> {
+    pub fn new(index: usize) -> NPlayer<N> {
+        assert!(index < N, "Player index {index} >= max player count {N}");
+        Self(index)
+    }
+
+    pub fn new_unchecked(index: usize) -> NPlayer<N> {
+        debug_assert!(index < N, "Player index {index} >= max player count {N}");
+        Self(index)
     }
 }
 
-/// Represents a player in an N-player game.
-pub struct NPlayer(pub usize);
+impl<const N: usize> Player for NPlayer<N> {
+    fn count() -> usize {
+        N
+    }
 
-impl Player for NPlayer {
-    fn is_two_player() -> bool {
-        false
+    fn idx(&self) -> usize {
+        self.0
+    }
+
+    fn next(self) -> Self {
+        // This will always make index < N.
+        Self::new_unchecked((self.0 + 1) % N)
     }
 }
 
 /// Represents a combinatorial game.
-pub trait Game {
+pub trait Game: Clone {
     /// The type of move this game uses.
     type Move: Clone;
 
@@ -62,6 +105,8 @@ pub trait Game {
     /// If your game is a two-player zero-sum game, using [`ZeroSumPlayer`]
     /// allows `negamax` to be used instead of minimax.
     type Player: Player;
+
+    type MoveError;
 
     /// Returns the player whose turn it is.
     /// The implementation of this should be
@@ -101,8 +146,8 @@ pub trait Game {
     /// Get the max number of moves in a game, if any.
     fn max_moves(&self) -> Option<usize>;
 
-    /// Returns true if the move was valid, and makes the move if it was.
-    fn make_move(&mut self, m: &Self::Move) -> bool;
+    /// Makes a move.
+    fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError>;
 
     /// Returns a vector of all possible moves.
     ///
@@ -111,18 +156,19 @@ pub trait Game {
     /// This allows alpha-beta pruning to move faster.
     fn possible_moves(&self) -> Self::Iter<'_>;
 
-    /// Returns None if the move isn't winning,
-    /// or Some(player) if the move is winning.
+    /// Returns the next state given a move.
     ///
-    /// This allows you to turn the other player in,
-    /// in the case that this player can purposely
-    /// lose in the next move.
-    fn is_winning_move(&self, m: &Self::Move) -> Option<Self::Player>;
+    /// This has a default implementation and is mainly useful for optimization -
+    /// this is used at every tree check and should be fast.
+    fn next_state(&self, m: &Self::Move) -> Result<GameState<Self::Player>, Self::MoveError> {
+        let mut new_self = self.clone();
+        new_self.make_move(m)?;
+        Ok(new_self.state())
+    }
 
-    /// Returns true if the game is a draw.
-    /// This function must exist for the current game,
-    /// e.g. with tic tac toe, it must check if the board is full.
-    fn is_draw(&self) -> bool;
+    /// Returns the current state of the game.
+    /// Used for verifying initialization and isn't commonly called.
+    fn state(&self) -> GameState<Self::Player>;
 }
 
 /// Utility function to get the upper bound of a game.
