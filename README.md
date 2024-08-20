@@ -11,18 +11,17 @@ More in-depth information can be found in [the book](https://leodog896.github.io
 
 [Game Theory](https://en.wikipedia.org/wiki/Game_theory) is a general study of games. Many of these games are solved without rigirous computation (for example, where [impartial](https://en.wikipedia.org/wiki/Impartial_game) [combinatorial games](https://en.wikipedia.org/wiki/Combinatorial_game_theory) are solved by generalizing the game to Nim).
 
-However, in order to apply game theory to more complex games, computation is required. This is where `game-solver` comes in.
+However, computation is required to strongly solve to more complex games. This is where the `game-solver` comes in.
 
 ## Contribute
 
-Rust nightly is required to compile the examples (as `game-solver` uses benches for examples)
+Rust nightly is required.
 
 If you want to contribute, new game implementations would be greately appreciated!
 The more examples of games that are provided, the more examples that can be used
 for benchmarks, analysis, and further optimization.
 
-Any new visual representations for games that don't exist on the [app](https://leodog896.github.io/game-solver/app/)
-would also be great!
+Any new visual representations for games that don't exist on the [app](https://leodog896.github.io/game-solver/app/) would also be great!
 
 ### Profiling
 

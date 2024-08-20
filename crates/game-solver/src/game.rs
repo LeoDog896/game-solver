@@ -57,21 +57,21 @@ impl Player for ZeroSumPlayer {
 }
 
 /// Represents a player in an N-player game.
-pub struct NPlayer<const N: usize>(usize);
+pub struct NPlayerConst<const N: usize>(usize);
 
-impl<const N: usize> NPlayer<N> {
-    pub fn new(index: usize) -> NPlayer<N> {
+impl<const N: usize> NPlayerConst<N> {
+    pub fn new(index: usize) -> NPlayerConst<N> {
         assert!(index < N, "Player index {index} >= max player count {N}");
         Self(index)
     }
 
-    pub fn new_unchecked(index: usize) -> NPlayer<N> {
+    pub fn new_unchecked(index: usize) -> NPlayerConst<N> {
         debug_assert!(index < N, "Player index {index} >= max player count {N}");
         Self(index)
     }
 }
 
-impl<const N: usize> Player for NPlayer<N> {
+impl<const N: usize> Player for NPlayerConst<N> {
     fn count() -> usize {
         N
     }
@@ -140,6 +140,8 @@ pub trait Game: Clone {
     /// because this does not keep track of the move count.
     fn player(&self) -> Self::Player;
 
+    // TODO: (move_count/max_moves) allow custom evaluation
+
     /// Returns the amount of moves that have been played
     fn move_count(&self) -> usize;
 
@@ -149,13 +151,14 @@ pub trait Game: Clone {
     /// Makes a move.
     fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError>;
 
-    /// Returns a vector of all possible moves.
+    /// Returns an iterator of all possible moves.
     ///
     /// If possible, this function should "guess" what the best moves are first.
     /// For example, if this is for tic tac toe, it should give the middle move first.
-    /// This allows alpha-beta pruning to move faster.
+    /// Since "better" moves would be found first, this permits more alpha/beta cutoffs.
     fn possible_moves(&self) -> Self::Iter<'_>;
 
+    // TODO: fn is_immediately_resolvable instead - better optimization for unwinnable games
     /// Returns the next state given a move.
     ///
     /// This has a default implementation and is mainly useful for optimization -

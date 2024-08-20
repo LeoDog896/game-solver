@@ -5,6 +5,7 @@ use games::{
     reversi::Reversi, tic_tac_toe::TicTacToe, util::cli::play, Games,
 };
 
+/// `game-solver` is a solving utility that helps analyze various combinatorial games.
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {

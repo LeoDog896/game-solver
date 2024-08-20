@@ -20,12 +20,12 @@ use crate::transposition::{Score, TranspositionTable};
 use std::hash::Hash;
 
 /// Runs the two-player minimax variant on a zero-sum game.
-/// It uses alpha beta pruning (e.g. you can specify \[-1, 1\] to get only win/loss/draw moves).
+/// Since it uses alpha-beta pruning, you can specify an alpha beta window.
 fn negamax<T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
     mut alpha: isize,
-    mut beta: isize,
+    mut beta: isize
 ) -> Result<isize, T::MoveError> {
     match game.state() {
         GameState::Playable => (),
@@ -34,7 +34,9 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
     };
 
     // check if this is a winning configuration
+    // TODO: allow overloading of this - some kind of game.can_win_next()
     for m in &mut game.possible_moves() {
+        // TODO: ties?
         if let GameState::Win(_) = game.next_state(&m)? {
             let mut board = game.clone();
             board.make_move(&m)?;
@@ -121,7 +123,7 @@ pub fn solve<T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
     while alpha < beta {
         let med = alpha + (beta - alpha) / 2;
 
-        // do a null window search
+        // do a [null window search](https://www.chessprogramming.org/Null_Window)
         let evaluation = negamax(game, transposition_table, med, med + 1)?;
 
         if evaluation <= med {
