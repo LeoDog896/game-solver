@@ -280,12 +280,10 @@ impl Display for OrderAndChaos {
 /// Analyzes Order and Chaos.
 ///
 #[doc = include_str!("./README.md")]
-#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
-#[derive(Default)]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone, Default)]
 pub struct OrderAndChaosArgs {
     moves: Vec<String>,
 }
-
 
 impl TryFrom<OrderAndChaosArgs> for OrderAndChaos {
     type Error = Error;

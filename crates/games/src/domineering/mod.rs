@@ -159,12 +159,10 @@ impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEI
 /// Analyzes Domineering.
 ///
 #[doc = include_str!("./README.md")]
-#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
-#[derive(Default)]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone, Default)]
 pub struct DomineeringArgs {
     moves: Vec<String>,
 }
-
 
 impl<const WIDTH: usize, const HEIGHT: usize> TryFrom<DomineeringArgs>
     for Domineering<WIDTH, HEIGHT>

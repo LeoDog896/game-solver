@@ -9,7 +9,6 @@ pub struct TemplateApp {
     selected_game: Option<Games>,
 }
 
-
 impl TemplateApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         // Load previous app state (if any).

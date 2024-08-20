@@ -232,14 +232,12 @@ impl fmt::Display for Reversi {
 /// Analyzes Reversi.
 ///
 #[doc = include_str!("./README.md")]
-#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
-#[derive(Default)]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone, Default)]
 pub struct ReversiArgs {
     /// Reversi moves, ordered as x1-y1 x2-y2 ...
     #[arg(value_parser = clap::value_parser!(ReversiMove))]
     moves: Vec<ReversiMove>,
 }
-
 
 impl TryFrom<ReversiArgs> for Reversi {
     type Error = Error;

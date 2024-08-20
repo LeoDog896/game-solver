@@ -5,7 +5,7 @@ pub mod gui;
 use anyhow::Error;
 use array2d::Array2D;
 use clap::Args;
-use game_solver::game::{Game, GameState, Player, ZeroSumPlayer};
+use game_solver::game::{Game, GameState, ZeroSumPlayer};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -123,8 +123,8 @@ impl Game for Chomp {
     }
 
     fn state(&self) -> GameState<Self::Player> {
-        if self.move_count == self.width * self.height {
-            GameState::Win(self.player().next())
+        if self.possible_moves().len() == 0 {
+            GameState::Win(self.player())
         } else {
             GameState::Playable
         }

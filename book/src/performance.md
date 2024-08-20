@@ -13,12 +13,12 @@
 - Memoization via [Transposition Tables](https://en.wikipedia.org/wiki/Transposition_table).
   - Both lower bound and upper bound
   - (Parallelization only):
-    - Concurrent HashMap cache via [moka](https://github.com/moka-rs/moka).
+    - Concurrent memory-based HashMap cache via [moka](https://github.com/moka-rs/moka).
       - TODO: Use depth-first cache removal
-    - [xxHash](https://github.com/Cyan4973/xxHash) for fast hashing.
-      - If you want to use xxHash without parallelization, pass it to your hashmap by using `hasher: std::hash::BuildHasherDefault<xxhash_rust::XxHash64>`.
-      - You can disable xxhash by removing the `xxhash` feature.
-        - More information about why you may want to do this can be found in the [hashing](#hashing) section
+  - [xxHash](https://github.com/Cyan4973/xxHash) for fast hashing.
+    - If you want to use xxHash without parallelization, pass it to your hashmap by using `hasher: std::hash::BuildHasherDefault<xxhash_rust::XxHash64>`.
+    - You can disable xxhash by removing the `xxhash` feature.
+      - More information about why you may want to do this can be found in the [hashing](#hashing) section
 - ML-based move ordering with [candle](https://github.com/huggingface/candle/)
 - Parallelization with [rayon](https://github.com/rayon-rs/rayon)
   - Note that this is under the `rayon` feature flag.
