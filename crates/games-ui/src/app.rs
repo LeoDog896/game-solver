@@ -3,18 +3,12 @@ use games::{nim, util::gui::egui_display::EguiDisplay, Games, DEFAULT_GAMES};
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
+#[derive(Default)]
 pub struct TemplateApp {
     /// The currently selected game
     selected_game: Option<Games>,
 }
 
-impl Default for TemplateApp {
-    fn default() -> Self {
-        Self {
-            selected_game: None,
-        }
-    }
-}
 
 impl TemplateApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {

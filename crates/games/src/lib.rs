@@ -38,62 +38,62 @@ pub static DEFAULT_GAMES: Lazy<[Games; 6]> = Lazy::new(|| {
 
 impl Games {
     pub fn name(&self) -> String {
-        match self {
-            &Self::Reversi(_) => "Reversi".to_string(),
-            &Self::TicTacToe(_) => "Tic Tac Toe".to_string(),
-            &Self::OrderAndChaos(_) => "Order and Chaos".to_string(),
-            &Self::Nim(_) => "Nim".to_string(),
-            &Self::Domineering(_) => "Domineering".to_string(),
-            &Self::Chomp(_) => "Chomp".to_string(),
+        match *self {
+            Self::Reversi(_) => "Reversi".to_string(),
+            Self::TicTacToe(_) => "Tic Tac Toe".to_string(),
+            Self::OrderAndChaos(_) => "Order and Chaos".to_string(),
+            Self::Nim(_) => "Nim".to_string(),
+            Self::Domineering(_) => "Domineering".to_string(),
+            Self::Chomp(_) => "Chomp".to_string(),
         }
     }
 
     pub fn description(&self) -> &str {
-        match self {
-            &Self::Reversi(_) => include_str!("./reversi/README.md"),
-            &Self::TicTacToe(_) => include_str!("./tic_tac_toe/README.md"),
-            &Self::OrderAndChaos(_) => include_str!("./order_and_chaos/README.md"),
-            &Self::Nim(_) => include_str!("./nim/README.md"),
-            &Self::Domineering(_) => include_str!("./domineering/README.md"),
-            &Self::Chomp(_) => include_str!("./chomp/README.md"),
+        match *self {
+            Self::Reversi(_) => include_str!("./reversi/README.md"),
+            Self::TicTacToe(_) => include_str!("./tic_tac_toe/README.md"),
+            Self::OrderAndChaos(_) => include_str!("./order_and_chaos/README.md"),
+            Self::Nim(_) => include_str!("./nim/README.md"),
+            Self::Domineering(_) => include_str!("./domineering/README.md"),
+            Self::Chomp(_) => include_str!("./chomp/README.md"),
         }
     }
 
     #[cfg(feature = "egui")]
     pub fn description_egui(&self, ui: &mut egui::Ui) {
         let mut cache = egui_commonmark::CommonMarkCache::default();
-        match self {
-            &Self::Reversi(_) => egui_commonmark::commonmark_str!(
+        match *self {
+            Self::Reversi(_) => egui_commonmark::commonmark_str!(
                 "reversi",
                 ui,
                 &mut cache,
                 "crates/games/src/reversi/README.md"
             ),
-            &Self::TicTacToe(_) => egui_commonmark::commonmark_str!(
+            Self::TicTacToe(_) => egui_commonmark::commonmark_str!(
                 "tic_tac_toe",
                 ui,
                 &mut cache,
                 "crates/games/src/tic_tac_toe/README.md"
             ),
-            &Self::OrderAndChaos(_) => egui_commonmark::commonmark_str!(
+            Self::OrderAndChaos(_) => egui_commonmark::commonmark_str!(
                 "order_and_chaos",
                 ui,
                 &mut cache,
                 "crates/games/src/order_and_chaos/README.md"
             ),
-            &Self::Nim(_) => egui_commonmark::commonmark_str!(
+            Self::Nim(_) => egui_commonmark::commonmark_str!(
                 "nim",
                 ui,
                 &mut cache,
                 "crates/games/src/nim/README.md"
             ),
-            &Self::Domineering(_) => egui_commonmark::commonmark_str!(
+            Self::Domineering(_) => egui_commonmark::commonmark_str!(
                 "domineering",
                 ui,
                 &mut cache,
                 "crates/games/src/domineering/README.md"
             ),
-            &Self::Chomp(_) => egui_commonmark::commonmark_str!(
+            Self::Chomp(_) => egui_commonmark::commonmark_str!(
                 "chomp",
                 ui,
                 &mut cache,

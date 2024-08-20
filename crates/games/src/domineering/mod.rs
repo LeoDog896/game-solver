@@ -23,6 +23,12 @@ pub struct Domineering<const WIDTH: usize, const HEIGHT: usize> {
     move_count: usize,
 }
 
+impl<const WIDTH: usize, const HEIGHT: usize> Default for Domineering<WIDTH, HEIGHT> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
     pub fn new() -> Self {
         Self {
@@ -154,15 +160,11 @@ impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEI
 ///
 #[doc = include_str!("./README.md")]
 #[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Default)]
 pub struct DomineeringArgs {
     moves: Vec<String>,
 }
 
-impl Default for DomineeringArgs {
-    fn default() -> Self {
-        Self { moves: vec![] }
-    }
-}
 
 impl<const WIDTH: usize, const HEIGHT: usize> TryFrom<DomineeringArgs>
     for Domineering<WIDTH, HEIGHT>

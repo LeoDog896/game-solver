@@ -155,6 +155,8 @@ pub fn move_scores<'a, T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
     })
 }
 
+type CollectedMoves<T> = Vec<Result<(<T as Game>::Move, isize), <T as Game>::MoveError>>;
+
 /// Parallelized version of `move_scores`. (faster by a large margin)
 /// This requires the `rayon` feature to be enabled.
 /// It uses rayon's parallel iterators to evaluate the scores of each move in parallel.
@@ -165,7 +167,7 @@ pub fn move_scores<'a, T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores_with_hasher<T, S>(game: &T) -> Vec<Result<(T::Move, isize), T::MoveError>>
+pub fn par_move_scores_with_hasher<T, S>(game: &T) -> CollectedMoves<T>
 where
     T: Game<Player = ZeroSumPlayer> + Eq + Hash + Sync + Send + 'static,
     T::Move: Sync + Send,
@@ -204,7 +206,7 @@ where
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores<T>(game: &T) -> Vec<Result<(T::Move, isize), T::MoveError>>
+pub fn par_move_scores<T>(game: &T) -> CollectedMoves<T>
 where
     T: Game<Player = ZeroSumPlayer> + Eq + Hash + Sync + Send + 'static,
     T::Move: Sync + Send,

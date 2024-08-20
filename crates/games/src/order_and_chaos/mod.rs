@@ -44,6 +44,12 @@ const WIDTH: usize = 6;
 const HEIGHT: usize = 6;
 const WIN_LENGTH: usize = 5;
 
+impl Default for OrderAndChaos {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OrderAndChaos {
     /// Create a new game of Nim with the given heaps,
     /// where heaps is a list of the number of objects in each heap.
@@ -106,15 +112,15 @@ impl Game for OrderAndChaos {
         // check for indexing OOB
         if row >= HEIGHT || column >= WIDTH {
             return Err(OrderAndChaosMoveError::OutOfBounds {
-                played: m.0 .0.clone(),
+                played: m.0 .0,
                 width: self.board.num_columns(),
                 height: self.board.num_rows(),
             });
         }
 
         // check if the cell is empty
-        if self.board[(row, column)] != None {
-            return Err(OrderAndChaosMoveError::AlreadyPresent(m.0 .0.clone()));
+        if self.board[(row, column)].is_some() {
+            return Err(OrderAndChaosMoveError::AlreadyPresent(m.0 .0));
         }
 
         // make the move
@@ -129,7 +135,7 @@ impl Game for OrderAndChaos {
 
         for row in 0..HEIGHT {
             for column in 0..WIDTH {
-                if self.board[(row, column)] == None {
+                if self.board[(row, column)].is_none() {
                     moves.push(OrderAndChaosMove(((row, column), CellType::X)));
                     moves.push(OrderAndChaosMove(((row, column), CellType::O)));
                 }
@@ -275,15 +281,11 @@ impl Display for OrderAndChaos {
 ///
 #[doc = include_str!("./README.md")]
 #[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Default)]
 pub struct OrderAndChaosArgs {
     moves: Vec<String>,
 }
 
-impl Default for OrderAndChaosArgs {
-    fn default() -> Self {
-        Self { moves: vec![] }
-    }
-}
 
 impl TryFrom<OrderAndChaosArgs> for OrderAndChaos {
     type Error = Error;
