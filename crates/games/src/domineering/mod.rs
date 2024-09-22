@@ -5,7 +5,7 @@ pub mod gui;
 use anyhow::Error;
 use array2d::Array2D;
 use clap::Args;
-use game_solver::game::{Game, GameState, Player, ZeroSumPlayer};
+use game_solver::{game::{Game, GameState, StateType}, player::{PartizanPlayer, Player}};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Debug, Display, Formatter},
@@ -63,9 +63,9 @@ impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
 #[derive(Error, Debug, Clone)]
 pub enum DomineeringMoveError {
     #[error("While no domino is present at {0}, player {1:?} can not move at {0} because a domino is in way of placement.")]
-    BlockingAdjacent(DomineeringMove, ZeroSumPlayer),
+    BlockingAdjacent(DomineeringMove, PartizanPlayer),
     #[error("Player {1:?} can not move at {0} because a domino is already at {0}.")]
-    BlockingCurrent(DomineeringMove, ZeroSumPlayer),
+    BlockingCurrent(DomineeringMove, PartizanPlayer),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -109,19 +109,13 @@ impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
 impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT> {
     type Move = DomineeringMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
-    type Player = ZeroSumPlayer;
+    type Player = PartizanPlayer;
     type MoveError = DomineeringMoveError;
+
+    const STATE_TYPE: Option<StateType> = Some(StateType::Normal);
 
     fn max_moves(&self) -> Option<usize> {
         Some(WIDTH * HEIGHT)
-    }
-
-    fn player(&self) -> Self::Player {
-        if self.move_count % 2 == 0 {
-            ZeroSumPlayer::One
-        } else {
-            ZeroSumPlayer::Two
-        }
     }
 
     fn move_count(&self) -> usize {
@@ -130,7 +124,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
 
     fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError> {
         if *self.board.get(m.0, m.1).unwrap() {
-            self.place(m, if self.player() == ZeroSumPlayer::One {
+            self.place(m, if self.player() == PartizanPlayer::Left {
                 self.primary_orientation
             } else {
                 self.primary_orientation.turn()
@@ -148,7 +142,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
 
     fn possible_moves(&self) -> Self::Iter<'_> {
         let mut moves = Vec::new();
-        let orientation = if self.player() == ZeroSumPlayer::One {
+        let orientation = if self.player() == PartizanPlayer::Left {
             self.primary_orientation
         } else {
             self.primary_orientation.turn()
@@ -183,6 +177,14 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
             GameState::Win(self.player().next())
         } else {
             GameState::Playable
+        }
+    }
+
+    fn player(&self) -> Self::Player {
+        if self.move_count % 2 == 0 {
+            PartizanPlayer::Left
+        } else {
+            PartizanPlayer::Right
         }
     }
 }
@@ -242,7 +244,7 @@ mod tests {
     use super::*;
 
     /// Get the winner of a generic configuration of domineering
-    fn winner<const WIDTH: usize, const HEIGHT: usize>(orientation: Orientation) -> Option<ZeroSumPlayer> {
+    fn winner<const WIDTH: usize, const HEIGHT: usize>(orientation: Orientation) -> Option<PartizanPlayer> {
         let game = Domineering::<WIDTH, HEIGHT>::new_orientation(orientation);
         let mut move_scores = move_scores(&game, &mut HashMap::new())
             .collect::<Result<Vec<_>, DomineeringMoveError>>()
@@ -254,20 +256,20 @@ mod tests {
             move_scores.sort_by_key(|m| m.1);
             move_scores.reverse();
             if move_scores[0].1 > 0 {
-                Some(ZeroSumPlayer::One)
+                Some(PartizanPlayer::Left)
             } else {
-                Some(ZeroSumPlayer::Two)
+                Some(PartizanPlayer::Right)
             }
         }
     }
 
     #[test]
     fn test_wins() {
-        assert_eq!(winner::<5, 5>(Orientation::Horizontal), Some(ZeroSumPlayer::Two));
-        assert_eq!(winner::<4, 4>(Orientation::Horizontal), Some(ZeroSumPlayer::One));
-        assert_eq!(winner::<3, 3>(Orientation::Horizontal), Some(ZeroSumPlayer::One));
-        assert_eq!(winner::<13, 2>(Orientation::Horizontal), Some(ZeroSumPlayer::Two));
-        assert_eq!(winner::<11, 2>(Orientation::Horizontal), Some(ZeroSumPlayer::One));
+        assert_eq!(winner::<5, 5>(Orientation::Horizontal), Some(PartizanPlayer::Right));
+        assert_eq!(winner::<4, 4>(Orientation::Horizontal), Some(PartizanPlayer::Left));
+        assert_eq!(winner::<3, 3>(Orientation::Horizontal), Some(PartizanPlayer::Left));
+        assert_eq!(winner::<13, 2>(Orientation::Horizontal), Some(PartizanPlayer::Right));
+        assert_eq!(winner::<11, 2>(Orientation::Horizontal), Some(PartizanPlayer::Left));
     }
 
     #[test]

@@ -1,17 +1,6 @@
 //! Game trait and related types.
 
-/// Represents a player.
-pub trait Player {
-    /// The max player count.
-    #[must_use]
-    fn count() -> usize;
-    /// The current index of this player starting at 0.
-    #[must_use]
-    fn idx(&self) -> usize;
-    /// The next player to play
-    #[must_use]
-    fn next(self) -> Self;
-}
+use crate::player::Player;
 
 /// Represents a move outcome
 #[derive(PartialEq, Eq, Debug, Clone, Copy, Hash)]
@@ -25,68 +14,48 @@ pub enum GameState<P: Player> {
     Win(P),
 }
 
-/// Represents a player in a zero-sum (2-player) game.
-///
-/// Allows for usage of `negamax` instead of minimax.
-#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash)]
-pub enum ZeroSumPlayer {
-    /// The first player.
-    One,
-    /// The second player.
-    Two,
+/// Defines the 'state' the game is in.
+/// 
+/// Generally used by a game solver for better optimizations.
+/// 
+/// This is usually wrapped in an Option, as there are many games that do not classify
+/// as being under 'Normal' or 'Misere.' (i.e. tic-tac-toe)
+#[non_exhaustive]
+pub enum StateType {
+    /// If a game is under 'normal play' convention, the last player to move wins.
+    /// There are no ties in this variant.
+    /// 
+    /// Learn more: <https://en.wikipedia.org/wiki/Normal_play_convention>
+    Normal,
+    /// If a game is under 'misere play' convention, the last player to move loses.
+    /// There are no ties in this variant.
+    /// 
+    /// Learn more: <https://en.wikipedia.org/wiki/Mis%C3%A8re#Mis%C3%A8re_game>
+    Misere
 }
 
-impl Player for ZeroSumPlayer {
-    fn count() -> usize {
-        2
-    }
-
-    fn idx(&self) -> usize {
-        match self {
-            Self::One => 0,
-            Self::Two => 1,
+impl StateType {
+    pub fn state<T>(&self, game: &T) -> GameState<T::Player>
+        where T: Game
+    {
+        if game.possible_moves().next().is_none() {
+            GameState::Win(match self {
+                Self::Misere => game.player(),
+                Self::Normal => game.player().previous()
+            })
+        } else {
+            GameState::Playable
         }
-    }
-
-    fn next(self) -> Self {
-        match self {
-            ZeroSumPlayer::One => ZeroSumPlayer::Two,
-            ZeroSumPlayer::Two => ZeroSumPlayer::One,
-        }
-    }
-}
-
-/// Represents a player in an N-player game.
-pub struct NPlayerConst<const N: usize>(usize);
-
-impl<const N: usize> NPlayerConst<N> {
-    pub fn new(index: usize) -> NPlayerConst<N> {
-        assert!(index < N, "Player index {index} >= max player count {N}");
-        Self(index)
-    }
-
-    pub fn new_unchecked(index: usize) -> NPlayerConst<N> {
-        debug_assert!(index < N, "Player index {index} >= max player count {N}");
-        Self(index)
-    }
-}
-
-impl<const N: usize> Player for NPlayerConst<N> {
-    fn count() -> usize {
-        N
-    }
-
-    fn idx(&self) -> usize {
-        self.0
-    }
-
-    fn next(self) -> Self {
-        // This will always make index < N.
-        Self::new_unchecked((self.0 + 1) % N)
     }
 }
 
 /// Represents a combinatorial game.
+/// 
+/// A game has three distinct variants per game:
+/// 
+/// - Game play type: Normal, Misere, Other
+/// - Game partiality type: Impartial, Partizan
+/// - Game player count: >0
 pub trait Game: Clone {
     /// The type of move this game uses.
     type Move: Clone;
@@ -96,17 +65,56 @@ pub trait Game: Clone {
     where
         Self: 'a;
 
-    /// The type of player this game uses.
-    /// There are two types of players:
-    ///
-    /// - [`ZeroSumPlayer`] for two-player zero-sum games.
-    /// - [`NPlayer`] for N-player games.
-    ///
-    /// If your game is a two-player zero-sum game, using [`ZeroSumPlayer`]
-    /// allows `negamax` to be used instead of minimax.
+    type MoveError;
+
     type Player: Player;
 
-    type MoveError;
+    const STATE_TYPE: Option<StateType>;
+
+    /// Returns the amount of moves that have been played
+    fn move_count(&self) -> usize;
+
+    /// Get the max number of moves in a game, if any.
+    fn max_moves(&self) -> Option<usize>;
+
+    /// Makes a move.
+    fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError>;
+
+    /// Returns an iterator of all possible moves.
+    ///
+    /// If possible, this function should "guess" what the best moves are first.
+    /// For example, if this is for tic tac toe, it should give the middle move first.
+    /// Since "better" moves would be found first, this permits more alpha/beta cutoffs.
+    fn possible_moves(&self) -> Self::Iter<'_>;
+
+    /// Returns a reachable game in one move.
+    /// 
+    /// Rather, this function asks if there exists some game in the possible games set
+    /// which has a resolvable, positive or negative, outcome.
+    fn find_immediately_resolvable_game(&self) -> Result<Option<Self>, Self::MoveError> {
+        for m in &mut self.possible_moves() {
+            let mut new_self = self.clone();
+            new_self.make_move(&m)?;
+            if let GameState::Win(_) = new_self.state() {
+                return Ok(Some(new_self));
+            }
+        }
+
+        Ok(None)
+    }
+
+    /// Returns the current state of the game.
+    /// Used for verifying initialization and isn't commonly called.
+    /// 
+    /// If `Self::STATE_TYPE` isn't None,
+    /// the following implementation can be used:
+    /// 
+    /// ```ignore
+    /// fn state(&self) -> GameState<Self::Player> {
+    ///     Self::STATE_TYPE.unwrap().state(self)
+    /// }
+    /// ```
+    fn state(&self) -> GameState<Self::Player>;
 
     /// Returns the player whose turn it is.
     /// The implementation of this should be
@@ -139,39 +147,6 @@ pub trait Game: Clone {
     /// However, no implementation is provided
     /// because this does not keep track of the move count.
     fn player(&self) -> Self::Player;
-
-    // TODO: (move_count/max_moves) allow custom evaluation
-
-    /// Returns the amount of moves that have been played
-    fn move_count(&self) -> usize;
-
-    /// Get the max number of moves in a game, if any.
-    fn max_moves(&self) -> Option<usize>;
-
-    /// Makes a move.
-    fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError>;
-
-    /// Returns an iterator of all possible moves.
-    ///
-    /// If possible, this function should "guess" what the best moves are first.
-    /// For example, if this is for tic tac toe, it should give the middle move first.
-    /// Since "better" moves would be found first, this permits more alpha/beta cutoffs.
-    fn possible_moves(&self) -> Self::Iter<'_>;
-
-    // TODO: fn is_immediately_resolvable instead - better optimization for unwinnable games
-    /// Returns the next state given a move.
-    ///
-    /// This has a default implementation and is mainly useful for optimization -
-    /// this is used at every tree check and should be fast.
-    fn next_state(&self, m: &Self::Move) -> Result<GameState<Self::Player>, Self::MoveError> {
-        let mut new_self = self.clone();
-        new_self.make_move(m)?;
-        Ok(new_self.state())
-    }
-
-    /// Returns the current state of the game.
-    /// Used for verifying initialization and isn't commonly called.
-    fn state(&self) -> GameState<Self::Player>;
 }
 
 /// Utility function to get the upper bound of a game.

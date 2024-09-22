@@ -1,14 +1,13 @@
 use anyhow::{anyhow, Result};
 use core::hash::Hash;
 use game_solver::{
-    game::{Game, GameState, ZeroSumPlayer},
-    par_move_scores,
+    game::{Game, GameState},
+    par_move_scores, player::TwoPlayer,
 };
 use std::fmt::{Debug, Display};
 
-pub fn play<T>(game: T)
+pub fn play<T: Game<Player = impl TwoPlayer + Debug> + Eq + Hash + Sync + Send + Display + 'static>(game: T)
 where
-    T: Game<Player = ZeroSumPlayer> + Eq + Hash + Sync + Send + Display + 'static,
     T::Move: Sync + Send + Display,
     T::MoveError: Sync + Send + Debug,
 {

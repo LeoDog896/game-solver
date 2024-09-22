@@ -5,7 +5,7 @@ pub mod gui;
 use anyhow::{anyhow, Error};
 use array2d::Array2D;
 use clap::Args;
-use game_solver::game::{Game, GameState, ZeroSumPlayer};
+use game_solver::{game::{Game, GameState, StateType}, player::PartizanPlayer};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Display, Formatter},
@@ -88,19 +88,13 @@ impl Game for OrderAndChaos {
     type Move = OrderAndChaosMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     /// Define Nimbers as a zero-sum game
-    type Player = ZeroSumPlayer;
+    type Player = PartizanPlayer;
     type MoveError = OrderAndChaosMoveError;
+
+    const STATE_TYPE: Option<StateType> = None;
 
     fn max_moves(&self) -> Option<usize> {
         Some(WIDTH * HEIGHT)
-    }
-
-    fn player(&self) -> ZeroSumPlayer {
-        if self.move_count % 2 == 0 {
-            ZeroSumPlayer::One
-        } else {
-            ZeroSumPlayer::Two
-        }
     }
 
     fn move_count(&self) -> usize {
@@ -147,58 +141,36 @@ impl Game for OrderAndChaos {
 
     // a move is winning if the next player
     // has no possible moves to make (normal play for Nim)
-    fn next_state(&self, m: &Self::Move) -> Result<GameState<Self::Player>, Self::MoveError> {
-        let mut board = self.clone();
-        board.make_move(m)?;
-        let found = 'found: {
-            let ((row, column), square) = m.0;
+    fn find_immediately_resolvable_game(&self) -> Result<Option<Self>, Self::MoveError> {
+        for m in &mut self.possible_moves() {
+            let mut board = self.clone();
+            board.make_move(&m)?;
+            let found = 'found: {
+                let ((row, column), square) = m.0;
 
-            // check for horizontal win
-            let mut count = 0;
-            let mut mistakes = 0;
-            'horiz: for i in 0..WIDTH {
-                if board.board[(row, i)] == Some(square) {
-                    count += 1;
-                    if count == WIN_LENGTH {
-                        break 'found true;
-                    }
-                } else {
-                    count = 0;
-                    mistakes += 1;
-                    if mistakes > WIDTH - WIN_LENGTH {
-                        break 'horiz;
-                    }
-                }
-            }
-
-            // check for vertical win
-            let mut count = 0;
-            let mut mistakes = 0;
-            'vert: for i in 0..HEIGHT {
-                if board.board[(i, column)] == Some(square) {
-                    count += 1;
-                    if count == WIN_LENGTH {
-                        break 'found true;
-                    }
-                } else {
-                    count = 0;
-                    mistakes += 1;
-                    if mistakes > HEIGHT - WIN_LENGTH {
-                        break 'vert;
+                // check for horizontal win
+                let mut count = 0;
+                let mut mistakes = 0;
+                'horiz: for i in 0..WIDTH {
+                    if board.board[(row, i)] == Some(square) {
+                        count += 1;
+                        if count == WIN_LENGTH {
+                            break 'found true;
+                        }
+                    } else {
+                        count = 0;
+                        mistakes += 1;
+                        if mistakes > WIDTH - WIN_LENGTH {
+                            break 'horiz;
+                        }
                     }
                 }
-            }
 
-            // check for diagonal win - top left to bottom right
-            let mut count = 0;
-            let mut mistakes = 0;
-            let origins = [(0, 0), (1, 0), (0, 1)];
-
-            'diag: for (row, column) in &origins {
-                let mut row = *row;
-                let mut column = *column;
-                while row < HEIGHT && column < WIDTH {
-                    if board.board[(row, column)] == Some(square) {
+                // check for vertical win
+                let mut count = 0;
+                let mut mistakes = 0;
+                'vert: for i in 0..HEIGHT {
+                    if board.board[(i, column)] == Some(square) {
                         count += 1;
                         if count == WIN_LENGTH {
                             break 'found true;
@@ -207,57 +179,89 @@ impl Game for OrderAndChaos {
                         count = 0;
                         mistakes += 1;
                         if mistakes > HEIGHT - WIN_LENGTH {
-                            break 'diag;
+                            break 'vert;
                         }
                     }
-                    row += 1;
-                    column += 1;
                 }
-            }
 
-            // check for diagonal win - top right to bottom left
-            let mut count = 0;
-            let mut mistakes = 0;
-            let origins = [(0, WIDTH - 1), (1, WIDTH - 1), (0, WIDTH - 2)];
+                // check for diagonal win - top left to bottom right
+                let mut count = 0;
+                let mut mistakes = 0;
+                let origins = [(0, 0), (1, 0), (0, 1)];
 
-            'diag: for (row, column) in &origins {
-                let mut row = *row;
-                let mut column = *column;
-                while row < HEIGHT {
-                    if board.board[(row, column)] == Some(square) {
-                        count += 1;
-                        if count == WIN_LENGTH {
-                            break 'found true;
+                'diag: for (row, column) in &origins {
+                    let mut row = *row;
+                    let mut column = *column;
+                    while row < HEIGHT && column < WIDTH {
+                        if board.board[(row, column)] == Some(square) {
+                            count += 1;
+                            if count == WIN_LENGTH {
+                                break 'found true;
+                            }
+                        } else {
+                            count = 0;
+                            mistakes += 1;
+                            if mistakes > HEIGHT - WIN_LENGTH {
+                                break 'diag;
+                            }
                         }
-                    } else {
-                        count = 0;
-                        mistakes += 1;
-                        if mistakes > HEIGHT - WIN_LENGTH {
-                            break 'diag;
-                        }
+                        row += 1;
+                        column += 1;
                     }
-                    row += 1;
-                    if column == 0 {
-                        break;
-                    }
-                    column -= 1;
                 }
+
+                // check for diagonal win - top right to bottom left
+                let mut count = 0;
+                let mut mistakes = 0;
+                let origins = [(0, WIDTH - 1), (1, WIDTH - 1), (0, WIDTH - 2)];
+
+                'diag: for (row, column) in &origins {
+                    let mut row = *row;
+                    let mut column = *column;
+                    while row < HEIGHT {
+                        if board.board[(row, column)] == Some(square) {
+                            count += 1;
+                            if count == WIN_LENGTH {
+                                break 'found true;
+                            }
+                        } else {
+                            count = 0;
+                            mistakes += 1;
+                            if mistakes > HEIGHT - WIN_LENGTH {
+                                break 'diag;
+                            }
+                        }
+                        row += 1;
+                        if column == 0 {
+                            break;
+                        }
+                        column -= 1;
+                    }
+                }
+
+                false
+            };
+
+            if found {
+                return Ok(Some(board));
+            } else if board.possible_moves().next().is_none() {
+                return Ok(Some(board));
             }
+        }
 
-            false
-        };
-
-        Ok(if found {
-            GameState::Win(ZeroSumPlayer::One)
-        } else if board.possible_moves().next().is_none() {
-            GameState::Win(ZeroSumPlayer::Two)
-        } else {
-            GameState::Playable
-        })
+        Ok(None)
     }
 
     fn state(&self) -> GameState<Self::Player> {
         unimplemented!()
+    }
+
+    fn player(&self) -> PartizanPlayer {
+        if self.move_count % 2 == 0 {
+            PartizanPlayer::Left
+        } else {
+            PartizanPlayer::Right
+        }
     }
 }
 

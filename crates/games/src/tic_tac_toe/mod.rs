@@ -4,7 +4,7 @@
 pub mod gui;
 use anyhow::{anyhow, Error};
 use clap::Args;
-use game_solver::game::{Game, GameState, Player, ZeroSumPlayer};
+use game_solver::{game::{Game, GameState, StateType}, player::{PartizanPlayer, Player}};
 use itertools::Itertools;
 use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};
 use serde::{Deserialize, Serialize};
@@ -160,8 +160,10 @@ impl Game for TicTacToe {
         IndexedIter<'a, Square, Dim<IxDynImpl>>,
         fn((Dim<IxDynImpl>, &Square)) -> Option<Self::Move>,
     >;
-    type Player = ZeroSumPlayer;
+    type Player = PartizanPlayer;
     type MoveError = TicTacToeMoveError;
+
+    const STATE_TYPE: Option<StateType> = None;
 
     fn max_moves(&self) -> Option<usize> {
         Some(self.size.pow(self.dim as u32))
@@ -169,14 +171,6 @@ impl Game for TicTacToe {
 
     fn move_count(&self) -> usize {
         self.move_count
-    }
-
-    fn player(&self) -> Self::Player {
-        if self.move_count % 2 == 0 {
-            ZeroSumPlayer::One
-        } else {
-            ZeroSumPlayer::Two
-        }
     }
 
     fn state(&self) -> GameState<Self::Player> {
@@ -204,7 +198,7 @@ impl Game for TicTacToe {
 
     fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError> {
         if *self.board.get(m.0.clone()).unwrap() == Square::Empty {
-            let square = if self.player() == ZeroSumPlayer::One {
+            let square = if self.player() == PartizanPlayer::Left {
                 Square::X
             } else {
                 Square::O
@@ -230,16 +224,30 @@ impl Game for TicTacToe {
             })
     }
 
-    fn next_state(&self, m: &Self::Move) -> Result<GameState<Self::Player>, Self::MoveError> {
+    fn find_immediately_resolvable_game(&self) -> Result<Option<Self>, Self::MoveError> {
         // check if the amount of moves is less than (size * 2) - 1
         // if it is, then it's impossible to win
         if self.move_count + 1 < self.size * 2 - 1 {
-            return Ok(GameState::Playable);
+            return Ok(None);
         }
 
-        let mut board = self.clone();
-        board.make_move(m)?;
-        Ok(board.state())
+        for m in &mut self.possible_moves() {
+            let mut new_self = self.clone();
+            new_self.make_move(&m)?;
+            if let GameState::Win(_) = new_self.state() {
+                return Ok(Some(new_self));
+            }
+        }
+
+        Ok(None)
+    }
+
+    fn player(&self) -> Self::Player {
+        if self.move_count % 2 == 0 {
+            PartizanPlayer::Left
+        } else {
+            PartizanPlayer::Right
+        }
     }
 }
 
@@ -335,7 +343,7 @@ mod tests {
         game.make_move(&TicTacToeMove(vec![2, 0].into_dimension()))
             .unwrap(); // X
 
-        assert!(game.state() == GameState::Win(ZeroSumPlayer::One));
+        assert!(game.state() == GameState::Win(PartizanPlayer::Left));
     }
 
     #[test]
@@ -373,7 +381,7 @@ mod tests {
         game.make_move(&TicTacToeMove(vec![0, 2, 0].into_dimension()))
             .unwrap(); // X
 
-        assert!(game.state() == GameState::Win(ZeroSumPlayer::One));
+        assert!(game.state() == GameState::Win(PartizanPlayer::Left));
     }
 
     #[test]

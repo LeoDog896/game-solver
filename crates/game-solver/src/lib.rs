@@ -5,6 +5,7 @@
 //! a great place to start.
 
 pub mod game;
+pub mod player;
 // TODO: reinforcement
 // #[cfg(feature = "reinforcement")]
 // pub mod reinforcement;
@@ -14,14 +15,15 @@ pub mod transposition;
 use std::hash::BuildHasher;
 
 use game::{upper_bound, GameState};
+use player::TwoPlayer;
 
-use crate::game::{Game, ZeroSumPlayer};
+use crate::game::Game;
 use crate::transposition::{Score, TranspositionTable};
 use std::hash::Hash;
 
 /// Runs the two-player minimax variant on a zero-sum game.
 /// Since it uses alpha-beta pruning, you can specify an alpha beta window.
-fn negamax<T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
+fn negamax<T: Game<Player = impl TwoPlayer> + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
     mut alpha: isize,
@@ -34,14 +36,8 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
     };
 
     // check if this is a winning configuration
-    // TODO: allow overloading of this - some kind of game.can_win_next()
-    for m in &mut game.possible_moves() {
-        // TODO: ties?
-        if let GameState::Win(_) = game.next_state(&m)? {
-            let mut board = game.clone();
-            board.make_move(&m)?;
-            return Ok(upper_bound(&board) - game.move_count() as isize - 1);
-        }
+    if let Ok(Some(board)) = game.find_immediately_resolvable_game() {
+        return Ok(upper_bound(&board) - board.move_count() as isize - 1);
     }
 
     // fetch values from the transposition table
@@ -112,7 +108,7 @@ fn negamax<T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
 /// In 2 player games, if a score > 0, then the player whose turn it is has a winning strategy.
 /// If a score < 0, then the player whose turn it is has a losing strategy.
 /// Else, the game is a draw (score = 0).
-pub fn solve<T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
+pub fn solve<T: Game<Player = impl TwoPlayer> + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
 ) -> Result<isize, T::MoveError> {
@@ -144,7 +140,7 @@ pub fn solve<T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
 /// # Returns
 ///
 /// An iterator of tuples of the form `(move, score)`.
-pub fn move_scores<'a, T: Game<Player = ZeroSumPlayer> + Eq + Hash>(
+pub fn move_scores<'a, T: Game<Player = impl TwoPlayer> + Eq + Hash>(
     game: &'a T,
     transposition_table: &'a mut dyn TranspositionTable<T>,
 ) -> impl Iterator<Item = Result<(T::Move, isize), T::MoveError>> + 'a {
@@ -169,9 +165,8 @@ type CollectedMoves<T> = Vec<Result<(<T as Game>::Move, isize), <T as Game>::Mov
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores_with_hasher<T, S>(game: &T) -> CollectedMoves<T>
+pub fn par_move_scores_with_hasher<T: Game<Player = impl TwoPlayer> + Eq + Hash + Sync + Send + 'static, S>(game: &T) -> CollectedMoves<T>
 where
-    T: Game<Player = ZeroSumPlayer> + Eq + Hash + Sync + Send + 'static,
     T::Move: Sync + Send,
     T::MoveError: Sync + Send,
     S: BuildHasher + Default + Sync + Send + Clone + 'static,
@@ -208,9 +203,8 @@ where
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores<T>(game: &T) -> CollectedMoves<T>
+pub fn par_move_scores<T: Game<Player = impl TwoPlayer> + Eq + Hash + Sync + Send + 'static>(game: &T) -> CollectedMoves<T>
 where
-    T: Game<Player = ZeroSumPlayer> + Eq + Hash + Sync + Send + 'static,
     T::Move: Sync + Send,
     T::MoveError: Sync + Send,
 {

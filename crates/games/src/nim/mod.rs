@@ -4,7 +4,7 @@
 pub mod gui;
 use anyhow::Error;
 use clap::Args;
-use game_solver::game::{Game, GameState, Player, ZeroSumPlayer};
+use game_solver::{game::{Game, GameState, StateType}, player::ImpartialPlayer};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, hash::Hash};
 use thiserror::Error;
@@ -50,19 +50,13 @@ impl Game for Nim {
     type Move = NimMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     /// Define Nimbers as a zero-sum game
-    type Player = ZeroSumPlayer;
+    type Player = ImpartialPlayer;
     type MoveError = NimMoveError;
+
+    const STATE_TYPE: Option<StateType> = Some(StateType::Normal);
 
     fn max_moves(&self) -> Option<usize> {
         Some(self.max_score)
-    }
-
-    fn player(&self) -> Self::Player {
-        if self.move_count % 2 == 0 {
-            ZeroSumPlayer::One
-        } else {
-            ZeroSumPlayer::Two
-        }
     }
 
     fn move_count(&self) -> usize {
@@ -107,11 +101,11 @@ impl Game for Nim {
     }
 
     fn state(&self) -> GameState<Self::Player> {
-        if self.possible_moves().len() == 0 {
-            GameState::Win(self.player().next())
-        } else {
-            GameState::Playable
-        }
+        Self::STATE_TYPE.unwrap().state(self)
+    }
+
+    fn player(&self) -> Self::Player {
+        ImpartialPlayer::Next
     }
 }
 

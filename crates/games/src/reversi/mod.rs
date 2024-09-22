@@ -6,7 +6,7 @@ pub mod gui;
 use anyhow::Error;
 use array2d::Array2D;
 use clap::Args;
-use game_solver::game::{Game, GameState, Player, ZeroSumPlayer};
+use game_solver::{game::{Game, GameState, StateType}, player::{PartizanPlayer, Player}};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::hash::Hash;
@@ -21,7 +21,7 @@ pub type ReversiMove = NaturalMove<2>;
 #[derive(Clone, Hash, Eq, PartialEq)]
 pub struct Reversi {
     /// None if empty, Some(Player) if occupied
-    board: Array2D<Option<ZeroSumPlayer>>,
+    board: Array2D<Option<PartizanPlayer>>,
     move_count: usize,
 }
 
@@ -31,16 +31,16 @@ impl Reversi {
 
         // set middle squares to occupied:
         board
-            .set(WIDTH / 2 - 1, HEIGHT / 2 - 1, Some(ZeroSumPlayer::One))
+            .set(WIDTH / 2 - 1, HEIGHT / 2 - 1, Some(PartizanPlayer::Left))
             .unwrap();
         board
-            .set(WIDTH / 2, HEIGHT / 2, Some(ZeroSumPlayer::One))
+            .set(WIDTH / 2, HEIGHT / 2, Some(PartizanPlayer::Left))
             .unwrap();
         board
-            .set(WIDTH / 2 - 1, HEIGHT / 2, Some(ZeroSumPlayer::Two))
+            .set(WIDTH / 2 - 1, HEIGHT / 2, Some(PartizanPlayer::Right))
             .unwrap();
         board
-            .set(WIDTH / 2, HEIGHT / 2 - 1, Some(ZeroSumPlayer::Two))
+            .set(WIDTH / 2, HEIGHT / 2 - 1, Some(PartizanPlayer::Right))
             .unwrap();
 
         Self {
@@ -127,8 +127,10 @@ impl Reversi {
 impl Game for Reversi {
     type Move = ReversiMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
-    type Player = ZeroSumPlayer;
+    type Player = PartizanPlayer;
     type MoveError = array2d::Error;
+
+    const STATE_TYPE: Option<StateType> = None;
 
     fn max_moves(&self) -> Option<usize> {
         Some(WIDTH * HEIGHT)
@@ -136,14 +138,6 @@ impl Game for Reversi {
 
     fn move_count(&self) -> usize {
         self.move_count
-    }
-
-    fn player(&self) -> ZeroSumPlayer {
-        if self.move_count % 2 == 0 {
-            ZeroSumPlayer::One
-        } else {
-            ZeroSumPlayer::Two
-        }
     }
 
     fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError> {
@@ -183,25 +177,33 @@ impl Game for Reversi {
         for x in 0..WIDTH {
             for y in 0..HEIGHT {
                 match *self.board.get(x, y).unwrap() {
-                    Some(ZeroSumPlayer::One) => player_one_count += 1,
-                    Some(ZeroSumPlayer::Two) => player_two_count += 1,
+                    Some(PartizanPlayer::Left) => player_one_count += 1,
+                    Some(PartizanPlayer::Right) => player_two_count += 1,
                     None => (),
                 }
             }
         }
 
         match player_one_count.cmp(&player_two_count) {
-            std::cmp::Ordering::Greater => GameState::Win(ZeroSumPlayer::One),
-            std::cmp::Ordering::Less => GameState::Win(ZeroSumPlayer::Two),
+            std::cmp::Ordering::Greater => GameState::Win(PartizanPlayer::Left),
+            std::cmp::Ordering::Less => GameState::Win(PartizanPlayer::Right),
             std::cmp::Ordering::Equal => GameState::Tie,
+        }
+    }
+
+    fn player(&self) -> PartizanPlayer {
+        if self.move_count % 2 == 0 {
+            PartizanPlayer::Left
+        } else {
+            PartizanPlayer::Right
         }
     }
 }
 
-fn player_to_char(player: Option<ZeroSumPlayer>) -> char {
+fn player_to_char(player: Option<PartizanPlayer>) -> char {
     match player {
-        Some(ZeroSumPlayer::One) => 'X',
-        Some(ZeroSumPlayer::Two) => 'O',
+        Some(PartizanPlayer::Left) => 'X',
+        Some(PartizanPlayer::Right) => 'O',
         None => '-',
     }
 }

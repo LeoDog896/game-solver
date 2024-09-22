@@ -5,7 +5,7 @@ pub mod gui;
 use anyhow::Error;
 use array2d::Array2D;
 use clap::Args;
-use game_solver::game::{Game, GameState, ZeroSumPlayer};
+use game_solver::{game::{Game, GameState, StateType}, player::ImpartialPlayer};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -77,19 +77,13 @@ pub type ChompMove = NaturalMove<2>;
 impl Game for Chomp {
     type Move = ChompMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
-    type Player = ZeroSumPlayer;
+    type Player = ImpartialPlayer;
     type MoveError = ChompMoveError;
+
+    const STATE_TYPE: Option<StateType> = Some(StateType::Misere);
 
     fn max_moves(&self) -> Option<usize> {
         Some(self.width * self.height)
-    }
-
-    fn player(&self) -> Self::Player {
-        if self.move_count % 2 == 0 {
-            ZeroSumPlayer::One
-        } else {
-            ZeroSumPlayer::Two
-        }
     }
 
     fn move_count(&self) -> usize {
@@ -122,12 +116,12 @@ impl Game for Chomp {
         moves.into_iter()
     }
 
+    fn player(&self) -> Self::Player {
+        ImpartialPlayer::Next
+    }
+
     fn state(&self) -> GameState<Self::Player> {
-        if self.possible_moves().len() == 0 {
-            GameState::Win(self.player())
-        } else {
-            GameState::Playable
-        }
+        Self::STATE_TYPE.unwrap().state(self)
     }
 }
 
