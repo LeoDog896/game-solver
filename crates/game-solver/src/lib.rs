@@ -27,7 +27,7 @@ fn negamax<T: Game<Player = impl TwoPlayer> + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
     mut alpha: isize,
-    mut beta: isize
+    mut beta: isize,
 ) -> Result<isize, T::MoveError> {
     match game.state() {
         GameState::Playable => (),
@@ -165,7 +165,12 @@ type CollectedMoves<T> = Vec<Result<(<T as Game>::Move, isize), <T as Game>::Mov
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores_with_hasher<T: Game<Player = impl TwoPlayer> + Eq + Hash + Sync + Send + 'static, S>(game: &T) -> CollectedMoves<T>
+pub fn par_move_scores_with_hasher<
+    T: Game<Player = impl TwoPlayer> + Eq + Hash + Sync + Send + 'static,
+    S,
+>(
+    game: &T,
+) -> CollectedMoves<T>
 where
     T::Move: Sync + Send,
     T::MoveError: Sync + Send,
@@ -203,7 +208,9 @@ where
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores<T: Game<Player = impl TwoPlayer> + Eq + Hash + Sync + Send + 'static>(game: &T) -> CollectedMoves<T>
+pub fn par_move_scores<T: Game<Player = impl TwoPlayer> + Eq + Hash + Sync + Send + 'static>(
+    game: &T,
+) -> CollectedMoves<T>
 where
     T::Move: Sync + Send,
     T::MoveError: Sync + Send,

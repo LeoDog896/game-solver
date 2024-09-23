@@ -15,33 +15,34 @@ pub enum GameState<P: Player> {
 }
 
 /// Defines the 'state' the game is in.
-/// 
+///
 /// Generally used by a game solver for better optimizations.
-/// 
+///
 /// This is usually wrapped in an Option, as there are many games that do not classify
 /// as being under 'Normal' or 'Misere.' (i.e. tic-tac-toe)
 #[non_exhaustive]
 pub enum StateType {
     /// If a game is under 'normal play' convention, the last player to move wins.
     /// There are no ties in this variant.
-    /// 
+    ///
     /// Learn more: <https://en.wikipedia.org/wiki/Normal_play_convention>
     Normal,
     /// If a game is under 'misere play' convention, the last player to move loses.
     /// There are no ties in this variant.
-    /// 
+    ///
     /// Learn more: <https://en.wikipedia.org/wiki/Mis%C3%A8re#Mis%C3%A8re_game>
-    Misere
+    Misere,
 }
 
 impl StateType {
     pub fn state<T>(&self, game: &T) -> GameState<T::Player>
-        where T: Game
+    where
+        T: Game,
     {
         if game.possible_moves().next().is_none() {
             GameState::Win(match self {
                 Self::Misere => game.player(),
-                Self::Normal => game.player().previous()
+                Self::Normal => game.player().previous(),
             })
         } else {
             GameState::Playable
@@ -50,9 +51,9 @@ impl StateType {
 }
 
 /// Represents a combinatorial game.
-/// 
+///
 /// A game has three distinct variants per game:
-/// 
+///
 /// - Game play type: Normal, Misere, Other
 /// - Game partiality type: Impartial, Partizan
 /// - Game player count: >0
@@ -88,7 +89,7 @@ pub trait Game: Clone {
     fn possible_moves(&self) -> Self::Iter<'_>;
 
     /// Returns a reachable game in one move.
-    /// 
+    ///
     /// Rather, this function asks if there exists some game in the possible games set
     /// which has a resolvable, positive or negative, outcome.
     fn find_immediately_resolvable_game(&self) -> Result<Option<Self>, Self::MoveError> {
@@ -105,10 +106,10 @@ pub trait Game: Clone {
 
     /// Returns the current state of the game.
     /// Used for verifying initialization and isn't commonly called.
-    /// 
+    ///
     /// If `Self::STATE_TYPE` isn't None,
     /// the following implementation can be used:
-    /// 
+    ///
     /// ```ignore
     /// fn state(&self) -> GameState<Self::Player> {
     ///     Self::STATE_TYPE.unwrap().state(self)

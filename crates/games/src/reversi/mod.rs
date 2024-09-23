@@ -6,7 +6,10 @@ pub mod gui;
 use anyhow::Error;
 use array2d::Array2D;
 use clap::Args;
-use game_solver::{game::{Game, GameState, StateType}, player::{PartizanPlayer, Player}};
+use game_solver::{
+    game::{Game, GameState, StateType},
+    player::{PartizanPlayer, Player},
+};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::hash::Hash;

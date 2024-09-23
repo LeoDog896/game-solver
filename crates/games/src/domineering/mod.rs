@@ -5,7 +5,10 @@ pub mod gui;
 use anyhow::Error;
 use array2d::Array2D;
 use clap::Args;
-use game_solver::{game::{Game, GameState, StateType}, player::{PartizanPlayer, Player}};
+use game_solver::{
+    game::{Game, GameState, StateType},
+    player::{PartizanPlayer, Player},
+};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Debug, Display, Formatter},
@@ -18,14 +21,14 @@ use crate::util::cli::move_failable;
 #[derive(Clone, Hash, Eq, PartialEq, Debug, Copy)]
 pub enum Orientation {
     Horizontal,
-    Vertical
+    Vertical,
 }
 
 impl Orientation {
     fn turn(&self) -> Orientation {
         match *self {
             Orientation::Horizontal => Orientation::Vertical,
-            Orientation::Vertical => Orientation::Horizontal
+            Orientation::Vertical => Orientation::Horizontal,
         }
     }
 }
@@ -55,7 +58,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
         Self {
             board: Array2D::filled_with(true, WIDTH, HEIGHT),
             move_count: 0,
-            primary_orientation: orientation
+            primary_orientation: orientation,
         }
     }
 }
@@ -78,7 +81,11 @@ impl Display for DomineeringMove {
 }
 
 impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
-    fn place(&mut self, m: &DomineeringMove, orientation: Orientation) -> Result<(), DomineeringMoveError> {
+    fn place(
+        &mut self,
+        m: &DomineeringMove,
+        orientation: Orientation,
+    ) -> Result<(), DomineeringMoveError> {
         match orientation {
             Orientation::Horizontal => {
                 if m.0 == WIDTH - 1 {
@@ -89,7 +96,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
                 }
                 self.board.set(m.0, m.1, false).unwrap();
                 self.board.set(m.0 + 1, m.1, false).unwrap();
-            },
+            }
             Orientation::Vertical => {
                 if m.1 == HEIGHT - 1 {
                     return Err(DomineeringMoveError::BlockingAdjacent(
@@ -101,7 +108,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
                 self.board.set(m.0, m.1 + 1, false).unwrap();
             }
         };
-        
+
         Ok(())
     }
 }
@@ -124,11 +131,14 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
 
     fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError> {
         if *self.board.get(m.0, m.1).unwrap() {
-            self.place(m, if self.player() == PartizanPlayer::Left {
-                self.primary_orientation
-            } else {
-                self.primary_orientation.turn()
-            })?;
+            self.place(
+                m,
+                if self.player() == PartizanPlayer::Left {
+                    self.primary_orientation
+                } else {
+                    self.primary_orientation.turn()
+                },
+            )?;
 
             self.move_count += 1;
             Ok(())
@@ -157,7 +167,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
                         }
                     }
                 }
-            },
+            }
             Orientation::Vertical => {
                 for i in 0..HEIGHT - 1 {
                     for j in 0..WIDTH {
@@ -244,7 +254,9 @@ mod tests {
     use super::*;
 
     /// Get the winner of a generic configuration of domineering
-    fn winner<const WIDTH: usize, const HEIGHT: usize>(orientation: Orientation) -> Option<PartizanPlayer> {
+    fn winner<const WIDTH: usize, const HEIGHT: usize>(
+        orientation: Orientation,
+    ) -> Option<PartizanPlayer> {
         let game = Domineering::<WIDTH, HEIGHT>::new_orientation(orientation);
         let mut move_scores = move_scores(&game, &mut HashMap::new())
             .collect::<Result<Vec<_>, DomineeringMoveError>>()
@@ -265,11 +277,26 @@ mod tests {
 
     #[test]
     fn test_wins() {
-        assert_eq!(winner::<5, 5>(Orientation::Horizontal), Some(PartizanPlayer::Right));
-        assert_eq!(winner::<4, 4>(Orientation::Horizontal), Some(PartizanPlayer::Left));
-        assert_eq!(winner::<3, 3>(Orientation::Horizontal), Some(PartizanPlayer::Left));
-        assert_eq!(winner::<13, 2>(Orientation::Horizontal), Some(PartizanPlayer::Right));
-        assert_eq!(winner::<11, 2>(Orientation::Horizontal), Some(PartizanPlayer::Left));
+        assert_eq!(
+            winner::<5, 5>(Orientation::Horizontal),
+            Some(PartizanPlayer::Right)
+        );
+        assert_eq!(
+            winner::<4, 4>(Orientation::Horizontal),
+            Some(PartizanPlayer::Left)
+        );
+        assert_eq!(
+            winner::<3, 3>(Orientation::Horizontal),
+            Some(PartizanPlayer::Left)
+        );
+        assert_eq!(
+            winner::<13, 2>(Orientation::Horizontal),
+            Some(PartizanPlayer::Right)
+        );
+        assert_eq!(
+            winner::<11, 2>(Orientation::Horizontal),
+            Some(PartizanPlayer::Left)
+        );
     }
 
     #[test]

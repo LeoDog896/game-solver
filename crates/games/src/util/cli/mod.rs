@@ -2,12 +2,16 @@ use anyhow::{anyhow, Result};
 use core::hash::Hash;
 use game_solver::{
     game::{Game, GameState},
-    par_move_scores, player::TwoPlayer,
+    par_move_scores,
+    player::TwoPlayer,
 };
 use std::fmt::{Debug, Display};
 
-pub fn play<T: Game<Player = impl TwoPlayer + Debug> + Eq + Hash + Sync + Send + Display + 'static>(game: T)
-where
+pub fn play<
+    T: Game<Player = impl TwoPlayer + Debug> + Eq + Hash + Sync + Send + Display + 'static,
+>(
+    game: T,
+) where
     T::Move: Sync + Send + Display,
     T::MoveError: Sync + Send + Debug,
 {

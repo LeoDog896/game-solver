@@ -4,7 +4,10 @@
 pub mod gui;
 use anyhow::Error;
 use clap::Args;
-use game_solver::{game::{Game, GameState, StateType}, player::ImpartialPlayer};
+use game_solver::{
+    game::{Game, GameState, StateType},
+    player::ImpartialPlayer,
+};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, hash::Hash};
 use thiserror::Error;

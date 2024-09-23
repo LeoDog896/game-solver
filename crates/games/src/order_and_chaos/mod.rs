@@ -5,7 +5,10 @@ pub mod gui;
 use anyhow::{anyhow, Error};
 use array2d::Array2D;
 use clap::Args;
-use game_solver::{game::{Game, GameState, StateType}, player::PartizanPlayer};
+use game_solver::{
+    game::{Game, GameState, StateType},
+    player::PartizanPlayer,
+};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Display, Formatter},

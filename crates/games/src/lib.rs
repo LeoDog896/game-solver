@@ -5,8 +5,8 @@ pub mod domineering;
 pub mod nim;
 pub mod order_and_chaos;
 pub mod reversi;
-pub mod tic_tac_toe;
 pub mod sprouts;
+pub mod tic_tac_toe;
 
 use crate::{
     chomp::ChompArgs, domineering::DomineeringArgs, nim::NimArgs,

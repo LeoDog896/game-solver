@@ -4,7 +4,10 @@
 pub mod gui;
 use anyhow::{anyhow, Error};
 use clap::Args;
-use game_solver::{game::{Game, GameState, StateType}, player::{PartizanPlayer, Player}};
+use game_solver::{
+    game::{Game, GameState, StateType},
+    player::{PartizanPlayer, Player},
+};
 use itertools::Itertools;
 use ndarray::{iter::IndexedIter, ArrayD, Dim, Dimension, IntoDimension, IxDyn, IxDynImpl};
 use serde::{Deserialize, Serialize};
