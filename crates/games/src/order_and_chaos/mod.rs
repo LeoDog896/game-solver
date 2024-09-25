@@ -11,8 +11,7 @@ use game_solver::{
 };
 use serde::{Deserialize, Serialize};
 use std::{
-    fmt::{Display, Formatter},
-    hash::Hash,
+    fmt::{Display, Formatter}, hash::Hash
 };
 use thiserror::Error;
 
@@ -38,25 +37,26 @@ impl Display for CellType {
 }
 
 #[derive(Clone, Hash, Eq, PartialEq)]
-pub struct OrderAndChaos {
+pub struct OrderAndChaos<const WIDTH: usize, const HEIGHT: usize, const MIN_WIN_LENGTH: usize, const MAX_WIN_LENGTH: usize> {
     board: Array2D<Option<CellType>>,
     move_count: usize,
 }
 
-const WIDTH: usize = 6;
-const HEIGHT: usize = 6;
-const WIN_LENGTH: usize = 5;
-
-impl Default for OrderAndChaos {
+impl<const WIDTH: usize, const HEIGHT: usize, const MIN_WIN_LENGTH: usize, const MAX_WIN_LENGTH: usize> Default for OrderAndChaos<WIDTH, HEIGHT, MIN_WIN_LENGTH, MAX_WIN_LENGTH> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl OrderAndChaos {
+impl<const WIDTH: usize, const HEIGHT: usize, const MIN_WIN_LENGTH: usize, const MAX_WIN_LENGTH: usize> OrderAndChaos<WIDTH, HEIGHT, MIN_WIN_LENGTH, MAX_WIN_LENGTH> {
     /// Create a new game of Nim with the given heaps,
     /// where heaps is a list of the number of objects in each heap.
     pub fn new() -> Self {
+        assert!(MIN_WIN_LENGTH <= MAX_WIN_LENGTH, "MIN > MAX win length?");
+        // [a, b][(a < b) as usize] is essentially the max function: https://stackoverflow.com/a/53646925/7589775
+        assert!(MAX_WIN_LENGTH <= [WIDTH, HEIGHT][(WIDTH < HEIGHT) as usize], "Win length should not be ");
+
+
         Self {
             board: Array2D::filled_with(None, HEIGHT, WIDTH),
             move_count: 0,
@@ -85,12 +85,14 @@ impl Display for OrderAndChaosMove {
     }
 }
 
-impl Game for OrderAndChaos {
+impl<const WIDTH: usize, const HEIGHT: usize, const MIN_WIN_LENGTH: usize, const MAX_WIN_LENGTH: usize> Game for OrderAndChaos<WIDTH, HEIGHT, MIN_WIN_LENGTH, MAX_WIN_LENGTH> {
     /// where Move is a tuple of:
     /// ((row, column), player)
     type Move = OrderAndChaosMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
-    /// Define Nimbers as a zero-sum game
+    /// Define Order and Chaos as a zero-sum game,
+    /// where Left is Order,
+    /// and Right is Chaos
     type Player = PartizanPlayer;
     type MoveError = OrderAndChaosMoveError;
 
@@ -142,121 +144,86 @@ impl Game for OrderAndChaos {
         moves.into_iter()
     }
 
-    // a move is winning if the next player
-    // has no possible moves to make (normal play for Nim)
-    fn find_immediately_resolvable_game(&self) -> Result<Option<Self>, Self::MoveError> {
-        for m in &mut self.possible_moves() {
-            let mut board = self.clone();
-            board.make_move(&m)?;
-            let found = 'found: {
-                let ((row, column), square) = m.0;
+    fn state(&self) -> GameState<Self::Player> {
+        // we need at least MIN_WIN_LENGTH plays to get a win
+        if self.move_count < MIN_WIN_LENGTH {
+            return GameState::Playable;
+        }
 
-                // check for horizontal win
-                let mut count = 0;
-                let mut mistakes = 0;
-                'horiz: for i in 0..WIDTH {
-                    if board.board[(row, i)] == Some(square) {
-                        count += 1;
-                        if count == WIN_LENGTH {
-                            break 'found true;
-                        }
-                    } else {
-                        count = 0;
-                        mistakes += 1;
-                        if mistakes > WIDTH - WIN_LENGTH {
-                            break 'horiz;
-                        }
-                    }
-                }
-
-                // check for vertical win
-                let mut count = 0;
-                let mut mistakes = 0;
-                'vert: for i in 0..HEIGHT {
-                    if board.board[(i, column)] == Some(square) {
-                        count += 1;
-                        if count == WIN_LENGTH {
-                            break 'found true;
-                        }
-                    } else {
-                        count = 0;
-                        mistakes += 1;
-                        if mistakes > HEIGHT - WIN_LENGTH {
-                            break 'vert;
-                        }
-                    }
-                }
-
-                // check for diagonal win - top left to bottom right
-                let mut count = 0;
-                let mut mistakes = 0;
-                let origins = [(0, 0), (1, 0), (0, 1)];
-
-                'diag: for (row, column) in &origins {
-                    let mut row = *row;
-                    let mut column = *column;
-                    while row < HEIGHT && column < WIDTH {
-                        if board.board[(row, column)] == Some(square) {
-                            count += 1;
-                            if count == WIN_LENGTH {
-                                break 'found true;
+        // check every horizontal row
+        for i in 0..HEIGHT {
+            // for the first (some) elements in that row
+            // TODO: this will not work if min_width_length > width! can we consider this?
+            'row_check: for j in 0..=(WIDTH - MIN_WIN_LENGTH) {
+                // find a piece? lets see if it continues going
+                if let Some(cell_type) = self.board[(j, i)] {
+                    for k in (j+1)..((MIN_WIN_LENGTH + j).max(WIDTH)) {
+                        if let Some(found_cell_type) = self.board[(k, i)] {
+                            if cell_type == found_cell_type {
+                                continue;
+                            } else {
+                                break 'row_check;
                             }
                         } else {
-                            count = 0;
-                            mistakes += 1;
-                            if mistakes > HEIGHT - WIN_LENGTH {
-                                break 'diag;
-                            }
+                            break 'row_check;
                         }
-                        row += 1;
-                        column += 1;
                     }
+
+                    return GameState::Win(PartizanPlayer::Left);
                 }
-
-                // check for diagonal win - top right to bottom left
-                let mut count = 0;
-                let mut mistakes = 0;
-                let origins = [(0, WIDTH - 1), (1, WIDTH - 1), (0, WIDTH - 2)];
-
-                'diag: for (row, column) in &origins {
-                    let mut row = *row;
-                    let mut column = *column;
-                    while row < HEIGHT {
-                        if board.board[(row, column)] == Some(square) {
-                            count += 1;
-                            if count == WIN_LENGTH {
-                                break 'found true;
-                            }
-                        } else {
-                            count = 0;
-                            mistakes += 1;
-                            if mistakes > HEIGHT - WIN_LENGTH {
-                                break 'diag;
-                            }
-                        }
-                        row += 1;
-                        if column == 0 {
-                            break;
-                        }
-                        column -= 1;
-                    }
-                }
-
-                false
-            };
-
-            if found {
-                return Ok(Some(board));
-            } else if board.possible_moves().next().is_none() {
-                return Ok(Some(board));
             }
         }
 
-        Ok(None)
-    }
+        // check every column
+        for i in 0..WIDTH {
+            'column_check: for j in 0..=(HEIGHT - MIN_WIN_LENGTH) {
+                // find a piece? see if it continues going
+                if let Some(cell_type) = self.board[(i, j)] {
+                    for k in (j+1)..((MIN_WIN_LENGTH + j).max(HEIGHT)) {
+                        if let Some(found_cell_type) = self.board[(i, k)] {
+                            if cell_type == found_cell_type {
+                                continue;
+                            } else {
+                                break 'column_check;
+                            }
+                        } else {
+                            break 'column_check;
+                        }
+                    }
+                }
 
-    fn state(&self) -> GameState<Self::Player> {
-        unimplemented!()
+                return GameState::Win(PartizanPlayer::Left);
+            }
+        }
+
+        // check every diag - we can essentially
+        // check every value in the top right corner
+        for i in 0..=(WIDTH - MIN_WIN_LENGTH) {
+            'diag_check: for j in 0..=(HEIGHT - MIN_WIN_LENGTH) {
+                if let Some(cell_type) = self.board[(i, j)] {
+                    // found a cell! lets continue going down!
+                    for k in (i.max(j) + 1)..(i.max(j) + MIN_WIN_LENGTH).max(WIDTH) {
+                        if let Some(found_cell_type) = self.board[(i + k, j + k)] {
+                            if found_cell_type == cell_type {
+                                continue;
+                            } else {
+                                break 'diag_check;
+                            }
+                        } else {
+                            break 'diag_check;
+                        }
+                    }
+                }
+
+                return GameState::Win(PartizanPlayer::Left);
+            }
+        }
+        
+        if self.move_count == WIDTH * HEIGHT {
+            return GameState::Tie;
+        }
+
+        GameState::Playable
     }
 
     fn player(&self) -> PartizanPlayer {
@@ -268,7 +235,7 @@ impl Game for OrderAndChaos {
     }
 }
 
-impl Display for OrderAndChaos {
+impl<const WIDTH: usize, const HEIGHT: usize, const MIN_WIN_LENGTH: usize, const MAX_WIN_LENGTH: usize> Display for OrderAndChaos<WIDTH, HEIGHT, MIN_WIN_LENGTH, MAX_WIN_LENGTH> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         for row in 0..HEIGHT {
             for column in 0..WIDTH {
@@ -292,7 +259,7 @@ pub struct OrderAndChaosArgs {
     moves: Vec<String>,
 }
 
-impl TryFrom<OrderAndChaosArgs> for OrderAndChaos {
+impl<const WIDTH: usize, const HEIGHT: usize, const MIN_WIN_LENGTH: usize, const MAX_WIN_LENGTH: usize> TryFrom<OrderAndChaosArgs> for OrderAndChaos<WIDTH, HEIGHT, MIN_WIN_LENGTH, MAX_WIN_LENGTH> {
     type Error = Error;
 
     fn try_from(value: OrderAndChaosArgs) -> Result<Self, Self::Error> {
@@ -320,5 +287,100 @@ impl TryFrom<OrderAndChaosArgs> for OrderAndChaos {
         }
 
         Ok(game)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn from_string(string: &str) -> OrderAndChaos<6, 6, 5, 6> {
+        let board_internal = string.chars().map(|ch| {
+            match ch {
+                'X' => Some(Some(CellType::X)),
+                'O' => Some(Some(CellType::O)),
+                '.' => Some(None),
+                '\n' => None,
+                _ => panic!("There shouldn't be other characters in the string!")
+            }
+        }).filter_map(|x| x).collect::<Vec<_>>();
+
+        let element_count = board_internal.iter().filter(|x| x.is_some()).count();
+
+        let board = Array2D::from_row_major(&board_internal, 6, 6).unwrap();
+
+        OrderAndChaos { board, move_count: element_count }
+    }
+
+    #[test]
+    fn win_empty() {
+        let empty_board = from_string("......\
+        ......\
+        ......\
+        ......\
+        ......\
+        ......");
+
+        assert_eq!(empty_board.state(), GameState::Playable);
+    }
+
+    #[test]
+    fn lose_horizontal_tiny() {
+        let horizontal_board = from_string("......\
+        .XOXXX\
+        .X....\
+        .OOOO.\
+        ......\
+        ......");
+
+        assert_eq!(horizontal_board.state(), GameState::Win(PartizanPlayer::Left));
+    }
+
+    #[test]
+    fn win_horizontal() {
+        let horizontal_board = from_string("......\
+        .XOXXX\
+        .X....\
+        .OOOOO\
+        ......\
+        ......");
+
+        assert_eq!(horizontal_board.state(), GameState::Win(PartizanPlayer::Left));
+    }
+
+    #[test]
+    fn win_vertical() {
+        let vertical_board = from_string("......\
+        .XOOXX\
+        .X.X..\
+        .OOXOO\
+        ...X..\
+        ...X..");
+
+        assert_eq!(vertical_board.state(), GameState::Win(PartizanPlayer::Left));
+    }
+
+    #[test]
+    fn lose_vertical_tiny() {
+        let vertical_board = from_string("......\
+        .XOOXX\
+        .X.X..\
+        .OOXOO\
+        ...X..\
+        ......");
+
+        assert_eq!(vertical_board.state(), GameState::Win(PartizanPlayer::Left));
+    }
+
+    #[test]
+    fn win_diagonal() {
+        let diagonal_board = from_string("......\
+        .OOOXX\
+        .XX...\
+        .OOXOO\
+        ...XX.\
+        ...X.X");
+
+        assert_eq!(diagonal_board.state(), GameState::Win(PartizanPlayer::Left));
     }
 }
