@@ -3,5 +3,6 @@
         "Cargo.toml"
     ],
     "rust-analyzer.check.features": "all",
-    "rust-analyzer.cargo.features": "all"
+    "rust-analyzer.cargo.features": "all",
+    "typos.config": "_typos.toml"
 }

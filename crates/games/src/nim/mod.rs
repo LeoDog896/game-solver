@@ -18,7 +18,7 @@ use crate::util::{cli::move_failable, move_natural::NaturalMove};
 pub struct Nim {
     heaps: Vec<usize>,
     move_count: usize,
-    max_score: usize,
+    max_moves: usize,
 }
 
 type NimMove = NaturalMove<2>;
@@ -31,7 +31,7 @@ impl Nim {
             heaps: heaps.clone(),
             move_count: 0,
             // sum of all the heaps is the upper bound for the amount of moves
-            max_score: heaps.iter().sum::<usize>(),
+            max_moves: heaps.iter().sum::<usize>(),
         }
     }
 }
@@ -52,14 +52,15 @@ impl Game for Nim {
     /// where Move is a tuple of the heap index and the number of objects to remove
     type Move = NimMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
-    /// Define Nimbers as a zero-sum game
+    
+    /// Define Nim as a zero-sum impartial game
     type Player = ImpartialPlayer;
     type MoveError = NimMoveError;
 
     const STATE_TYPE: Option<StateType> = Some(StateType::Normal);
 
     fn max_moves(&self) -> Option<usize> {
-        Some(self.max_score)
+        Some(self.max_moves)
     }
 
     fn move_count(&self) -> usize {
@@ -115,7 +116,7 @@ impl Game for Nim {
 impl Display for Nim {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (i, heap) in self.heaps.iter().enumerate() {
-            write!(f, "heap {i}: {heap}")?;
+            writeln!(f, "Heap {i}: {heap}")?;
         }
 
         Ok(())
@@ -128,7 +129,7 @@ impl Display for Nim {
 #[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct NimArgs {
     /// The configuration of the game. For example, 3,5,7
-    /// creates a Nimbers game that has three heaps, where each
+    /// creates a Nim game that has three heaps, where each
     /// heap has 3, 5, and 7 objects respectively
     configuration: String,
     /// Nim moves, ordered as x1-y1 x2-y2 ...
@@ -166,5 +167,15 @@ impl TryFrom<NimArgs> for Nim {
         }
 
         Ok(game)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn max_moves_is_heap_sum() {
+        assert_eq!(Nim::new(vec![3, 5, 7]).max_moves(), Some(3 + 5 + 7));
     }
 }

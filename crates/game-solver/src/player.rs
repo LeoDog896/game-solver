@@ -1,5 +1,5 @@
 /// Represents a player.
-pub trait Player: Sized {
+pub trait Player: Sized + Eq {
     /// The max player count.
     #[must_use]
     fn count() -> usize;
@@ -12,6 +12,14 @@ pub trait Player: Sized {
     /// The previous player to play
     #[must_use]
     fn previous(self) -> Self;
+    /// How the player instance 'changes' on the next move.
+    /// 
+    /// For partizan games, the player doesn't change:
+    /// Left stays left; right stays right.
+    /// 
+    /// For impartial games, the player does change:
+    /// Next turns into previous, and previous turns into next
+    fn turn(self) -> Self;
 }
 
 /// Represents a two player player.
@@ -57,6 +65,10 @@ impl Player for PartizanPlayer {
     fn previous(self) -> Self {
         self.next()
     }
+
+    fn turn(self) -> Self {
+        self
+    }
 }
 
 impl TwoPlayer for PartizanPlayer {}
@@ -95,26 +107,31 @@ impl Player for ImpartialPlayer {
     fn previous(self) -> Self {
         self.next()
     }
+
+    fn turn(self) -> Self {
+        self.next()
+    }
 }
 
 impl TwoPlayer for ImpartialPlayer {}
 
 /// Represents a player in an N-player game.
-pub struct NPlayerConst<const N: usize>(usize);
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub struct NPlayerPartizanConst<const N: usize>(usize);
 
-impl<const N: usize> NPlayerConst<N> {
-    pub fn new(index: usize) -> NPlayerConst<N> {
+impl<const N: usize> NPlayerPartizanConst<N> {
+    pub fn new(index: usize) -> NPlayerPartizanConst<N> {
         assert!(index < N, "Player index {index} >= max player count {N}");
         Self(index)
     }
 
-    pub fn new_unchecked(index: usize) -> NPlayerConst<N> {
+    pub fn new_unchecked(index: usize) -> NPlayerPartizanConst<N> {
         debug_assert!(index < N, "Player index {index} >= max player count {N}");
         Self(index)
     }
 }
 
-impl<const N: usize> Player for NPlayerConst<N> {
+impl<const N: usize> Player for NPlayerPartizanConst<N> {
     fn count() -> usize {
         N
     }
@@ -134,5 +151,9 @@ impl<const N: usize> Player for NPlayerConst<N> {
         } else {
             Self::new_unchecked(self.0 - 1)
         }
+    }
+    
+    fn turn(self) -> Self {
+        self
     }
 }

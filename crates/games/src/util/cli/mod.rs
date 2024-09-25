@@ -1,14 +1,14 @@
 use anyhow::{anyhow, Result};
 use core::hash::Hash;
 use game_solver::{
-    game::{Game, GameState},
+    game::{score_to_outcome, Game, GameScoreOutcome, GameState},
     par_move_scores,
-    player::TwoPlayer,
+    player::{ImpartialPlayer, TwoPlayer},
 };
-use std::fmt::{Debug, Display};
+use std::{any::TypeId, fmt::{Debug, Display}};
 
 pub fn play<
-    T: Game<Player = impl TwoPlayer + Debug> + Eq + Hash + Sync + Send + Display + 'static,
+    T: Game<Player = impl TwoPlayer + Debug + 'static> + Eq + Hash + Sync + Send + Display + 'static,
 >(
     game: T,
 ) where
@@ -20,7 +20,12 @@ pub fn play<
 
     match game.state() {
         GameState::Playable => {
-            println!("Player {:?} to move", game.player());
+            if TypeId::of::<T::Player>() != TypeId::of::<ImpartialPlayer>() {
+                println!("Player {:?} to move", game.player());
+            } else {
+                // TODO: can we assert that game.player() is the next player?
+                println!("Impartial game; Next player is moving.");
+            }
 
             let move_scores = par_move_scores(&game);
             let mut move_scores = move_scores
@@ -34,7 +39,11 @@ pub fn play<
             let mut current_move_score = None;
             for (game_move, score) in move_scores {
                 if current_move_score != Some(score) {
-                    println!("\n\nBest moves @ score {}:", score);
+                    match score_to_outcome(&game, score) {
+                        GameScoreOutcome::Win(moves) => println!("\n\nWin in {} move{} (score {}):", moves, if moves == 1 { "" } else { "s" }, score),
+                        GameScoreOutcome::Loss(moves) => println!("\n\nLose in {} move{} (score {}):", moves, if moves == 1 { "" } else { "s" }, score),
+                        GameScoreOutcome::Tie => println!("\n\nTie with the following moves:")
+                    }
                     current_move_score = Some(score);
                 }
                 print!("{}, ", &game_move);
@@ -42,7 +51,13 @@ pub fn play<
             println!();
         }
         GameState::Tie => println!("No moves left! Game tied!"),
-        GameState::Win(player) => println!("Player {player:?} won!"),
+        GameState::Win(player) => {
+            if TypeId::of::<T::Player>() != TypeId::of::<ImpartialPlayer>() {
+                println!("The {player:?} player won!");
+            } else {
+                println!("Player {player:?} won!");
+            }
+        }
     }
 }
 
