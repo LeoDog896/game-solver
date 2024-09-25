@@ -49,10 +49,10 @@ impl Chomp {
 #[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct ChompArgs {
     /// The width of the game
-    #[arg(short, long, default_value_t = 6)]
+    #[arg(long, default_value_t = 6)]
     width: usize,
     /// The height of the game
-    #[arg(short, long, default_value_t = 4)]
+    #[arg(long, default_value_t = 4)]
     height: usize,
     /// Chomp moves, ordered as x1-y1 x2-y2 ...
     #[arg(value_parser = clap::value_parser!(ChompMove))]
@@ -83,7 +83,7 @@ impl Game for Chomp {
     type Player = ImpartialPlayer;
     type MoveError = ChompMoveError;
 
-    const STATE_TYPE: Option<StateType> = Some(StateType::Misere);
+    const STATE_TYPE: Option<StateType> = Some(StateType::Normal);
 
     fn max_moves(&self) -> Option<usize> {
         Some(self.width * self.height)
