@@ -11,7 +11,7 @@ use game_solver::{
 };
 use serde::{Deserialize, Serialize};
 use std::{
-    fmt::{Display, Formatter},
+    fmt::{Debug, Display, Formatter},
     hash::Hash,
 };
 use thiserror::Error;
@@ -283,6 +283,18 @@ impl<
     }
 }
 
+impl<
+        const WIDTH: usize,
+        const HEIGHT: usize,
+        const MIN_WIN_LENGTH: usize,
+        const MAX_WIN_LENGTH: usize,
+    > Debug for OrderAndChaos<WIDTH, HEIGHT, MIN_WIN_LENGTH, MAX_WIN_LENGTH>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <Self as Display>::fmt(&self, f)
+    }
+}
+
 /// Analyzes Order and Chaos.
 ///
 #[doc = include_str!("./README.md")]
@@ -380,10 +392,7 @@ mod tests {
         ......",
         );
 
-        assert_eq!(
-            horizontal_board.state(),
-            GameState::Playable
-        );
+        assert_eq!(horizontal_board.state(), GameState::Playable);
     }
 
     #[test]

@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use std::{
-    fmt::{Display, Formatter},
+    fmt::{Debug, Display, Formatter},
     hash::Hash,
     iter::FilterMap,
 };
@@ -23,9 +23,24 @@ use crate::util::cli::move_failable;
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
 pub enum Square {
-    Empty,
     X,
     O,
+}
+
+impl Square {
+    fn to_player(self) -> PartizanPlayer {
+        match self {
+            Self::X => PartizanPlayer::Left,
+            Self::O => PartizanPlayer::Right
+        }
+    }
+
+    fn from_player(player: PartizanPlayer) -> Square {
+        match player {
+            PartizanPlayer::Left => Self::X,
+            PartizanPlayer::Right => Self::O
+        }
+    }
 }
 
 #[derive(Clone, Hash, Eq, PartialEq)]
@@ -33,7 +48,7 @@ pub struct TicTacToe {
     dim: usize,
     size: usize,
     /// True represents a square that has not been eaten
-    board: ArrayD<Square>,
+    board: ArrayD<Option<Square>>,
     move_count: usize,
 }
 
@@ -112,7 +127,7 @@ fn add_checked(a: Dim<IxDynImpl>, b: Vec<i32>) -> Option<Dim<IxDynImpl>> {
 impl TicTacToe {
     fn new(dim: usize, size: usize) -> Self {
         // we want [SIZE; dim] but dim isn't a const - we have to get the slice from a vec
-        let board = ArrayD::from_elem(IxDyn(&vec![size; dim]), Square::Empty);
+        let board = ArrayD::from_elem(IxDyn(&vec![size; dim]), None);
 
         Self {
             dim,
@@ -122,11 +137,12 @@ impl TicTacToe {
         }
     }
 
-    fn winning_line(&self, point: &Dim<IxDynImpl>, offset: &[i32]) -> bool {
+    /// Returns the square on this winning line.
+    fn winning_line(&self, point: &Dim<IxDynImpl>, offset: &[i32]) -> Option<Square> {
         let square = self.board.get(point).unwrap();
 
-        if *square == Square::Empty {
-            return false;
+        if *square == None {
+            return None;
         }
 
         let mut n = 1;
@@ -153,15 +169,19 @@ impl TicTacToe {
             }
         }
 
-        n >= self.size
+        if n >= self.size {
+            *square
+        } else {
+            None
+        }
     }
 }
 
 impl Game for TicTacToe {
     type Move = TicTacToeMove;
     type Iter<'a> = FilterMap<
-        IndexedIter<'a, Square, Dim<IxDynImpl>>,
-        fn((Dim<IxDynImpl>, &Square)) -> Option<Self::Move>,
+        IndexedIter<'a, Option<Square>, Dim<IxDynImpl>>,
+        fn((Dim<IxDynImpl>, &Option<Square>)) -> Option<Self::Move>,
     >;
     type Player = PartizanPlayer;
     type MoveError = TicTacToeMoveError;
@@ -184,14 +204,14 @@ impl Game for TicTacToe {
 
         // check every move
         for (index, square) in self.board.indexed_iter() {
-            if square == &Square::Empty {
+            if square == &None {
                 continue;
             }
 
             let point = index.into_dimension();
             for offset in offsets(&point, self.size) {
-                if self.winning_line(&point, &offset) {
-                    return GameState::Win(self.player().next());
+                if let Some(square) = self.winning_line(&point, &offset) {
+                    return GameState::Win(square.to_player());
                 }
             }
         }
@@ -200,14 +220,10 @@ impl Game for TicTacToe {
     }
 
     fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError> {
-        if *self.board.get(m.0.clone()).unwrap() == Square::Empty {
-            let square = if self.player() == PartizanPlayer::Left {
-                Square::X
-            } else {
-                Square::O
-            };
+        if *self.board.get(m.0.clone()).unwrap() == None {
+            let square = Square::from_player(self.player());
 
-            *self.board.get_mut(m.0.clone()).unwrap() = square;
+            *self.board.get_mut(m.0.clone()).unwrap() = Some(square);
             self.move_count += 1;
             Ok(())
         } else {
@@ -219,7 +235,7 @@ impl Game for TicTacToe {
         self.board
             .indexed_iter()
             .filter_map(move |(index, square)| {
-                if square == &Square::Empty {
+                if square == &None {
                     Some(TicTacToeMove(index))
                 } else {
                     None
@@ -234,15 +250,25 @@ impl Game for TicTacToe {
             return Ok(None);
         }
 
+        let mut best_non_winning_game: Option<Self> = None;
+
         for m in &mut self.possible_moves() {
             let mut new_self = self.clone();
             new_self.make_move(&m)?;
-            if let GameState::Win(_) = new_self.state() {
-                return Ok(Some(new_self));
-            }
+            match new_self.state() {
+                GameState::Playable => continue,
+                GameState::Tie => best_non_winning_game = Some(new_self),
+                GameState::Win(winning_player) => {
+                    if winning_player == self.player().turn() {
+                        return Ok(Some(new_self));
+                    } else if best_non_winning_game.is_none() {
+                        best_non_winning_game = Some(new_self)
+                    }
+                }
+            };
         }
 
-        Ok(None)
+        Ok(best_non_winning_game)
     }
 
     fn player(&self) -> Self::Player {
@@ -292,15 +318,21 @@ impl Display for TicTacToe {
     }
 }
 
+impl Debug for TicTacToe {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <Self as Display>::fmt(&self, f)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use game_solver::move_scores;
+    use game_solver::{move_scores, GameSolveError};
     use std::collections::HashMap;
 
     fn move_scores_unwrapped(game: &TicTacToe) -> Vec<(TicTacToeMove, isize)> {
-        move_scores(game, &mut HashMap::new())
-            .collect::<Result<Vec<_>, TicTacToeMoveError>>()
+        move_scores(game, &mut HashMap::new(), None, &None)
+            .collect::<Result<Vec<_>, GameSolveError<TicTacToe>>>()
             .unwrap()
     }
 

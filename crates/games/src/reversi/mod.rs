@@ -11,7 +11,7 @@ use game_solver::{
     player::{PartizanPlayer, Player},
 };
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::hash::Hash;
 
 use crate::util::{cli::move_failable, move_natural::NaturalMove};
@@ -231,6 +231,12 @@ impl fmt::Display for Reversi {
         }
 
         Ok(())
+    }
+}
+
+impl Debug for Reversi {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        <Self as fmt::Display>::fmt(&self, f)
     }
 }
 

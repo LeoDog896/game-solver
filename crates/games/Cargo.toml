@@ -20,6 +20,8 @@ egui_commonmark = { version = "0.17.0", optional = true, features = ["macros"] }
 thiserror = "1.0.63"
 petgraph = "0.6.5"
 castaway = "0.2.3"
+ratatui = "0.28.1"
+owo-colors = "4.1.0"
 
 [features]
 "egui" = ["dep:egui", "dep:egui_commonmark"]

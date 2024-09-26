@@ -23,7 +23,9 @@ pub trait Player: Sized + Eq {
 }
 
 /// Represents a two player player.
-pub trait TwoPlayer: Player {
+/// 
+/// This player should always be representable by a byte.
+pub trait TwoPlayer: Player + Copy {
     /// Gets the other player
     #[must_use]
     fn other(self) -> Self {
@@ -83,6 +85,16 @@ pub enum ImpartialPlayer {
     /// The player that has played previous to this game state
     /// (or will play after Next).
     Previous,
+}
+
+impl ImpartialPlayer {
+    pub fn from_move_count(initial_move_count: usize, final_move_count: usize) -> ImpartialPlayer {
+        if (final_move_count - initial_move_count) % 2 == 0 {
+            ImpartialPlayer::Next
+        } else {
+            ImpartialPlayer::Previous
+        }
+    }
 }
 
 impl Player for ImpartialPlayer {

@@ -1,6 +1,6 @@
 //! Game trait and related types.
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, error::Error};
 
 use crate::player::Player;
 
@@ -68,7 +68,7 @@ pub trait Game: Clone {
     where
         Self: 'a;
 
-    type MoveError;
+    type MoveError: Error;
 
     type Player: Player;
 

@@ -215,6 +215,12 @@ impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEI
     }
 }
 
+impl<const WIDTH: usize, const HEIGHT: usize> Debug for Domineering<WIDTH, HEIGHT> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <Self as Display>::fmt(&self, f)
+    }
+}
+
 /// Analyzes Domineering.
 ///
 #[doc = include_str!("./README.md")]
@@ -249,7 +255,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> TryFrom<DomineeringArgs>
 mod tests {
     use std::collections::HashMap;
 
-    use game_solver::move_scores;
+    use game_solver::{move_scores, GameSolveError};
 
     use super::*;
 
@@ -258,8 +264,8 @@ mod tests {
         orientation: Orientation,
     ) -> Option<PartizanPlayer> {
         let game = Domineering::<WIDTH, HEIGHT>::new_orientation(orientation);
-        let mut move_scores = move_scores(&game, &mut HashMap::new())
-            .collect::<Result<Vec<_>, DomineeringMoveError>>()
+        let mut move_scores = move_scores(&game, &mut HashMap::new(), None, &None)
+            .collect::<Result<Vec<_>, GameSolveError<Domineering<WIDTH, HEIGHT>>>>()
             .unwrap();
 
         if move_scores.is_empty() {
@@ -302,8 +308,8 @@ mod tests {
     #[test]
     fn test_domineering() {
         let game = Domineering::<5, 5>::new_orientation(Orientation::Horizontal);
-        let mut move_scores = move_scores(&game, &mut HashMap::new())
-            .collect::<Result<Vec<_>, DomineeringMoveError>>()
+        let mut move_scores = move_scores(&game, &mut HashMap::new(), None, &None)
+            .collect::<Result<Vec<_>, GameSolveError<Domineering<5, 5>>>>()
             .unwrap();
 
         assert_eq!(move_scores.len(), game.possible_moves().len());
@@ -311,26 +317,26 @@ mod tests {
         move_scores.sort();
 
         let mut current_scores = vec![
-            (DomineeringMove(3, 4), -13),
-            (DomineeringMove(0, 4), -13),
-            (DomineeringMove(3, 3), -13),
-            (DomineeringMove(2, 3), -13),
-            (DomineeringMove(1, 3), -13),
-            (DomineeringMove(0, 3), -13),
-            (DomineeringMove(3, 2), -13),
-            (DomineeringMove(0, 2), -13),
-            (DomineeringMove(3, 1), -13),
-            (DomineeringMove(2, 1), -13),
-            (DomineeringMove(1, 1), -13),
-            (DomineeringMove(0, 1), -13),
-            (DomineeringMove(3, 0), -13),
-            (DomineeringMove(0, 0), -13),
-            (DomineeringMove(2, 4), -15),
-            (DomineeringMove(1, 4), -15),
-            (DomineeringMove(2, 2), -15),
-            (DomineeringMove(1, 2), -15),
-            (DomineeringMove(2, 0), -15),
-            (DomineeringMove(1, 0), -15),
+            (DomineeringMove(3, 4), -14),
+            (DomineeringMove(0, 4), -14),
+            (DomineeringMove(3, 3), -14),
+            (DomineeringMove(2, 3), -14),
+            (DomineeringMove(1, 3), -14),
+            (DomineeringMove(0, 3), -14),
+            (DomineeringMove(3, 2), -14),
+            (DomineeringMove(0, 2), -14),
+            (DomineeringMove(3, 1), -14),
+            (DomineeringMove(2, 1), -14),
+            (DomineeringMove(1, 1), -14),
+            (DomineeringMove(0, 1), -14),
+            (DomineeringMove(3, 0), -14),
+            (DomineeringMove(0, 0), -14),
+            (DomineeringMove(2, 4), -16),
+            (DomineeringMove(1, 4), -16),
+            (DomineeringMove(2, 2), -16),
+            (DomineeringMove(1, 2), -16),
+            (DomineeringMove(2, 0), -16),
+            (DomineeringMove(1, 0), -16),
         ];
 
         current_scores.sort();

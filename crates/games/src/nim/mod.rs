@@ -9,7 +9,10 @@ use game_solver::{
     player::ImpartialPlayer,
 };
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, hash::Hash};
+use std::{
+    fmt::{Debug, Display},
+    hash::Hash,
+};
 use thiserror::Error;
 
 use crate::util::{cli::move_failable, move_natural::NaturalMove};
@@ -123,6 +126,12 @@ impl Display for Nim {
     }
 }
 
+impl Debug for Nim {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Display>::fmt(&self, f)
+    }
+}
+
 /// Analyzes Nim.
 ///
 #[doc = include_str!("./README.md")]
@@ -172,10 +181,53 @@ impl TryFrom<NimArgs> for Nim {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
+    use game_solver::{move_scores, CollectedMoves};
+    use itertools::Itertools;
+
+    use crate::util::move_score::best_move_score_testing;
+
     use super::*;
+
+    fn play(nim: Nim) -> CollectedMoves<Nim> {
+        move_scores(&nim, &mut HashMap::new(), None, &None).collect_vec()
+    }
 
     #[test]
     fn max_moves_is_heap_sum() {
         assert_eq!(Nim::new(vec![3, 5, 7]).max_moves(), Some(3 + 5 + 7));
+        assert_eq!(Nim::new(vec![0, 2, 2]).max_moves(), Some(0 + 2 + 2));
+    }
+
+    #[test]
+    fn single_heap() {
+        // p1 always wins for single-heap stacks
+        // the score is equivalent to the stack, as we can make 1 move to win,
+        // and score is always (max moves - moves made (+ 1 to account for ties))
+        assert_eq!(best_move_score_testing(play(Nim::new(vec![7]))).1, 7);
+        assert_eq!(best_move_score_testing(play(Nim::new(vec![4]))).1, 4);
+        assert_eq!(best_move_score_testing(play(Nim::new(vec![20]))).1, 20);
+    }
+
+    #[test]
+    fn empty_heap() {
+        // unless the heaps have nothing, in which we cant play
+        assert!(play(Nim::new(vec![0])).is_empty());
+        assert!(play(Nim::new(vec![0, 0])).is_empty());
+    }
+
+    #[test]
+    fn symmetrical_nim_wins() {
+        // a loss in 4 moves: take 1, other player takes from other, take 1, other player takes from other
+        assert_eq!(best_move_score_testing(play(Nim::new(vec![2, 2]))).1, -1);
+
+        // generalize this for more cases:
+        assert_eq!(best_move_score_testing(play(Nim::new(vec![6, 6]))).1, -1);
+        assert_eq!(
+            best_move_score_testing(play(Nim::new(vec![5, 5, 3, 3]))).1,
+            -1
+        );
+        assert_eq!(best_move_score_testing(play(Nim::new(vec![7, 7]))).1, -1);
     }
 }

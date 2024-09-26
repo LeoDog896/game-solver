@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use std::{
-    fmt::{Display, Formatter},
+    fmt::{Debug, Display, Formatter},
     hash::Hash,
 };
 
@@ -144,6 +144,12 @@ impl Display for Chomp {
     }
 }
 
+impl Debug for Chomp {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <Self as Display>::fmt(&self, f)
+    }
+}
+
 impl TryFrom<ChompArgs> for Chomp {
     type Error = Error;
 
@@ -163,42 +169,42 @@ impl TryFrom<ChompArgs> for Chomp {
 mod tests {
     use std::collections::HashMap;
 
-    use game_solver::move_scores;
+    use game_solver::{move_scores, GameSolveError};
 
     use super::*;
 
     #[test]
     fn test_chomp() {
         let game = Chomp::new(6, 4);
-        let mut move_scores = move_scores(&game, &mut HashMap::new())
-            .collect::<Result<Vec<_>, ChompMoveError>>()
+        let mut move_scores = move_scores(&game, &mut HashMap::new(), None, &None)
+            .collect::<Result<Vec<_>, GameSolveError<Chomp>>>()
             .unwrap();
         move_scores.sort();
 
         let mut new_scores = vec![
-            (NaturalMove([2, 2]), 13),
-            (NaturalMove([5, 0]), -12),
-            (NaturalMove([4, 0]), -12),
-            (NaturalMove([3, 0]), -12),
-            (NaturalMove([2, 0]), -12),
-            (NaturalMove([0, 0]), -12),
-            (NaturalMove([5, 1]), -12),
-            (NaturalMove([4, 1]), -12),
-            (NaturalMove([3, 1]), -12),
-            (NaturalMove([2, 1]), -12),
-            (NaturalMove([0, 1]), -12),
-            (NaturalMove([5, 2]), -12),
-            (NaturalMove([4, 2]), -12),
-            (NaturalMove([3, 2]), -12),
-            (NaturalMove([5, 3]), -12),
-            (NaturalMove([1, 0]), -16),
-            (NaturalMove([1, 1]), -16),
-            (NaturalMove([1, 2]), -16),
-            (NaturalMove([4, 3]), -16),
-            (NaturalMove([3, 3]), -16),
-            (NaturalMove([2, 3]), -16),
-            (NaturalMove([0, 2]), -22),
-            (NaturalMove([1, 3]), -22),
+            (NaturalMove([2, 2]), 14),
+            (NaturalMove([5, 0]), -13),
+            (NaturalMove([4, 0]), -13),
+            (NaturalMove([3, 0]), -13),
+            (NaturalMove([2, 0]), -13),
+            (NaturalMove([0, 0]), -13),
+            (NaturalMove([5, 1]), -13),
+            (NaturalMove([4, 1]), -13),
+            (NaturalMove([3, 1]), -13),
+            (NaturalMove([2, 1]), -13),
+            (NaturalMove([0, 1]), -13),
+            (NaturalMove([5, 2]), -13),
+            (NaturalMove([4, 2]), -13),
+            (NaturalMove([3, 2]), -13),
+            (NaturalMove([5, 3]), -13),
+            (NaturalMove([1, 0]), -17),
+            (NaturalMove([1, 1]), -17),
+            (NaturalMove([1, 2]), -17),
+            (NaturalMove([4, 3]), -17),
+            (NaturalMove([3, 3]), -17),
+            (NaturalMove([2, 3]), -17),
+            (NaturalMove([0, 2]), -23),
+            (NaturalMove([1, 3]), -23),
         ];
 
         new_scores.sort();
