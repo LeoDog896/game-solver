@@ -83,10 +83,7 @@ impl<G: Game> App<G> {
 impl<G: Game> Widget for &App<G> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let title = Title::from(" game-solver ".bold().green());
-        let instructions = Title::from(Line::from(vec![
-            " Quit ".into(),
-            "<Q> ".blue().bold(),
-        ]));
+        let instructions = Title::from(Line::from(vec![" Quit ".into(), "<Q> ".blue().bold()]));
         let block = Block::bordered()
             .title(title.alignment(Alignment::Center))
             .title(
@@ -181,14 +178,14 @@ where
 {
     let mut terminal = ratatui::init();
 
-    let stats = Arc::new(Stats { 
+    let stats = Arc::new(Stats {
         states_explored: AtomicU64::new(0),
         max_depth: AtomicUsize::new(0),
         cache_hits: AtomicU64::new(0),
         pruning_cutoffs: AtomicU64::new(0),
         terminal_ends: TerminalEnds::default(),
         original_player: game.player(),
-        original_move_count: game.move_count()
+        original_move_count: game.move_count(),
     });
 
     let exit = Arc::new(AtomicBool::new(false));
@@ -203,7 +200,11 @@ where
     let internal_game = game.clone();
     let internal_stats = stats.clone();
     let game_thread = thread::spawn(move || {
-        let move_scores = par_move_scores(&internal_game, Some(internal_stats.as_ref()), &Some(exit.clone()));
+        let move_scores = par_move_scores(
+            &internal_game,
+            Some(internal_stats.as_ref()),
+            &Some(exit.clone()),
+        );
 
         exit_ui.store(true, Ordering::SeqCst);
 

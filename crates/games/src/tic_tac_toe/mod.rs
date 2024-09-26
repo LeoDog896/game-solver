@@ -31,14 +31,14 @@ impl Square {
     fn to_player(self) -> PartizanPlayer {
         match self {
             Self::X => PartizanPlayer::Left,
-            Self::O => PartizanPlayer::Right
+            Self::O => PartizanPlayer::Right,
         }
     }
 
     fn from_player(player: PartizanPlayer) -> Square {
         match player {
             PartizanPlayer::Left => Self::X,
-            PartizanPlayer::Right => Self::O
+            PartizanPlayer::Right => Self::O,
         }
     }
 }

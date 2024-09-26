@@ -1,6 +1,6 @@
 mod human;
-mod robot;
 mod report;
+mod robot;
 
 use anyhow::{anyhow, Result};
 use game_solver::{

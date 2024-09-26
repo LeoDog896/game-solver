@@ -74,7 +74,11 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
             // TODO: can we not duplicate this
             if let Some(stats) = stats {
                 if let Ok(player) = castaway::cast!(winning_player, ImpartialPlayer) {
-                    if ImpartialPlayer::from_move_count(stats.original_move_count, game.move_count()) == player {
+                    if ImpartialPlayer::from_move_count(
+                        stats.original_move_count,
+                        game.move_count(),
+                    ) == player
+                    {
                         stats.terminal_ends.winning.fetch_add(1, Ordering::Relaxed);
                     } else {
                         stats.terminal_ends.losing.fetch_add(1, Ordering::Relaxed);
@@ -118,7 +122,11 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
             GameState::Win(winning_player) => {
                 if let Some(stats) = stats {
                     if let Ok(player) = castaway::cast!(winning_player, ImpartialPlayer) {
-                        if ImpartialPlayer::from_move_count(stats.original_move_count, game.move_count()) == player {
+                        if ImpartialPlayer::from_move_count(
+                            stats.original_move_count,
+                            game.move_count(),
+                        ) == player
+                        {
                             stats.terminal_ends.winning.fetch_add(1, Ordering::Relaxed);
                         } else {
                             stats.terminal_ends.losing.fetch_add(1, Ordering::Relaxed);
@@ -370,7 +378,9 @@ where
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores<T: Game<Player = impl TwoPlayer + Sync + 'static> + Eq + Hash + Sync + Send + 'static>(
+pub fn par_move_scores<
+    T: Game<Player = impl TwoPlayer + Sync + 'static> + Eq + Hash + Sync + Send + 'static,
+>(
     game: &T,
     stats: Option<&Stats<T::Player>>,
     cancellation_token: &Option<Arc<AtomicBool>>,

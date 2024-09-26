@@ -10,8 +10,8 @@ pub mod tic_tac_toe;
 
 use crate::{
     chomp::ChompArgs, domineering::DomineeringArgs, nim::NimArgs,
-    order_and_chaos::OrderAndChaosArgs, reversi::ReversiArgs, tic_tac_toe::TicTacToeArgs,
-    sprouts::SproutsArgs
+    order_and_chaos::OrderAndChaosArgs, reversi::ReversiArgs, sprouts::SproutsArgs,
+    tic_tac_toe::TicTacToeArgs,
 };
 use clap::Subcommand;
 use once_cell::sync::Lazy;
@@ -25,7 +25,7 @@ pub enum Games {
     Nim(NimArgs),
     Domineering(DomineeringArgs),
     Chomp(ChompArgs),
-    Sprouts(SproutsArgs)
+    Sprouts(SproutsArgs),
 }
 
 pub static DEFAULT_GAMES: Lazy<[Games; 7]> = Lazy::new(|| {
@@ -36,7 +36,7 @@ pub static DEFAULT_GAMES: Lazy<[Games; 7]> = Lazy::new(|| {
         Games::Nim(Default::default()),
         Games::Domineering(Default::default()),
         Games::Chomp(Default::default()),
-        Games::Sprouts(Default::default())
+        Games::Sprouts(Default::default()),
     ]
 });
 
@@ -49,7 +49,7 @@ impl Games {
             Self::Nim(_) => "Nim".to_string(),
             Self::Domineering(_) => "Domineering".to_string(),
             Self::Chomp(_) => "Chomp".to_string(),
-            Self::Sprouts(_) => "Sprouts".to_string()
+            Self::Sprouts(_) => "Sprouts".to_string(),
         }
     }
 
@@ -61,7 +61,7 @@ impl Games {
             Self::Nim(_) => include_str!("./nim/README.md"),
             Self::Domineering(_) => include_str!("./domineering/README.md"),
             Self::Chomp(_) => include_str!("./chomp/README.md"),
-            Self::Sprouts(_) => include_str!("./sprouts/README.md")
+            Self::Sprouts(_) => include_str!("./sprouts/README.md"),
         }
     }
 

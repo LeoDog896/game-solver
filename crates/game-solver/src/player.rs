@@ -23,7 +23,7 @@ pub trait Player: Sized + Eq {
 }
 
 /// Represents a two player player.
-/// 
+///
 /// This player should always be representable by a byte.
 pub trait TwoPlayer: Player + Copy {
     /// Gets the other player

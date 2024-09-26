@@ -27,6 +27,5 @@ pub struct Stats<P: Player> {
     pub pruning_cutoffs: AtomicU64,
     pub terminal_ends: TerminalEnds,
     pub original_player: P,
-    pub original_move_count: usize
+    pub original_move_count: usize,
 }
-
