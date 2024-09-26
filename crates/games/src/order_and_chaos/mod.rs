@@ -190,9 +190,9 @@ impl<const WIDTH: usize, const HEIGHT: usize, const MIN_WIN_LENGTH: usize, const
                             break 'column_check;
                         }
                     }
-                }
 
-                return GameState::Win(PartizanPlayer::Left);
+                    return GameState::Win(PartizanPlayer::Left);
+                }
             }
         }
 
@@ -213,14 +213,14 @@ impl<const WIDTH: usize, const HEIGHT: usize, const MIN_WIN_LENGTH: usize, const
                             break 'diag_check;
                         }
                     }
-                }
 
-                return GameState::Win(PartizanPlayer::Left);
+                    return GameState::Win(PartizanPlayer::Left);
+                }
             }
         }
         
         if self.move_count == WIDTH * HEIGHT {
-            return GameState::Tie;
+            return GameState::Win(PartizanPlayer::Right);
         }
 
         GameState::Playable
@@ -274,7 +274,7 @@ impl<const WIDTH: usize, const HEIGHT: usize, const MIN_WIN_LENGTH: usize, const
                 .map(|num| num.parse::<usize>().expect("Not a number!"))
                 .collect::<Vec<_>>();
 
-            let player = match args[2] {
+            let player = match args[2].to_ascii_lowercase().as_str() {
                 "x" => Ok(CellType::X),
                 "o" => Ok(CellType::O),
                 _ => Err(anyhow!("Invalid player!")),

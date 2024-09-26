@@ -19,7 +19,7 @@ fn main() -> Result<()> {
     match cli.command {
         Games::Reversi(args) => play::<Reversi>(args.try_into().unwrap()),
         Games::TicTacToe(args) => play::<TicTacToe>(args.try_into().unwrap()),
-        Games::OrderAndChaos(args) => play::<OrderAndChaos>(args.try_into().unwrap()),
+        Games::OrderAndChaos(args) => play::<OrderAndChaos<6, 6, 5, 6>>(args.try_into().unwrap()),
         Games::Nim(args) => play::<Nim>(args.try_into().unwrap()),
         Games::Domineering(args) => play::<Domineering<5, 5>>(args.try_into().unwrap()),
         Games::Chomp(args) => play::<Chomp>(args.try_into().unwrap()),

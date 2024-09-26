@@ -186,7 +186,9 @@ pub fn upper_bound<T: Game>(game: &T) -> isize {
 /// Represents an outcome of a game derived by a score and a valid instance of a game.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum GameScoreOutcome {
+    /// The inner field represents the amount of moves till a win.
     Win(usize),
+    /// The inner field represents the amount of moves till a loss.
     Loss(usize),
     Tie
 }
@@ -195,8 +197,8 @@ pub enum GameScoreOutcome {
 /// amount of moves to a win or loss, or a tie.
 pub fn score_to_outcome<T: Game>(game: &T, score: isize) -> GameScoreOutcome {
     match score.cmp(&0) {
-        Ordering::Greater => GameScoreOutcome::Win((-score + upper_bound(game)) as usize),
+        Ordering::Greater => GameScoreOutcome::Win((-score + upper_bound(game) - game.move_count() as isize) as usize),
         Ordering::Equal => GameScoreOutcome::Tie,
-        Ordering::Less => GameScoreOutcome::Loss((score + upper_bound(game)) as usize)
+        Ordering::Less => GameScoreOutcome::Loss((score + upper_bound(game) - game.move_count() as isize) as usize)
     }
 }

@@ -67,14 +67,14 @@ where
     T::MoveError: Display,
     T::Player: Debug,
 {
-    game.make_move(m)
-        .map_err(|err| anyhow!("Failed to move: {}", err))?;
-
     match game.state() {
-        GameState::Playable => Ok(()),
-        GameState::Tie => Err(anyhow!("Can't continue - game is tied.")),
-        GameState::Win(player) => Err(anyhow!(
+        GameState::Playable => (),
+        GameState::Tie => return Err(anyhow!("Can't continue - game is tied.")),
+        GameState::Win(player) => return Err(anyhow!(
             "Can't continue game if player {player:?} already won."
         )),
-    }
+    };
+
+    game.make_move(m)
+        .map_err(|err| anyhow!("Failed to move: {}", err))
 }
