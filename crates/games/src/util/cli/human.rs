@@ -84,10 +84,6 @@ impl<G: Game> Widget for &App<G> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let title = Title::from(" game-solver ".bold().green());
         let instructions = Title::from(Line::from(vec![
-            " Decrement ".into(),
-            "<Left>".blue().bold(),
-            " Increment ".into(),
-            "<Right>".blue().bold(),
             " Quit ".into(),
             "<Q> ".blue().bold(),
         ]));

@@ -51,6 +51,10 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
         }
     }
 
+    if let Some(stats) = stats {
+        stats.states_explored.fetch_add(1, Ordering::Relaxed);
+    }
+
     // TODO: debug-based depth counting
     // if let Some(stats) = stats {
     //     stats.max_depth.fetch_max(depth, Ordering::Relaxed);
@@ -135,10 +139,6 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
                 }
             }
         }
-    }
-
-    if let Some(stats) = stats {
-        stats.states_explored.fetch_add(1, Ordering::Relaxed);
     }
 
     // fetch values from the transposition table
