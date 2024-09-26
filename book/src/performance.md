@@ -19,7 +19,6 @@
     - If you want to use xxHash without parallelization, pass it to your hashmap by using `hasher: std::hash::BuildHasherDefault<xxhash_rust::XxHash64>`.
     - You can disable xxhash by removing the `xxhash` feature.
       - More information about why you may want to do this can be found in the [hashing](#hashing) section
-- ML-based move ordering with [candle](https://github.com/huggingface/candle/)
 - Parallelization with [rayon](https://github.com/rayon-rs/rayon)
   - Note that this is under the `rayon` feature flag.
   - TODO: Use Lazy SMP (currently this is using naive parallelization on the `move_scores` level)
@@ -40,6 +39,9 @@ that benefit from good moves being chosen first.
 You can also use `game-solver`'s [reinforcement learning](./reinforcement_learning.md) method, which is highly recommended as it saves time on manual implementation.
 
 If possible, try to "guess" the score of a move, and sort the moves by that score.
+
+Since `game-solver` uses principal variation search, if the first move in the move ordering is great,
+this solver will generally work very fast.
 
 ### Efficient Bitboards
 

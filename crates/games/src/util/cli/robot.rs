@@ -1,5 +1,5 @@
 use game_solver::{
-    game::{score_to_outcome, Game, GameScoreOutcome},
+    game::Game,
     par_move_scores,
     player::{ImpartialPlayer, TwoPlayer},
 };
@@ -9,7 +9,7 @@ use std::{
     hash::Hash,
 };
 
-use crate::util::{cli::report::scores::show_scores, move_score::normalize_move_scores};
+use crate::util::cli::report::scores::show_scores;
 
 pub fn robotic_output<
     T: Game<Player = impl TwoPlayer + Debug + Sync + 'static>

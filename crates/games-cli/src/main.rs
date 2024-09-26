@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use games::{
     chomp::Chomp, domineering::Domineering, nim::Nim, order_and_chaos::OrderAndChaos,
-    reversi::Reversi, tic_tac_toe::TicTacToe, util::cli::play, Games,
+    reversi::Reversi, sprouts::Sprouts, tic_tac_toe::TicTacToe, util::cli::play, Games,
 };
 
 /// `game-solver` is a solving utility that helps analyze various combinatorial games.
@@ -27,6 +27,7 @@ fn main() -> Result<()> {
         Games::Nim(args) => play::<Nim>(args.try_into().unwrap(), cli.plain),
         Games::Domineering(args) => play::<Domineering<5, 5>>(args.try_into().unwrap(), cli.plain),
         Games::Chomp(args) => play::<Chomp>(args.try_into().unwrap(), cli.plain),
+        Games::Sprouts(args) => play::<Sprouts>(args.try_into().unwrap(), cli.plain),
     };
 
     Ok(())

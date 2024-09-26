@@ -252,6 +252,12 @@ pub fn solve<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
 
     // we're trying to guess the score of the board via null windows
     while alpha < beta {
+        if let Some(token) = cancellation_token {
+            if token.load(Ordering::Relaxed) {
+                return Err(GameSolveError::CancellationTokenError);
+            }
+        }
+
         let med = alpha + (beta - alpha) / 2;
 
         // do a [null window search](https://www.chessprogramming.org/Null_Window)
