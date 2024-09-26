@@ -146,7 +146,7 @@ impl Display for Chomp {
 
 impl Debug for Chomp {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <Self as Display>::fmt(&self, f)
+        <Self as Display>::fmt(self, f)
     }
 }
 

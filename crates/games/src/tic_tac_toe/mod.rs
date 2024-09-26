@@ -141,7 +141,7 @@ impl TicTacToe {
     fn winning_line(&self, point: &Dim<IxDynImpl>, offset: &[i32]) -> Option<Square> {
         let square = self.board.get(point).unwrap();
 
-        if *square == None {
+        if square.is_none() {
             return None;
         }
 
@@ -204,7 +204,7 @@ impl Game for TicTacToe {
 
         // check every move
         for (index, square) in self.board.indexed_iter() {
-            if square == &None {
+            if square.is_none() {
                 continue;
             }
 
@@ -220,7 +220,7 @@ impl Game for TicTacToe {
     }
 
     fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError> {
-        if *self.board.get(m.0.clone()).unwrap() == None {
+        if self.board.get(m.0.clone()).unwrap().is_none() {
             let square = Square::from_player(self.player());
 
             *self.board.get_mut(m.0.clone()).unwrap() = Some(square);
@@ -235,7 +235,7 @@ impl Game for TicTacToe {
         self.board
             .indexed_iter()
             .filter_map(move |(index, square)| {
-                if square == &None {
+                if square.is_none() {
                     Some(TicTacToeMove(index))
                 } else {
                     None
@@ -320,7 +320,7 @@ impl Display for TicTacToe {
 
 impl Debug for TicTacToe {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <Self as Display>::fmt(&self, f)
+        <Self as Display>::fmt(self, f)
     }
 }
 

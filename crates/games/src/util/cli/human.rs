@@ -69,9 +69,8 @@ impl<G: Game> App<G> {
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) {
-        match key_event.code {
-            KeyCode::Char('q') => self.exit(),
-            _ => {}
+        if let KeyCode::Char('q') = key_event.code {
+            self.exit()
         }
     }
 

@@ -7,7 +7,9 @@ impl Add for Nimber {
     type Output = Nimber;
 
     fn add(self, rhs: Self) -> Self::Output {
-        return Nimber(self.0 ^ rhs.0);
+        // bitxor is the way nimbers are added.
+        #[allow(clippy::suspicious_arithmetic_impl)]
+        Nimber(self.0 ^ rhs.0)
     }
 }
 

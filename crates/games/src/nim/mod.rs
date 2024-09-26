@@ -128,7 +128,7 @@ impl Display for Nim {
 
 impl Debug for Nim {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Display>::fmt(&self, f)
+        <Self as Display>::fmt(self, f)
     }
 }
 
@@ -197,7 +197,7 @@ mod tests {
     #[test]
     fn max_moves_is_heap_sum() {
         assert_eq!(Nim::new(vec![3, 5, 7]).max_moves(), Some(3 + 5 + 7));
-        assert_eq!(Nim::new(vec![0, 2, 2]).max_moves(), Some(0 + 2 + 2));
+        assert_eq!(Nim::new(vec![0, 2, 2]).max_moves(), Some(2 + 2));
     }
 
     #[test]

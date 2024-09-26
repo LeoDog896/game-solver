@@ -291,7 +291,7 @@ impl<
     > Debug for OrderAndChaos<WIDTH, HEIGHT, MIN_WIN_LENGTH, MAX_WIN_LENGTH>
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <Self as Display>::fmt(&self, f)
+        <Self as Display>::fmt(self, f)
     }
 }
 
@@ -347,14 +347,13 @@ mod tests {
     fn from_string(string: &str) -> OrderAndChaos<6, 6, 5, 6> {
         let board_internal = string
             .chars()
-            .map(|ch| match ch {
+            .filter_map(|ch| match ch {
                 'X' => Some(Some(CellType::X)),
                 'O' => Some(Some(CellType::O)),
                 '.' => Some(None),
                 '\n' => None,
                 _ => panic!("There shouldn't be other characters in the string!"),
             })
-            .filter_map(|x| x)
             .collect::<Vec<_>>();
 
         let element_count = board_internal.iter().filter(|x| x.is_some()).count();

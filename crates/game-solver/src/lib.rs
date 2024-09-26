@@ -83,12 +83,10 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
                     } else {
                         stats.terminal_ends.losing.fetch_add(1, Ordering::Relaxed);
                     }
+                } else if stats.original_player == winning_player {
+                    stats.terminal_ends.winning.fetch_add(1, Ordering::Relaxed);
                 } else {
-                    if stats.original_player == winning_player {
-                        stats.terminal_ends.winning.fetch_add(1, Ordering::Relaxed);
-                    } else {
-                        stats.terminal_ends.losing.fetch_add(1, Ordering::Relaxed);
-                    }
+                    stats.terminal_ends.losing.fetch_add(1, Ordering::Relaxed);
                 }
             }
 
@@ -131,12 +129,10 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
                         } else {
                             stats.terminal_ends.losing.fetch_add(1, Ordering::Relaxed);
                         }
+                    } else if stats.original_player == winning_player {
+                        stats.terminal_ends.winning.fetch_add(1, Ordering::Relaxed);
                     } else {
-                        if stats.original_player == winning_player {
-                            stats.terminal_ends.winning.fetch_add(1, Ordering::Relaxed);
-                        } else {
-                            stats.terminal_ends.losing.fetch_add(1, Ordering::Relaxed);
-                        }
+                        stats.terminal_ends.losing.fetch_add(1, Ordering::Relaxed);
                     }
                 }
 
@@ -197,7 +193,7 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
                 -beta,
                 -alpha,
                 stats,
-                &cancellation_token,
+                cancellation_token,
             )?
         } else {
             let score = -negamax(
@@ -206,7 +202,7 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
                 -alpha - 1,
                 -alpha,
                 stats,
-                &cancellation_token,
+                cancellation_token,
             )?;
             if score > alpha {
                 -negamax(
@@ -215,7 +211,7 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
                     -beta,
                     -alpha,
                     stats,
-                    &cancellation_token,
+                    cancellation_token,
                 )?
             } else {
                 score

@@ -63,10 +63,6 @@ impl PartialEq for Sprouts {
             && self.0.edge_references().collect::<Vec<_>>()
                 == other.0.edge_references().collect::<Vec<_>>()
     }
-
-    fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
-    }
 }
 
 impl Eq for Sprouts {}
@@ -119,7 +115,7 @@ impl Game for Sprouts {
     fn make_move(&mut self, m: &Self::Move) -> Result<(), Self::MoveError> {
         // There already exists an edge here!
         if self.0.has_edge(m.from, m.to) {
-            return Err(SproutsMoveError::SproutsConnected(m.clone()));
+            return Err(SproutsMoveError::SproutsConnected(*m));
         }
 
         // move index is out of bounds
@@ -127,14 +123,14 @@ impl Game for Sprouts {
             if !self.0.node_identifiers().contains(&m.from) {
                 return Err(SproutsMoveError::MoveOutOfBounds(
                     m.from.index().try_into().unwrap(),
-                    m.clone(),
+                    *m,
                 ));
             }
 
             if !self.0.node_identifiers().contains(&m.to) {
                 return Err(SproutsMoveError::MoveOutOfBounds(
                     m.to.index().try_into().unwrap(),
-                    m.clone(),
+                    *m,
                 ));
             }
         }
@@ -144,14 +140,14 @@ impl Game for Sprouts {
             if self.0.edges(m.from).count() >= MAX_SPROUTS {
                 return Err(SproutsMoveError::DeadSprout(
                     m.from.index().try_into().unwrap(),
-                    m.clone(),
+                    *m,
                 ));
             }
 
             if self.0.edges(m.to).count() >= MAX_SPROUTS {
                 return Err(SproutsMoveError::DeadSprout(
                     m.to.index().try_into().unwrap(),
-                    m.clone(),
+                    *m,
                 ));
             }
         }
@@ -244,7 +240,7 @@ impl Debug for Sprouts {
 
 impl Display for Sprouts {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Debug>::fmt(&self, f)
+        <Self as Debug>::fmt(self, f)
     }
 }
 

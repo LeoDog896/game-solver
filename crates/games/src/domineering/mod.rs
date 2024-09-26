@@ -217,7 +217,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Display for Domineering<WIDTH, HEI
 
 impl<const WIDTH: usize, const HEIGHT: usize> Debug for Domineering<WIDTH, HEIGHT> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <Self as Display>::fmt(&self, f)
+        <Self as Display>::fmt(self, f)
     }
 }
 

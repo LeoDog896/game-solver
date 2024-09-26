@@ -236,7 +236,7 @@ impl fmt::Display for Reversi {
 
 impl Debug for Reversi {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        <Self as fmt::Display>::fmt(&self, f)
+        <Self as fmt::Display>::fmt(self, f)
     }
 }
 
