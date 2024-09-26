@@ -38,11 +38,11 @@ fn negamax<T: Game<Player = impl TwoPlayer> + Eq + Hash>(
         GameState::Win(winning_player) => {
             // The next player is the winning player - the score should be positive.
             if game.player() == winning_player {
-                return Ok(upper_bound(game) - game.move_count() as isize)
+                return Ok(upper_bound(game) - game.move_count() as isize);
             } else {
-                return Ok(-(upper_bound(game) - game.move_count() as isize))
+                return Ok(-(upper_bound(game) - game.move_count() as isize));
             }
-        },
+        }
     };
 
     // check if this is a winning configuration
@@ -50,10 +50,12 @@ fn negamax<T: Game<Player = impl TwoPlayer> + Eq + Hash>(
         match board.state() {
             GameState::Playable => panic!("A resolvable game should not be playable."),
             GameState::Tie => return Ok(0),
-            GameState::Win(winning_player) => if game.player().turn() == winning_player {
-                return Ok(upper_bound(&board) - board.move_count() as isize);
-            } else {
-                return Ok(-(upper_bound(&board) - board.move_count() as isize));
+            GameState::Win(winning_player) => {
+                if game.player().turn() == winning_player {
+                    return Ok(upper_bound(&board) - board.move_count() as isize);
+                } else {
+                    return Ok(-(upper_bound(&board) - board.move_count() as isize));
+                }
             }
         }
     }

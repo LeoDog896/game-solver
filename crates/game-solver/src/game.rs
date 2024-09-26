@@ -94,31 +94,33 @@ pub trait Game: Clone {
     ///
     /// Rather, this function asks if there exists some game in the possible games set
     /// which has a resolvable, positive or negative, outcome.
-    /// 
+    ///
     /// This function must act in the Next player's best interest.
     /// Positive games should have highest priority, then tied games, then lost games.
     /// Exact order of what game is returned doesn't matter past its outcome equivalency,
     /// as the score is dependent on move count.
-    /// 
+    ///
     /// (If this function returns a losing game when a positive game exists
     /// in the set of immediately resolvable games, that is a violation of this
     /// function's contract).
-    /// 
+    ///
     /// This function's default implementation is quite slow,
     /// and it's encouraged to use a custom implementation.
     fn find_immediately_resolvable_game(&self) -> Result<Option<Self>, Self::MoveError> {
-        let mut best_non_winning_game: Option<Self> = None; 
-        
+        let mut best_non_winning_game: Option<Self> = None;
+
         for m in &mut self.possible_moves() {
             let mut new_self = self.clone();
             new_self.make_move(&m)?;
             match new_self.state() {
                 GameState::Playable => continue,
                 GameState::Tie => best_non_winning_game = Some(new_self),
-                GameState::Win(winning_player) => if winning_player == self.player().turn() {
-                    return Ok(Some(new_self))
-                } else if best_non_winning_game.is_none() {
-                    best_non_winning_game = Some(new_self)
+                GameState::Win(winning_player) => {
+                    if winning_player == self.player().turn() {
+                        return Ok(Some(new_self));
+                    } else if best_non_winning_game.is_none() {
+                        best_non_winning_game = Some(new_self)
+                    }
                 }
             };
         }
@@ -173,11 +175,11 @@ pub trait Game: Clone {
 }
 
 /// Utility function to get the upper score bound of a game.
-/// 
+///
 /// Essentially, score computation generally gives some max (usually max moves),
 /// and penalizes the score by the amount of moves that have been made, as we're
 /// trying to encourage winning in the shortest amount of time - God's algorithm.
-/// 
+///
 /// Note: Despite this returning isize, this function will always be positive.
 pub fn upper_bound<T: Game>(game: &T) -> isize {
     game.max_moves().map_or(isize::MAX, |m| m as isize)
@@ -190,15 +192,19 @@ pub enum GameScoreOutcome {
     Win(usize),
     /// The inner field represents the amount of moves till a loss.
     Loss(usize),
-    Tie
+    Tie,
 }
 
 /// Utility function to convert a score to the
 /// amount of moves to a win or loss, or a tie.
 pub fn score_to_outcome<T: Game>(game: &T, score: isize) -> GameScoreOutcome {
     match score.cmp(&0) {
-        Ordering::Greater => GameScoreOutcome::Win((-score + upper_bound(game) - game.move_count() as isize) as usize),
+        Ordering::Greater => GameScoreOutcome::Win(
+            (-score + upper_bound(game) - game.move_count() as isize) as usize,
+        ),
         Ordering::Equal => GameScoreOutcome::Tie,
-        Ordering::Less => GameScoreOutcome::Loss((score + upper_bound(game) - game.move_count() as isize) as usize)
+        Ordering::Less => GameScoreOutcome::Loss(
+            (score + upper_bound(game) - game.move_count() as isize) as usize,
+        ),
     }
 }

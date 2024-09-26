@@ -52,7 +52,7 @@ impl Game for Nim {
     /// where Move is a tuple of the heap index and the number of objects to remove
     type Move = NimMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
-    
+
     /// Define Nim as a zero-sum impartial game
     type Player = ImpartialPlayer;
     type MoveError = NimMoveError;

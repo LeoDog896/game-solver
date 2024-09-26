@@ -5,7 +5,10 @@ use game_solver::{
     par_move_scores,
     player::{ImpartialPlayer, TwoPlayer},
 };
-use std::{any::TypeId, fmt::{Debug, Display}};
+use std::{
+    any::TypeId,
+    fmt::{Debug, Display},
+};
 
 pub fn play<
     T: Game<Player = impl TwoPlayer + Debug + 'static> + Eq + Hash + Sync + Send + Display + 'static,
@@ -40,9 +43,19 @@ pub fn play<
             for (game_move, score) in move_scores {
                 if current_move_score != Some(score) {
                     match score_to_outcome(&game, score) {
-                        GameScoreOutcome::Win(moves) => println!("\n\nWin in {} move{} (score {}):", moves, if moves == 1 { "" } else { "s" }, score),
-                        GameScoreOutcome::Loss(moves) => println!("\n\nLose in {} move{} (score {}):", moves, if moves == 1 { "" } else { "s" }, score),
-                        GameScoreOutcome::Tie => println!("\n\nTie with the following moves:")
+                        GameScoreOutcome::Win(moves) => println!(
+                            "\n\nWin in {} move{} (score {}):",
+                            moves,
+                            if moves == 1 { "" } else { "s" },
+                            score
+                        ),
+                        GameScoreOutcome::Loss(moves) => println!(
+                            "\n\nLose in {} move{} (score {}):",
+                            moves,
+                            if moves == 1 { "" } else { "s" },
+                            score
+                        ),
+                        GameScoreOutcome::Tie => println!("\n\nTie with the following moves:"),
                     }
                     current_move_score = Some(score);
                 }
@@ -70,9 +83,11 @@ where
     match game.state() {
         GameState::Playable => (),
         GameState::Tie => return Err(anyhow!("Can't continue - game is tied.")),
-        GameState::Win(player) => return Err(anyhow!(
-            "Can't continue game if player {player:?} already won."
-        )),
+        GameState::Win(player) => {
+            return Err(anyhow!(
+                "Can't continue game if player {player:?} already won."
+            ))
+        }
     };
 
     game.make_move(m)

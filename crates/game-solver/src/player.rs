@@ -13,10 +13,10 @@ pub trait Player: Sized + Eq {
     #[must_use]
     fn previous(self) -> Self;
     /// How the player instance 'changes' on the next move.
-    /// 
+    ///
     /// For partizan games, the player doesn't change:
     /// Left stays left; right stays right.
-    /// 
+    ///
     /// For impartial games, the player does change:
     /// Next turns into previous, and previous turns into next
     fn turn(self) -> Self;
@@ -152,7 +152,7 @@ impl<const N: usize> Player for NPlayerPartizanConst<N> {
             Self::new_unchecked(self.0 - 1)
         }
     }
-    
+
     fn turn(self) -> Self {
         self
     }
