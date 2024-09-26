@@ -183,7 +183,7 @@ impl<
             'row_check: for j in 0..=(WIDTH - MIN_WIN_LENGTH) {
                 // find a piece? lets see if it continues going
                 if let Some(cell_type) = self.board[(j, i)] {
-                    for k in (j + 1)..((MIN_WIN_LENGTH + j).max(WIDTH)) {
+                    for k in (j + 1)..((MIN_WIN_LENGTH + j).min(WIDTH)) {
                         if let Some(found_cell_type) = self.board[(k, i)] {
                             if cell_type == found_cell_type {
                                 continue;
@@ -205,7 +205,7 @@ impl<
             'column_check: for j in 0..=(HEIGHT - MIN_WIN_LENGTH) {
                 // find a piece? see if it continues going
                 if let Some(cell_type) = self.board[(i, j)] {
-                    for k in (j + 1)..((MIN_WIN_LENGTH + j).max(HEIGHT)) {
+                    for k in (j + 1)..((MIN_WIN_LENGTH + j).min(HEIGHT)) {
                         if let Some(found_cell_type) = self.board[(i, k)] {
                             if cell_type == found_cell_type {
                                 continue;
@@ -228,7 +228,7 @@ impl<
             'diag_check: for j in 0..=(HEIGHT - MIN_WIN_LENGTH) {
                 if let Some(cell_type) = self.board[(i, j)] {
                     // found a cell! lets continue going down!
-                    for k in (i.max(j) + 1)..(i.max(j) + MIN_WIN_LENGTH).max(WIDTH) {
+                    for k in 1..MIN_WIN_LENGTH.min(WIDTH).min(HEIGHT) {
                         if let Some(found_cell_type) = self.board[(i + k, j + k)] {
                             if found_cell_type == cell_type {
                                 continue;
@@ -382,7 +382,7 @@ mod tests {
 
         assert_eq!(
             horizontal_board.state(),
-            GameState::Win(PartizanPlayer::Left)
+            GameState::Playable
         );
     }
 
@@ -407,7 +407,7 @@ mod tests {
     fn win_vertical() {
         let vertical_board = from_string(
             "......\
-        .XOOXX\
+        .XOXXX\
         .X.X..\
         .OOXOO\
         ...X..\
@@ -421,18 +421,32 @@ mod tests {
     fn lose_vertical_tiny() {
         let vertical_board = from_string(
             "......\
-        .XOOXX\
+        .XOXXX\
         .X.X..\
         .OOXOO\
         ...X..\
         ......",
         );
 
-        assert_eq!(vertical_board.state(), GameState::Win(PartizanPlayer::Left));
+        assert_eq!(vertical_board.state(), GameState::Playable);
     }
 
     #[test]
     fn win_diagonal() {
+        let diagonal_board = from_string(
+            "......\
+        .XOOXX\
+        .XX...\
+        .OOXOO\
+        ...XX.\
+        ...X.X",
+        );
+
+        assert_eq!(diagonal_board.state(), GameState::Win(PartizanPlayer::Left));
+    }
+
+    #[test]
+    fn lose_diagonal_tiny() {
         let diagonal_board = from_string(
             "......\
         .OOOXX\
@@ -442,6 +456,6 @@ mod tests {
         ...X.X",
         );
 
-        assert_eq!(diagonal_board.state(), GameState::Win(PartizanPlayer::Left));
+        assert_eq!(diagonal_board.state(), GameState::Playable);
     }
 }
