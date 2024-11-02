@@ -77,7 +77,9 @@ impl TwoPlayer for PartizanPlayer {}
 
 /// Represents a player in a zero-sum (2-player) game,
 /// where the game is impartial. That is,
-/// the only difference between players is who goes first.
+/// the only difference between players is who goes first,
+/// and the only thing that defines a game is its 'state':
+/// both players need to have the same winning criteria for this player to be used.
 #[derive(PartialEq, Eq, Debug, Clone, Copy, Hash)]
 pub enum ImpartialPlayer {
     /// The player that will play on the current game state,
