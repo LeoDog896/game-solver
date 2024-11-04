@@ -8,8 +8,10 @@ use crate::{game::{Game, Normal, NormalImpartial}, player::ImpartialPlayer};
 /// two impartial normal combinatorial games.
 /// 
 /// Since `Game` isn't object safe, we use `dyn Any` internally with downcast safety.
+/// 
+/// We restrict games to being normal impartial to force implementation of the marker trait.
 #[derive(Clone)]
-pub struct DisjointImpartialNormalGame<L: Game, R: Game> {
+pub struct DisjointImpartialNormalGame<L: Game + NormalImpartial, R: Game + NormalImpartial> {
     left: L,
     right: R
 }
@@ -31,9 +33,20 @@ pub enum DisjointMoveError<L: Game, R: Game> {
 type LeftMoveMap<L, R> = Box<dyn Fn(<L as Game>::Move) -> DisjointMove<L, R>>;
 type RightMoveMap<L, R> = Box<dyn Fn(<R as Game>::Move) -> DisjointMove<L, R>>;
 
-impl<L: Game + Debug + 'static, R: Game + Debug + 'static> Normal for DisjointImpartialNormalGame<L, R> {}
-impl<L: Game + Debug + 'static, R: Game + Debug + 'static> NormalImpartial for DisjointImpartialNormalGame<L, R> {}
-impl<L: Game + Debug + 'static, R: Game + Debug + 'static> Game for DisjointImpartialNormalGame<L, R> {
+impl<
+    L: Game + Debug + NormalImpartial + 'static,
+    R: Game + Debug + NormalImpartial + 'static
+> Normal for DisjointImpartialNormalGame<L, R> {}
+
+impl<
+    L: Game + Debug + NormalImpartial + 'static,
+    R: Game + Debug + NormalImpartial + 'static
+> NormalImpartial for DisjointImpartialNormalGame<L, R> {}
+
+impl<
+    L: Game + Debug + NormalImpartial + 'static,
+    R: Game + Debug + NormalImpartial + 'static
+> Game for DisjointImpartialNormalGame<L, R> {
     type Move = DisjointMove<L, R>;
     type Iter<'a> = Interleave<
         Map<<L as Game>::Iter<'a>, LeftMoveMap<L, R>>,
