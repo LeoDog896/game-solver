@@ -5,6 +5,7 @@
 //! a great place to start.
 
 pub mod game;
+pub mod disjoint_game;
 pub mod player;
 pub mod stats;
 // TODO: reinforcement

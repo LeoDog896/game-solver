@@ -6,7 +6,7 @@ use anyhow::Error;
 use array2d::Array2D;
 use clap::Args;
 use game_solver::{
-    game::{Game, GameState, StateType},
+    game::{Game, GameState, Normal},
     player::{PartizanPlayer, Player},
 };
 use serde::{Deserialize, Serialize};
@@ -113,13 +113,13 @@ impl<const WIDTH: usize, const HEIGHT: usize> Domineering<WIDTH, HEIGHT> {
     }
 }
 
+impl<const WIDTH: usize, const HEIGHT: usize> Normal for Domineering<WIDTH, HEIGHT> {}
+
 impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT> {
     type Move = DomineeringMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     type Player = PartizanPlayer;
     type MoveError = DomineeringMoveError;
-
-    const STATE_TYPE: Option<StateType> = Some(StateType::Normal);
 
     fn max_moves(&self) -> Option<usize> {
         Some(WIDTH * HEIGHT)
@@ -183,11 +183,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game for Domineering<WIDTH, HEIGHT
     }
 
     fn state(&self) -> GameState<Self::Player> {
-        if self.possible_moves().len() == 0 {
-            GameState::Win(self.player().next())
-        } else {
-            GameState::Playable
-        }
+        <Self as Normal>::state(&self)
     }
 
     fn player(&self) -> Self::Player {

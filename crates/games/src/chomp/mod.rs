@@ -6,7 +6,7 @@ use anyhow::Error;
 use array2d::Array2D;
 use clap::Args;
 use game_solver::{
-    game::{Game, GameState, StateType},
+    game::{Game, GameState, Normal, NormalImpartial},
     player::ImpartialPlayer,
 };
 use serde::{Deserialize, Serialize};
@@ -77,13 +77,14 @@ pub enum ChompMoveError {
 
 pub type ChompMove = NaturalMove<2>;
 
+impl Normal for Chomp {}
+impl NormalImpartial for Chomp {}
+
 impl Game for Chomp {
     type Move = ChompMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     type Player = ImpartialPlayer;
     type MoveError = ChompMoveError;
-
-    const STATE_TYPE: Option<StateType> = Some(StateType::Normal);
 
     fn max_moves(&self) -> Option<usize> {
         Some(self.width * self.height)
@@ -124,7 +125,7 @@ impl Game for Chomp {
     }
 
     fn state(&self) -> GameState<Self::Player> {
-        Self::STATE_TYPE.unwrap().state(self)
+        <Self as Normal>::state(&self)
     }
 }
 

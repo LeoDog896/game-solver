@@ -9,7 +9,7 @@ use std::{
 use anyhow::Error;
 use clap::Args;
 use game_solver::{
-    game::{Game, StateType},
+    game::{Game, Normal, NormalImpartial},
     player::ImpartialPlayer,
 };
 use itertools::Itertools;
@@ -91,14 +91,14 @@ pub enum SproutsMoveError {
 
 const MAX_SPROUTS: usize = 3;
 
+impl Normal for Sprouts {}
+impl NormalImpartial for Sprouts {}
 impl Game for Sprouts {
     type Move = SproutsMove;
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
 
     type Player = ImpartialPlayer;
     type MoveError = SproutsMoveError;
-
-    const STATE_TYPE: Option<StateType> = Some(StateType::Normal);
 
     fn max_moves(&self) -> Option<usize> {
         // TODO: i actually want to find what the proper paper is, but
@@ -215,7 +215,7 @@ impl Game for Sprouts {
     }
 
     fn state(&self) -> game_solver::game::GameState<Self::Player> {
-        Self::STATE_TYPE.unwrap().state(self)
+        <Self as Normal>::state(&self)
     }
 }
 

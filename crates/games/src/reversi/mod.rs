@@ -7,7 +7,7 @@ use anyhow::Error;
 use array2d::Array2D;
 use clap::Args;
 use game_solver::{
-    game::{Game, GameState, StateType},
+    game::{Game, GameState},
     player::{PartizanPlayer, Player},
 };
 use serde::{Deserialize, Serialize};
@@ -132,8 +132,6 @@ impl Game for Reversi {
     type Iter<'a> = std::vec::IntoIter<Self::Move>;
     type Player = PartizanPlayer;
     type MoveError = array2d::Error;
-
-    const STATE_TYPE: Option<StateType> = None;
 
     fn max_moves(&self) -> Option<usize> {
         Some(WIDTH * HEIGHT)

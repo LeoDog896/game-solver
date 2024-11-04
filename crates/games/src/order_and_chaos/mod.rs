@@ -6,7 +6,7 @@ use anyhow::{anyhow, Error};
 use array2d::Array2D;
 use clap::Args;
 use game_solver::{
-    game::{Game, GameState, StateType},
+    game::{Game, GameState},
     player::PartizanPlayer,
 };
 use serde::{Deserialize, Serialize};
@@ -121,8 +121,6 @@ impl<
     /// and Right is Chaos
     type Player = PartizanPlayer;
     type MoveError = OrderAndChaosMoveError;
-
-    const STATE_TYPE: Option<StateType> = None;
 
     fn max_moves(&self) -> Option<usize> {
         Some(WIDTH * HEIGHT)

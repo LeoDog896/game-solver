@@ -5,7 +5,7 @@ pub mod gui;
 use anyhow::Error;
 use clap::Args;
 use game_solver::{
-    game::{Game, GameState, StateType},
+    game::{Game, GameState, Normal, NormalImpartial},
     player::ImpartialPlayer,
 };
 use serde::{Deserialize, Serialize};
@@ -51,6 +51,8 @@ pub enum NimMoveError {
     },
 }
 
+impl Normal for Nim {}
+impl NormalImpartial for Nim {}
 impl Game for Nim {
     /// where Move is a tuple of the heap index and the number of objects to remove
     type Move = NimMove;
@@ -59,8 +61,6 @@ impl Game for Nim {
     /// Define Nim as a zero-sum impartial game
     type Player = ImpartialPlayer;
     type MoveError = NimMoveError;
-
-    const STATE_TYPE: Option<StateType> = Some(StateType::Normal);
 
     fn max_moves(&self) -> Option<usize> {
         Some(self.max_moves)
@@ -108,7 +108,7 @@ impl Game for Nim {
     }
 
     fn state(&self) -> GameState<Self::Player> {
-        Self::STATE_TYPE.unwrap().state(self)
+        <Self as Normal>::state(&self)
     }
 
     fn player(&self) -> Self::Player {

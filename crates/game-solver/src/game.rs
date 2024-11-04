@@ -16,36 +16,49 @@ pub enum GameState<P: Player> {
     Win(P),
 }
 
-/// Defines the 'state' the game is in.
+/// Marks a game as being 'normal' (a game has the 'normal play' convention).
+/// 
+/// Rather, this means that the game is won by whoever plays last.
+/// Under this convention, no ties are possible: there has to exist a strategy
+/// for players to be able to force a win.
 ///
-/// Generally used by a game solver for better optimizations.
-///
-/// This is usually wrapped in an Option, as there are many games that do not classify
-/// as being under 'Normal' or 'Misere.' (i.e. tic-tac-toe)
-#[non_exhaustive]
-pub enum StateType {
-    /// If a game is under 'normal play' convention, the last player to move wins.
-    /// There are no ties in this variant.
-    ///
-    /// Learn more: <https://en.wikipedia.org/wiki/Normal_play_convention>
-    Normal,
-    /// If a game is under 'misere play' convention, the last player to move loses.
-    /// There are no ties in this variant.
-    ///
-    /// Learn more: <https://en.wikipedia.org/wiki/Mis%C3%A8re#Mis%C3%A8re_game>
-    Misere,
+/// Learn more: <https://en.wikipedia.org/wiki/Normal_play_convention>
+pub trait Normal: Game {
+    fn state(&self) -> GameState<Self::Player> {
+        if self.possible_moves().next().is_none() {
+            GameState::Win(self.player().previous())
+        } else {
+            GameState::Playable
+        }
+    }
 }
 
-impl StateType {
-    pub fn state<T>(&self, game: &T) -> GameState<T::Player>
-    where
-        T: Game,
-    {
-        if game.possible_moves().next().is_none() {
-            GameState::Win(match self {
-                Self::Misere => game.player(),
-                Self::Normal => game.player().previous(),
-            })
+/// Normal impartial games have the special property of being splittable: i.e.,
+/// the disjunctive sum of two games is equal to another normal-play game.
+pub trait NormalImpartial: Normal {
+    /// Splits a game into multiple separate games.
+    /// 
+    /// This function doesn't have to be necessarily optimal, but
+    /// it makes normal impartial game analysis much quicker,
+    /// using the technique described in [Nimbers Are Inevitable](https://arxiv.org/abs/1011.5841).
+    /// 
+    /// Returns `Option::None`` if the game currently can not be split.
+    fn split(&self) -> Option<Vec<Self>> {
+        None
+    }
+}
+
+/// Marks a game as being 'misere' (a game has the 'misere play' convention).
+/// 
+/// Rather, this means that the game is lost by whoever plays last.
+/// Under this convention, no ties are possible: there has to exist a strategy
+/// for players to be able to force a win.
+///
+/// Learn more: <https://en.wikipedia.org/wiki/Mis%C3%A8re#Mis%C3%A8re_game>
+pub trait Misere: Game {
+    fn state<T>(&self) -> GameState<Self::Player> {
+        if self.possible_moves().next().is_none() {
+            GameState::Win(self.player())
         } else {
             GameState::Playable
         }
@@ -71,8 +84,6 @@ pub trait Game: Clone {
     type MoveError: Error;
 
     type Player: Player;
-
-    const STATE_TYPE: Option<StateType>;
 
     /// Returns the amount of moves that have been played
     fn move_count(&self) -> usize;
@@ -131,12 +142,11 @@ pub trait Game: Clone {
     /// Returns the current state of the game.
     /// Used for verifying initialization and is commonly called.
     ///
-    /// If `Self::STATE_TYPE` isn't None,
     /// the following implementation can be used:
     ///
     /// ```ignore
     /// fn state(&self) -> GameState<Self::Player> {
-    ///     Self::STATE_TYPE.unwrap().state(self)
+    ///     <Self as Normal>::state(&self) // or Misere if misere.
     /// }
     /// ```
     fn state(&self) -> GameState<Self::Player>;

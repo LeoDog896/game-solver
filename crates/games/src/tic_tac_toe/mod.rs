@@ -5,7 +5,7 @@ pub mod gui;
 use anyhow::{anyhow, Error};
 use clap::Args;
 use game_solver::{
-    game::{Game, GameState, StateType},
+    game::{Game, GameState},
     player::{PartizanPlayer, Player},
 };
 use itertools::Itertools;
@@ -185,8 +185,6 @@ impl Game for TicTacToe {
     >;
     type Player = PartizanPlayer;
     type MoveError = TicTacToeMoveError;
-
-    const STATE_TYPE: Option<StateType> = None;
 
     fn max_moves(&self) -> Option<usize> {
         Some(self.size.pow(self.dim as u32))
