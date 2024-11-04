@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use games::{
-    chomp::Chomp, domineering::Domineering, nim::Nim, order_and_chaos::OrderAndChaos,
+    chomp::Chomp, domineering::Domineering, naive_nim::Nim, order_and_chaos::OrderAndChaos,
     reversi::Reversi, sprouts::Sprouts, tic_tac_toe::TicTacToe, util::cli::play, Games,
 };
 
@@ -24,7 +24,7 @@ fn main() -> Result<()> {
         Games::OrderAndChaos(args) => {
             play::<OrderAndChaos<6, 6, 5, 6>>(args.try_into().unwrap(), cli.plain)
         }
-        Games::Nim(args) => play::<Nim>(args.try_into().unwrap(), cli.plain),
+        Games::NaiveNim(args) => play::<Nim>(args.try_into().unwrap(), cli.plain),
         Games::Domineering(args) => play::<Domineering<5, 5>>(args.try_into().unwrap(), cli.plain),
         Games::Chomp(args) => play::<Chomp>(args.try_into().unwrap(), cli.plain),
         Games::Sprouts(args) => play::<Sprouts>(args.try_into().unwrap(), cli.plain),

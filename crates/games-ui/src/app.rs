@@ -1,4 +1,4 @@
-use games::{nim, util::gui::egui_display::EguiDisplay, Games, DEFAULT_GAMES};
+use games::{naive_nim, util::gui::egui_display::EguiDisplay, Games, DEFAULT_GAMES};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -66,7 +66,7 @@ impl eframe::App for TemplateApp {
                     game.description_egui(ui)
                 });
 
-                let game = nim::Nim::new(vec![5, 3, 1]);
+                let game = naive_nim::Nim::new(vec![5, 3, 1]);
 
                 game.display(ui);
             } else {
