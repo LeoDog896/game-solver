@@ -7,6 +7,7 @@ pub mod order_and_chaos;
 pub mod reversi;
 pub mod sprouts;
 pub mod tic_tac_toe;
+pub mod zener;
 
 use crate::{
     chomp::ChompArgs, domineering::DomineeringArgs, naive_nim::NimArgs,
