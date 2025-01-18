@@ -17,7 +17,7 @@ pub enum GameState<P: Player> {
 }
 
 /// Marks a game as being 'normal' (a game has the 'normal play' convention).
-/// 
+///
 /// Rather, this means that the game is won by whoever plays last.
 /// Under this convention, no ties are possible: there has to exist a strategy
 /// for players to be able to force a win.
@@ -37,11 +37,11 @@ pub trait Normal: Game {
 /// the disjunctive sum of two games is equal to another normal-play game.
 pub trait NormalImpartial: Normal {
     /// Splits a game into multiple separate games.
-    /// 
+    ///
     /// This function doesn't have to be necessarily optimal, but
     /// it makes normal impartial game analysis much quicker,
     /// using the technique described in [Nimbers Are Inevitable](https://arxiv.org/abs/1011.5841).
-    /// 
+    ///
     /// Returns `Option::None`` if the game currently can not be split.
     fn split(&self) -> Option<Vec<Self>> {
         None
@@ -49,7 +49,7 @@ pub trait NormalImpartial: Normal {
 }
 
 /// Marks a game as being 'misere' (a game has the 'misere play' convention).
-/// 
+///
 /// Rather, this means that the game is lost by whoever plays last.
 /// Under this convention, no ties are possible: there has to exist a strategy
 /// for players to be able to force a win.

@@ -4,8 +4,8 @@
 //! [the book](https://leodog896.github.io/game-solver/book) is
 //! a great place to start.
 
-pub mod game;
 pub mod disjoint_game;
+pub mod game;
 pub mod player;
 pub mod stats;
 // TODO: reinforcement
