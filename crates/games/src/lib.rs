@@ -17,6 +17,7 @@ use crate::{
 use clap::Subcommand;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use zener::ZenerArgs;
 
 #[derive(Subcommand, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub enum Games {
@@ -27,9 +28,10 @@ pub enum Games {
     Domineering(DomineeringArgs),
     Chomp(ChompArgs),
     Sprouts(SproutsArgs),
+    Zener(ZenerArgs),
 }
 
-pub static DEFAULT_GAMES: Lazy<[Games; 7]> = Lazy::new(|| {
+pub static DEFAULT_GAMES: Lazy<[Games; 8]> = Lazy::new(|| {
     [
         Games::Reversi(Default::default()),
         Games::TicTacToe(Default::default()),
@@ -38,6 +40,7 @@ pub static DEFAULT_GAMES: Lazy<[Games; 7]> = Lazy::new(|| {
         Games::Domineering(Default::default()),
         Games::Chomp(Default::default()),
         Games::Sprouts(Default::default()),
+        Games::Zener(Default::default()),
     ]
 });
 
@@ -51,6 +54,7 @@ impl Games {
             Self::Domineering(_) => "Domineering".to_string(),
             Self::Chomp(_) => "Chomp".to_string(),
             Self::Sprouts(_) => "Sprouts".to_string(),
+            Self::Zener(_) => "Zener".to_string(),
         }
     }
 
@@ -63,6 +67,7 @@ impl Games {
             Self::Domineering(_) => include_str!("./domineering/README.md"),
             Self::Chomp(_) => include_str!("./chomp/README.md"),
             Self::Sprouts(_) => include_str!("./sprouts/README.md"),
+            Self::Zener(_) => include_str!("./zener/README.md"),
         }
     }
 
@@ -111,6 +116,12 @@ impl Games {
                 ui,
                 &mut cache,
                 "crates/games/src/sprouts/README.md"
+            ),
+            Self::Zener(_) => egui_commonmark::commonmark_str!(
+                "zener",
+                ui,
+                &mut cache,
+                "crates/games/src/zener/README.md"
             ),
         };
     }

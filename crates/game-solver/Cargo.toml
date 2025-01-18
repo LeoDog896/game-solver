@@ -11,7 +11,6 @@ edition = "2021"
 [features]
 "xxhash" = ["dep:twox-hash"]
 "rayon" = ["dep:rayon", "xxhash", "dep:sysinfo", "dep:moka"]
-# "reinforcement" = ["dep:rand", "dep:dfdx", "dep:itertools"]
 "js" = ["moka/js"]
 
 [dependencies]
@@ -21,7 +20,7 @@ rand = { version = "0.8", optional = true }
 rayon = { version = "1.8", optional = true }
 sysinfo = { version = "0.30", optional = true }
 twox-hash = { version = "1.6", optional = true }
-itertools = { version = "0.13", optional = true }
+itertools = { version = "0.13" }
 futures = "0.3.30"
 thiserror = "1.0"
 castaway = "0.2.3"

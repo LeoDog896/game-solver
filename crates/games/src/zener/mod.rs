@@ -3,11 +3,16 @@
 #[cfg(feature = "egui")]
 pub mod gui;
 
+use std::fmt::Display;
+
 use array2d::Array2D;
+use clap::Args;
 use game_solver::{
     game::{Game, GameState},
-    player::PartizanPlayer,
+    player::{PartizanPlayer, Player},
 };
+use owo_colors::{OwoColorize, Stream::Stdout, Style};
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
@@ -19,14 +24,43 @@ pub enum InnerCellType {
     Star,
 }
 
+impl Display for InnerCellType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Wave => "〜",
+                Self::Cross => "+",
+                Self::Circle => "∘",
+                Self::Square => "□",
+                Self::Star => "⋆",
+            }
+        )
+    }
+}
+
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
 pub struct CellType(InnerCellType, PartizanPlayer);
 
-#[derive(Clone, Hash, Eq, PartialEq)]
+impl Display for CellType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            format!("{}", self.0)
+                .if_supports_color(Stdout, |text| text.style(match self.1 {
+                    PartizanPlayer::Left => Style::new().on_bright_white(),
+                    PartizanPlayer::Right => Style::new().on_black(),
+                }))
+        )
+    }
+}
+
+#[derive(Clone, Hash, Eq, PartialEq, Debug)]
 pub struct Zener {
-    /// [0] is the piece on the bottom, [len - 1] is the piece on top.
+    /// vec is used as a fifo
     board: Array2D<Vec<CellType>>,
-    player: PartizanPlayer,
     compulsory: Option<InnerCellType>,
     move_count: usize,
     gutter: Option<CellType>,
@@ -53,7 +87,6 @@ impl Default for Zener {
 
         Self {
             board,
-            player: PartizanPlayer::Left,
             compulsory: None,
             move_count: 0,
 
@@ -86,6 +119,22 @@ pub enum ZenerMoveError {
 pub struct ZenerMove {
     from: (usize, usize),
     to: ZenerPosition,
+}
+
+impl Display for ZenerMove {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{:?} -> {}",
+            self.from,
+            match self.to {
+                ZenerPosition::Gutter => "[gutter]".to_string(),
+                ZenerPosition::Position(row, col) => format!("({row}, {col})"),
+            }
+        )?;
+
+        Ok(())
+    }
 }
 
 impl Game for Zener {
@@ -154,7 +203,13 @@ impl Game for Zener {
         let mut moves = Vec::new();
 
         for (row, col) in self.board.indices_row_major() {
-            if self.board.get(row, col).map(|cell| cell.last()).flatten().is_none() {
+            if self
+                .board
+                .get(row, col)
+                .map(|cell| cell.last())
+                .flatten()
+                .is_none()
+            {
                 continue;
             };
 
@@ -192,13 +247,62 @@ impl Game for Zener {
     }
 
     fn player(&self) -> Self::Player {
-        self.player
+        if self.move_count % 2 == 0 {
+            PartizanPlayer::Left
+        } else {
+            PartizanPlayer::Right
+        }
     }
 
     fn state(&self) -> GameState<Self::Player> {
         match self.gutter {
-            None => GameState::Playable,
+            None => {
+                if self.possible_moves().len() == 0 {
+                    GameState::Win(self.player().previous())
+                } else {
+                    GameState::Playable
+                }
+            }
             Some(CellType(_, player)) => GameState::Win(player),
         }
+    }
+}
+
+/// Analyzes Zener.
+///
+#[doc = include_str!("./README.md")]
+#[derive(Args, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub struct ZenerArgs {}
+
+impl Default for ZenerArgs {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl TryFrom<ZenerArgs> for Zener {
+    type Error = anyhow::Error;
+
+    fn try_from(value: ZenerArgs) -> Result<Self, Self::Error> {
+        Ok(Zener::default())
+    }
+}
+
+impl Display for Zener {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for row_iter in self.board.rows_iter() {
+            for element in row_iter {
+                if let Some(top) = element.last() {
+                    match top.1 {
+                        PartizanPlayer::Left => write!(f, "[ {top} ]")?,
+                        PartizanPlayer::Right => write!(f, "( {top} )")?,
+                    }
+                } else {
+                    write!(f, "{{   }}")?;
+                }
+            }
+        }
+
+        Ok(())
     }
 }

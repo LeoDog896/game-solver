@@ -7,7 +7,7 @@ use array2d::Array2D;
 use clap::Args;
 use game_solver::{
     game::{Game, GameState, Normal},
-    player::{PartizanPlayer, Player},
+    player::PartizanPlayer,
 };
 use serde::{Deserialize, Serialize};
 use std::{
