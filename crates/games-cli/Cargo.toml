@@ -9,3 +9,6 @@ game-solver = { path = "../game-solver", features = ["rayon"] }
 games = { path = "../games" }
 anyhow = "1.0.86"
 clap = { version = "4.5.15", features = ["derive"] }
+dialoguer = "0.11.0"
+clearscreen = "4.0.1"
+owo-colors = "4.1.0"

@@ -12,7 +12,7 @@ use game_solver::{
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Debug, Display, Formatter},
-    hash::Hash,
+    hash::Hash, str::FromStr,
 };
 use thiserror::Error;
 
@@ -301,6 +301,29 @@ pub struct OrderAndChaosArgs {
     moves: Vec<String>,
 }
 
+impl FromStr for OrderAndChaosMove {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let args: Vec<&str> = s.split('-').collect();
+
+        let numbers = args[0..2]
+            .iter()
+            .map(|num| num.parse::<usize>().expect("Not a number!"))
+            .collect::<Vec<_>>();
+
+        let player = match args[2].to_ascii_lowercase().as_str() {
+            "x" => Ok(CellType::X),
+            "o" => Ok(CellType::O),
+            _ => Err(anyhow!("Invalid player!")),
+        }?;
+
+        assert_eq!(args.len(), 3);
+
+        Ok(OrderAndChaosMove(((numbers[0], numbers[1]), player)))
+    }
+}
+
 impl<
         const WIDTH: usize,
         const HEIGHT: usize,
@@ -315,23 +338,7 @@ impl<
 
         // parse every move in args, e.g. 0-0-x 1-1-o in args
         for arg in value.moves {
-            let args: Vec<&str> = arg.split('-').collect();
-
-            let numbers = args[0..2]
-                .iter()
-                .map(|num| num.parse::<usize>().expect("Not a number!"))
-                .collect::<Vec<_>>();
-
-            let player = match args[2].to_ascii_lowercase().as_str() {
-                "x" => Ok(CellType::X),
-                "o" => Ok(CellType::O),
-                _ => Err(anyhow!("Invalid player!")),
-            }?;
-
-            assert_eq!(args.len(), 3);
-
-            let move_to_make = OrderAndChaosMove(((numbers[0], numbers[1]), player));
-            move_failable(&mut game, &move_to_make)?;
+            move_failable(&mut game, &OrderAndChaosMove::from_str(&arg)?)?;
         }
 
         Ok(game)

@@ -192,7 +192,11 @@ pub trait Game: Clone {
 ///
 /// Note: Despite this returning isize, this function will always be positive.
 pub fn upper_bound<T: Game>(game: &T) -> isize {
-    game.max_moves().map_or(isize::MAX, |m| m as isize)
+    game.max_moves().map_or(
+        // TODO(HACKY): theres probably nicer ways of handling upper bounds for
+        // loopy games
+        isize::MAX / 2, |m| m as isize
+    )
 }
 
 /// Represents an outcome of a game derived by a score and a valid instance of a game.

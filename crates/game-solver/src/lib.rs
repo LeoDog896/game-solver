@@ -8,6 +8,7 @@ pub mod disjoint_game;
 pub mod game;
 pub mod player;
 pub mod stats;
+pub mod loopy;
 // TODO: reinforcement
 // #[cfg(feature = "reinforcement")]
 // pub mod reinforcement;
