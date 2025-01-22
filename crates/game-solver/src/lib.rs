@@ -17,12 +17,12 @@ pub mod transposition;
 use core::panic;
 #[cfg(feature = "rayon")]
 use std::hash::BuildHasher;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::atomic::Ordering;
 
 use game::{upper_bound, GameState};
 use player::{ImpartialPlayer, TwoPlayer};
 use stats::Stats;
+use tokio_util::sync::CancellationToken;
 
 use crate::game::Game;
 use crate::transposition::{Score, TranspositionTable};
@@ -45,10 +45,10 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
     mut alpha: isize,
     mut beta: isize,
     stats: Option<&Stats<T::Player>>,
-    cancellation_token: &Option<Arc<AtomicBool>>,
+    cancellation_token: &Option<CancellationToken>,
 ) -> Result<isize, GameSolveError<T>> {
     if let Some(token) = cancellation_token {
-        if token.load(Ordering::Relaxed) {
+        if token.is_cancelled() {
             return Err(GameSolveError::CancellationTokenError);
         }
     }
@@ -251,7 +251,7 @@ pub fn solve<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
     stats: Option<&Stats<T::Player>>,
-    cancellation_token: &Option<Arc<AtomicBool>>,
+    cancellation_token: &Option<CancellationToken>,
 ) -> Result<isize, GameSolveError<T>> {
     let mut alpha = -upper_bound(game);
     let mut beta = upper_bound(game) + 1;
@@ -259,7 +259,7 @@ pub fn solve<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
     // we're trying to guess the score of the board via null windows
     while alpha < beta {
         if let Some(token) = cancellation_token {
-            if token.load(Ordering::Relaxed) {
+            if token.is_cancelled() {
                 return Err(GameSolveError::CancellationTokenError);
             }
         }
@@ -298,7 +298,7 @@ pub fn move_scores<'a, T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
     game: &'a T,
     transposition_table: &'a mut dyn TranspositionTable<T>,
     stats: Option<&'a Stats<T::Player>>,
-    cancellation_token: &'a Option<Arc<AtomicBool>>,
+    cancellation_token: &'a Option<CancellationToken>,
 ) -> impl Iterator<Item = Result<(T::Move, isize), GameSolveError<T>>> + 'a {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
@@ -332,7 +332,7 @@ pub fn par_move_scores_with_hasher<
 >(
     game: &T,
     stats: Option<&Stats<T::Player>>,
-    cancellation_token: &Option<Arc<AtomicBool>>,
+    cancellation_token: &Option<CancellationToken>,
 ) -> CollectedMoves<T>
 where
     T::Move: Sync + Send,
@@ -381,7 +381,7 @@ pub fn par_move_scores<
 >(
     game: &T,
     stats: Option<&Stats<T::Player>>,
-    cancellation_token: &Option<Arc<AtomicBool>>,
+    cancellation_token: &Option<CancellationToken>,
 ) -> CollectedMoves<T>
 where
     T::Move: Sync + Send,

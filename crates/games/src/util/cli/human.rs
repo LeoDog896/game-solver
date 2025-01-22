@@ -1,7 +1,7 @@
 use std::{
     fmt::Display,
     sync::{
-        atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
+        atomic::{AtomicU64, AtomicUsize, Ordering},
         Arc,
     },
     thread,
@@ -9,6 +9,7 @@ use std::{
 };
 
 use anyhow::Result;
+use tokio_util::sync::CancellationToken;
 use core::hash::Hash;
 use game_solver::{
     game::Game,
@@ -35,15 +36,15 @@ use super::report::{scores::show_scores, stats::show_stats};
 
 #[derive(Debug)]
 struct App<G: Game> {
-    exit: Arc<AtomicBool>,
-    exit_ui: Arc<AtomicBool>,
+    exit: CancellationToken,
+    exit_ui: CancellationToken,
     stats: Arc<Stats<G::Player>>,
 }
 
 impl<G: Game> App<G> {
     /// runs the application's main loop until the user quits
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
-        while !self.exit.load(Ordering::SeqCst) && !self.exit_ui.load(Ordering::SeqCst) {
+        while !self.exit.is_cancelled() && !self.exit_ui.is_cancelled() {
             terminal.draw(|frame| self.draw(frame))?;
             self.handle_events()?;
         }
@@ -75,7 +76,7 @@ impl<G: Game> App<G> {
     }
 
     fn exit(&mut self) {
-        self.exit.store(true, Ordering::SeqCst);
+        self.exit.cancel();
     }
 }
 
@@ -187,8 +188,8 @@ where
         original_move_count: game.move_count(),
     });
 
-    let exit = Arc::new(AtomicBool::new(false));
-    let exit_ui = Arc::new(AtomicBool::new(false));
+    let exit = CancellationToken::new();
+    let exit_ui = CancellationToken::new();
 
     let mut app: App<T> = App {
         exit: exit.clone(),
@@ -205,7 +206,7 @@ where
             &Some(exit.clone()),
         );
 
-        exit_ui.store(true, Ordering::SeqCst);
+        exit_ui.cancel();
 
         move_scores
     });

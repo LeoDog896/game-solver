@@ -24,6 +24,7 @@ itertools = { version = "0.13" }
 futures = "0.3.30"
 thiserror = "1.0"
 castaway = "0.2.3"
+tokio-util = "0.7.13"
 
 [package.metadata.docs.rs]
 all-features = true
