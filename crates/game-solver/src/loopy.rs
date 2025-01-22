@@ -1,23 +1,37 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::collections::HashSet;
+use std::marker::PhantomData;
+
+use fxhash::FxHashSet;
 
 /// We handle loopy games with a custom struct, `LoopyTracker`, which is a
 /// HashSet of some state T. This is used to keep track of the states that
 /// have been visited, and if a state has been visited, we can handle it appropriately.
 /// 
 /// `LoopyTracker` should be updated at `Game::make_move` and checked in `Game::state`.
+/// 
+/// We say `T` is the primary type, and `S` is some representation of `T` without the `LoopyTracker`.
 
-#[derive(Debug, Clone)]
-pub struct LoopyTracker<T: Eq + Hash> {
-    visited: HashSet<T>,
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LoopyTracker<S: Eq + Hash, T: Eq + Hash> {
+    visited: FxHashSet<T>,
+    _phantom: PhantomData<S>,
 }
 
-impl<T: Eq + Hash> LoopyTracker<T> {
+pub trait Loopy<S: Hash + Eq> where Self: Eq + Hash + Sized {
+    fn tracker_mut(&mut self) -> &mut LoopyTracker<S, Self>;
+    fn tracker(&self) -> &LoopyTracker<S, Self>;
+
+    fn without_tracker(&self) -> S;
+}
+
+impl<S: Eq + Hash, T: Eq + Hash> LoopyTracker<S, T> {
     /// Create a new `LoopyTracker`.
     pub fn new() -> Self {
         Self {
-            visited: HashSet::new(),
+            visited: FxHashSet::default(),
+            _phantom: PhantomData,
         }
     }
 
@@ -37,24 +51,16 @@ impl<T: Eq + Hash> LoopyTracker<T> {
     }
 }
 
-impl<T: Eq + Hash> Default for LoopyTracker<T> {
+impl<S: Eq + Hash, T: Eq + Hash> Default for LoopyTracker<S, T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: Eq + Hash> PartialEq for LoopyTracker<T> {
-    fn eq(&self, _: &Self) -> bool {
-        true
-    }
-}
-
-impl<T: Eq + Hash> Eq for LoopyTracker<T> {}
-
-impl<T: Eq + Hash> Hash for LoopyTracker<T> {
+impl<S: Eq + Hash, T: Eq + Hash + Loopy<S>> Hash for LoopyTracker<S, T> {
     fn hash<H: std::hash::Hasher>(&self, hasher: &mut H) {
         for item in self.visited.iter() {
-            item.hash(hasher);
+            item.without_tracker().hash(hasher);
         }
     }
 }

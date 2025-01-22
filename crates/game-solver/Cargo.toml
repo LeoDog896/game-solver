@@ -25,6 +25,7 @@ futures = "0.3.30"
 thiserror = "1.0"
 castaway = "0.2.3"
 tokio-util = "0.7.13"
+fxhash = "0.2.1"
 
 [package.metadata.docs.rs]
 all-features = true

@@ -8,7 +8,7 @@ use std::{fmt::Display, str::FromStr};
 use array2d::Array2D;
 use clap::Args;
 use game_solver::{
-    game::{Game, GameState, Normal}, loopy::LoopyTracker, player::PartizanPlayer
+    game::{Game, GameState, Normal}, loopy::{Loopy, LoopyTracker}, player::PartizanPlayer
 };
 use owo_colors::{OwoColorize, Stream::Stdout, Style};
 use serde::{Deserialize, Serialize};
@@ -56,13 +56,41 @@ impl Display for CellType {
 }
 
 #[derive(Clone, Hash, Eq, PartialEq, Debug)]
+pub struct ZenerNoLoopTrack {
+    /// vec is used as a fifo
+    board: Array2D<Vec<CellType>>,
+    compulsory: Option<InnerCellType>,
+    move_count: usize,
+    gutter: Option<CellType>,
+}
+
+#[derive(Clone, Hash, Eq, PartialEq, Debug)]
 pub struct Zener {
     /// vec is used as a fifo
     board: Array2D<Vec<CellType>>,
     compulsory: Option<InnerCellType>,
     move_count: usize,
     gutter: Option<CellType>,
-    loopy: LoopyTracker<Self>
+    loopy: LoopyTracker<ZenerNoLoopTrack, Self>
+}
+
+impl Loopy<ZenerNoLoopTrack> for Zener {
+    fn tracker(&self) -> &LoopyTracker<ZenerNoLoopTrack, Self> {
+        &self.loopy
+    }
+
+    fn tracker_mut(&mut self) -> &mut LoopyTracker<ZenerNoLoopTrack, Self> {
+        &mut self.loopy
+    }
+
+    fn without_tracker(&self) -> ZenerNoLoopTrack {
+        ZenerNoLoopTrack {
+            board: self.board.clone(),
+            compulsory: self.compulsory,
+            move_count: self.move_count,
+            gutter: self.gutter,
+        }
+    }
 }
 
 const NUM_ROWS: usize = 7;
