@@ -1,14 +1,12 @@
 use std::{
-    fmt::Display,
-    sync::{
+    fmt::Display, future::IntoFuture, sync::{
         atomic::{AtomicU64, AtomicUsize, Ordering},
         Arc,
-    },
-    thread,
-    time::Duration,
+    }, time::Duration
 };
 
 use anyhow::Result;
+use tokio::select;
 use tokio_util::sync::CancellationToken;
 use core::hash::Hash;
 use game_solver::{
@@ -37,14 +35,13 @@ use super::report::{scores::show_scores, stats::show_stats};
 #[derive(Debug)]
 struct App<G: Game> {
     exit: CancellationToken,
-    exit_ui: CancellationToken,
     stats: Arc<Stats<G::Player>>,
 }
 
 impl<G: Game> App<G> {
     /// runs the application's main loop until the user quits
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
-        while !self.exit.is_cancelled() && !self.exit_ui.is_cancelled() {
+        while !self.exit.is_cancelled() {
             terminal.draw(|frame| self.draw(frame))?;
             self.handle_events()?;
         }
@@ -160,7 +157,7 @@ impl<G: Game> Widget for &App<G> {
     }
 }
 
-pub fn human_output<
+pub async fn human_output<
     T: Game<Player = impl TwoPlayer + Debug + Sync + Send + 'static>
         + Eq
         + Hash
@@ -189,34 +186,41 @@ where
     });
 
     let exit = CancellationToken::new();
-    let exit_ui = CancellationToken::new();
 
     let mut app: App<T> = App {
-        exit: exit.clone(),
         stats: stats.clone(),
-        exit_ui: exit_ui.clone(),
+        exit: exit.clone(),
     };
 
     let internal_game = game.clone();
     let internal_stats = stats.clone();
-    let game_thread = thread::spawn(move || {
-        let move_scores = par_move_scores(
-            &internal_game,
-            Some(internal_stats.as_ref()),
-            &Some(exit.clone()),
-        );
 
-        exit_ui.cancel();
+    let game_thread = tokio::spawn(async move {
+        let game_solving_thread = tokio::spawn(async move {
+            par_move_scores(
+                &internal_game,
+                Some(internal_stats.as_ref()),
+            )
+        }).into_future();
 
-        move_scores
+        select! {
+            score = game_solving_thread => {
+                exit.cancel();
+                Some(score)
+            },
+            _ = exit.cancelled() => None
+        }
     });
 
     app.run(&mut terminal)?;
     ratatui::restore();
-    let move_scores = game_thread.join().unwrap();
+    let move_scores = game_thread.await?;
 
     show_stats::<T>(&stats);
-    show_scores(&game, move_scores);
+    match move_scores {
+        Some(move_scores) => show_scores(&game, move_scores?),
+        None => eprintln!("Game solving was cancelled!"),
+    }
 
     Ok(())
 }

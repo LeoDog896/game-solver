@@ -9,7 +9,7 @@ use std::{
     hash::Hash,
 };
 
-use crate::util::cli::report::scores::show_scores;
+use crate::report::scores::show_scores;
 
 pub fn announce_player<T: Game<Player = impl TwoPlayer + Debug + 'static>>(game: &T) {
     if TypeId::of::<T::Player>() != TypeId::of::<ImpartialPlayer>() {
@@ -40,7 +40,7 @@ pub fn robotic_output<
 
     announce_player(&game);
 
-    let move_scores = par_move_scores(&game, None, &None);
+    let move_scores = par_move_scores(&game, None);
 
     show_scores(&game, move_scores);
 }

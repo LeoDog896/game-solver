@@ -15,7 +15,7 @@ use std::{
 };
 use thiserror::Error;
 
-use crate::util::{cli::move_failable, move_natural::NaturalMove};
+use crate::util::{move_failable, move_natural::NaturalMove};
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 pub struct Nim {
@@ -191,7 +191,7 @@ mod tests {
     use super::*;
 
     fn play(nim: Nim) -> CollectedMoves<Nim> {
-        move_scores(&nim, &mut HashMap::new(), None, &None).collect_vec()
+        move_scores(&nim, &mut HashMap::new(), None).collect_vec()
     }
 
     #[test]

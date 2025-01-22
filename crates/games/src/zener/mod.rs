@@ -5,11 +5,14 @@ pub mod gui;
 
 use std::{fmt::Display, str::FromStr};
 
-use array2d::Array2D;
+use arrayvec::ArrayVec;
 use clap::Args;
 use game_solver::{
-    game::{Game, GameState, Normal}, loopy::{Loopy, LoopyTracker}, player::PartizanPlayer
+    game::{Game, GameState, Normal},
+    loopy::{Loopy, LoopyTracker},
+    player::PartizanPlayer,
 };
+use grid_stack::Grid;
 use owo_colors::{OwoColorize, Stream::Stdout, Style};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -55,10 +58,14 @@ impl Display for CellType {
     }
 }
 
+const WIDTH: usize = 5;
+const HEIGHT: usize = 7;
+const TOTAL_SIZE: usize = WIDTH * HEIGHT;
+
 #[derive(Clone, Hash, Eq, PartialEq, Debug)]
 pub struct ZenerNoLoopTrack {
     /// vec is used as a fifo
-    board: Array2D<Vec<CellType>>,
+    board: Grid<ArrayVec<CellType, 10>, WIDTH, HEIGHT, TOTAL_SIZE>,
     compulsory: Option<InnerCellType>,
     move_count: usize,
     gutter: Option<CellType>,
@@ -67,11 +74,11 @@ pub struct ZenerNoLoopTrack {
 #[derive(Clone, Hash, Eq, PartialEq, Debug)]
 pub struct Zener {
     /// vec is used as a fifo
-    board: Array2D<Vec<CellType>>,
+    board: Grid<ArrayVec<CellType, 10>, WIDTH, HEIGHT, TOTAL_SIZE>,
     compulsory: Option<InnerCellType>,
     move_count: usize,
     gutter: Option<CellType>,
-    loopy: LoopyTracker<ZenerNoLoopTrack, Self>
+    loopy: LoopyTracker<ZenerNoLoopTrack, Self>,
 }
 
 impl Loopy<ZenerNoLoopTrack> for Zener {
@@ -93,34 +100,35 @@ impl Loopy<ZenerNoLoopTrack> for Zener {
     }
 }
 
-const NUM_ROWS: usize = 7;
-const NUM_COLS: usize = 5;
-
 impl Default for Zener {
     fn default() -> Self {
-        let mut board = Array2D::filled_with(vec![], NUM_ROWS, NUM_COLS);
+        let mut board = Grid::filled_with(ArrayVec::<CellType, 10>::new());
         // TODO: make this generic
-        board[(0, 0)] = vec![CellType(InnerCellType::Star, PartizanPlayer::Right)];
-        board[(0, 1)] = vec![CellType(InnerCellType::Square, PartizanPlayer::Right)];
-        board[(0, 2)] = vec![CellType(InnerCellType::Wave, PartizanPlayer::Right)];
-        board[(0, 3)] = vec![CellType(InnerCellType::Cross, PartizanPlayer::Right)];
-        board[(0, 4)] = vec![CellType(InnerCellType::Circle, PartizanPlayer::Right)];
+        board[(0, 0)].push(CellType(InnerCellType::Star, PartizanPlayer::Right));
+        board[(1, 0)].push(CellType(InnerCellType::Square, PartizanPlayer::Right));
+        board[(2, 0)].push(CellType(InnerCellType::Wave, PartizanPlayer::Right));
+        board[(3, 0)].push(CellType(InnerCellType::Cross, PartizanPlayer::Right));
+        board[(4, 0)].push(CellType(InnerCellType::Circle, PartizanPlayer::Right));
 
-        board[(NUM_ROWS - 1, 4)] = vec![CellType(InnerCellType::Star, PartizanPlayer::Left)];
-        board[(NUM_ROWS - 1, 3)] = vec![CellType(InnerCellType::Square, PartizanPlayer::Left)];
-        board[(NUM_ROWS - 1, 2)] = vec![CellType(InnerCellType::Wave, PartizanPlayer::Left)];
-        board[(NUM_ROWS - 1, 1)] = vec![CellType(InnerCellType::Cross, PartizanPlayer::Left)];
-        board[(NUM_ROWS - 1, 0)] = vec![CellType(InnerCellType::Circle, PartizanPlayer::Left)];
+        board[(4, HEIGHT - 1)].push(CellType(InnerCellType::Star, PartizanPlayer::Left));
+        board[(3, HEIGHT - 1)].push(CellType(InnerCellType::Square, PartizanPlayer::Left));
+        board[(2, HEIGHT - 1)].push(CellType(InnerCellType::Wave, PartizanPlayer::Left));
+        board[(1, HEIGHT - 1)].push(CellType(InnerCellType::Cross, PartizanPlayer::Left));
+        board[(0, HEIGHT - 1)].push(CellType(InnerCellType::Circle, PartizanPlayer::Left));
 
-        Self {
+        let x = Self {
             board,
             compulsory: None,
             move_count: 0,
 
             gutter: None,
 
-            loopy: LoopyTracker::new()
-        }
+            loopy: LoopyTracker::new(),
+        };
+
+        println!("{}", x);
+
+        x
     }
 }
 
@@ -141,10 +149,10 @@ pub enum Direction {
 impl Direction {
     fn as_step(&self) -> (isize, isize) {
         match self {
-            Self::Up => (-1, 0),
-            Self::Down => (1, 0),
-            Self::Left => (0, -1),
-            Self::Right => (0, 1),
+            Self::Up => (0, -1),
+            Self::Down => (0, 1),
+            Self::Left => (-1, 0),
+            Self::Right => (1, 0),
         }
     }
 
@@ -155,33 +163,26 @@ impl Direction {
     fn apply_to_position(&self, position: (usize, usize)) -> Result<ZenerPosition, anyhow::Error> {
         let offset = self.as_step();
 
-        let new_row = (position.0 as isize) + offset.0;
-        let new_col = (position.1 as isize) + offset.1;
+        let new_x = (position.0 as isize) + offset.0;
+        let new_y = (position.1 as isize) + offset.1;
 
-        if new_row == -1 || new_row == (NUM_ROWS as isize) {
+        if new_y == -1 || new_y == (HEIGHT as isize) {
             return Ok(ZenerPosition::Gutter);
         }
 
-        if (NUM_ROWS as isize) < new_row {
-            return Err(anyhow::anyhow!(
-                "out of row bounds ({NUM_ROWS} < {new_row})"
-            ));
+        if (HEIGHT as isize) < new_y {
+            return Err(anyhow::anyhow!("out of height bounds ({HEIGHT} < {new_y})"));
         }
 
-        let Ok(new_col) = new_col.try_into() else {
-            return Err(anyhow::anyhow!("out of column bounds ({new_col} < 0)"));
+        let Ok(new_x) = new_x.try_into() else {
+            return Err(anyhow::anyhow!("out of width bounds ({new_x} < 0)"));
         };
 
-        if NUM_COLS <= new_col {
-            return Err(anyhow::anyhow!(
-                "out of column bounds ({NUM_COLS} <= {new_col})"
-            ));
+        if WIDTH <= new_x {
+            return Err(anyhow::anyhow!("out of width bounds ({WIDTH} <= {new_x})"));
         }
 
-        return Ok(ZenerPosition::Position(
-            new_row.try_into().unwrap(),
-            new_col,
-        ));
+        return Ok(ZenerPosition::Position(new_x.try_into().unwrap(), new_x));
     }
 }
 
@@ -216,7 +217,7 @@ pub enum ZenerMoveError {
     #[error("can't move a player into their own gutter!")]
     WrongMoveGutter,
     #[error("tried to play as {0:?}, but is {1:?}")]
-    WrongPlayer(PartizanPlayer, PartizanPlayer)
+    WrongPlayer(PartizanPlayer, PartizanPlayer),
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -269,14 +270,16 @@ impl Game for Zener {
             .board
             .get_mut(m.from.0, m.from.1)
             .ok_or(ZenerMoveError::FromOutOfBounds(m.from))?;
-        
-        let from_piece = from_piece_arr.last().ok_or(ZenerMoveError::NoPiece(m.from))?;
+
+        let from_piece = from_piece_arr
+            .last()
+            .ok_or(ZenerMoveError::NoPiece(m.from))?;
 
         // check that this is the right player
         if from_piece.1 != player {
-            return Err(ZenerMoveError::WrongPlayer(from_piece.1, self.player()))
+            return Err(ZenerMoveError::WrongPlayer(from_piece.1, self.player()));
         }
-    
+
         if let ZenerPosition::Gutter = position {
             if m.from.0 == 0 && player == PartizanPlayer::Right
                 || m.from.0 != 0 && player == PartizanPlayer::Left
@@ -285,7 +288,9 @@ impl Game for Zener {
             }
         }
 
-        let from_piece = from_piece_arr.pop().ok_or(ZenerMoveError::NoPiece(m.from))?;
+        let from_piece = from_piece_arr
+            .pop()
+            .ok_or(ZenerMoveError::NoPiece(m.from))?;
 
         if let Some(compulsory) = self.compulsory {
             if from_piece.0 != compulsory {
@@ -298,9 +303,9 @@ impl Game for Zener {
 
         // add it on the 'to' stack.
         match position {
-            ZenerPosition::Position(row, col) => self
+            ZenerPosition::Position(x, y) => self
                 .board
-                .get_mut(row, col)
+                .get_mut(x, y)
                 .expect("Guard check failed - this shouldn't happen.") // guaranteed with the guard check
                 .push(from_piece),
             ZenerPosition::Gutter => self.gutter = Some(from_piece),
@@ -319,8 +324,13 @@ impl Game for Zener {
 
         let mut moves = Vec::new();
 
-        for (row, col) in self.board.indices_row_major() {
-            let Some(cell) = self.board.get(row, col).map(|cell| cell.last()).flatten() else {
+        for (x, y) in self.board.indices_row_major() {
+            let Some(cell) = self
+                .board
+                .get(x, y)
+                .map(|cell| cell.len().checked_sub(1).map(|i| cell.get(i)).flatten())
+                .flatten()
+            else {
                 continue;
             };
 
@@ -329,17 +339,17 @@ impl Game for Zener {
             }
 
             for direction in Direction::directions() {
-                if let Ok(new_position) = direction.apply_to_position((row, col)) {
+                if let Ok(new_position) = direction.apply_to_position((x, y)) {
                     if let ZenerPosition::Gutter = new_position {
-                        if row == 0 && self.player() == PartizanPlayer::Right
-                            || row != 0 && self.player() == PartizanPlayer::Left
+                        if y == 0 && self.player() == PartizanPlayer::Right
+                            || y != 0 && self.player() == PartizanPlayer::Left
                         {
                             continue;
                         }
                     }
 
                     moves.push(ZenerMove {
-                        from: (row, col),
+                        from: (x, y),
                         to: direction,
                     });
                 }
@@ -385,37 +395,31 @@ impl FromStr for ZenerMove {
         let mut split = s.split(":").collect::<Vec<_>>().into_iter();
 
         if split.len() != 3 {
-            return Err(anyhow::anyhow!(
-                "move must be separated as `row:col:direction`"
-            ));
+            return Err(anyhow::anyhow!("move must be separated as `x:y:direction`"));
         }
 
-        let Some(row) = split.next() else {
-            return Err(anyhow::anyhow!(
-                "No row present. (Format: `row:col:direction`)"
-            ));
+        let Some(x) = split.next() else {
+            return Err(anyhow::anyhow!("No `x` present. (Format: `x:y:direction`)"));
         };
-        let row: usize = row
+        let x: usize = x
             .parse()
-            .map_err(|_| anyhow::anyhow!("row {row} is not a number"))?;
+            .map_err(|_| anyhow::anyhow!("x {x} is not a number"))?;
 
-        let Some(col) = split.next() else {
-            return Err(anyhow::anyhow!(
-                "No col present. (Format: `row:col:direction`)"
-            ));
+        let Some(y) = split.next() else {
+            return Err(anyhow::anyhow!("No y present. (Format: `x:y:direction`)"));
         };
-        let col = col
+        let y = y
             .parse()
-            .map_err(|_| anyhow::anyhow!("col {col} is not a number"))?;
+            .map_err(|_| anyhow::anyhow!("y {y} is not a number"))?;
 
         let Some(direction) = split.next() else {
             return Err(anyhow::anyhow!(
-                "No direction present. (Format: `row:col:direction`)"
+                "No direction present. (Format: `x:y:direction`)"
             ));
         };
 
         Ok(Self {
-            from: (row, col),
+            from: (x, y),
             to: Direction::from_str(direction)?,
         })
     }

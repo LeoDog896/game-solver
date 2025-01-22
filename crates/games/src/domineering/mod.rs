@@ -16,7 +16,7 @@ use std::{
 };
 use thiserror::Error;
 
-use crate::util::cli::move_failable;
+use crate::util::move_failable;
 
 #[derive(Clone, Hash, Eq, PartialEq, Debug, Copy)]
 pub enum Orientation {
@@ -268,7 +268,7 @@ mod tests {
         orientation: Orientation,
     ) -> Option<PartizanPlayer> {
         let game = Domineering::<WIDTH, HEIGHT>::new_orientation(orientation);
-        let mut move_scores = move_scores(&game, &mut HashMap::new(), None, &None)
+        let mut move_scores = move_scores(&game, &mut HashMap::new(), None)
             .collect::<Result<Vec<_>, GameSolveError<Domineering<WIDTH, HEIGHT>>>>()
             .unwrap();
 
@@ -312,7 +312,7 @@ mod tests {
     #[test]
     fn test_domineering() {
         let game = Domineering::<5, 5>::new_orientation(Orientation::Horizontal);
-        let mut move_scores = move_scores(&game, &mut HashMap::new(), None, &None)
+        let mut move_scores = move_scores(&game, &mut HashMap::new(), None)
             .collect::<Result<Vec<_>, GameSolveError<Domineering<5, 5>>>>()
             .unwrap();
 

@@ -21,7 +21,7 @@ use petgraph::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::util::cli::move_failable;
+use crate::util::move_failable;
 
 /// We aren't dealing with large sprout counts for now.
 pub type SproutsIx = u8;

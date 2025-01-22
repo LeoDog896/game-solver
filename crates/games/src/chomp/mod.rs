@@ -17,7 +17,7 @@ use std::{
     hash::Hash,
 };
 
-use crate::util::{cli::move_failable, move_natural::NaturalMove};
+use crate::util::{move_failable, move_natural::NaturalMove};
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 pub struct Chomp {
@@ -177,7 +177,7 @@ mod tests {
     #[test]
     fn test_chomp() {
         let game = Chomp::new(6, 4);
-        let mut move_scores = move_scores(&game, &mut HashMap::new(), None, &None)
+        let mut move_scores = move_scores(&game, &mut HashMap::new(), None)
             .collect::<Result<Vec<_>, GameSolveError<Chomp>>>()
             .unwrap();
         move_scores.sort();

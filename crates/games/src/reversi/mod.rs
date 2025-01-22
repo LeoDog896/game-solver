@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{self, Debug};
 use std::hash::Hash;
 
-use crate::util::{cli::move_failable, move_natural::NaturalMove};
+use crate::util::{move_failable, move_natural::NaturalMove};
 
 pub const WIDTH: usize = 6;
 pub const HEIGHT: usize = 6;

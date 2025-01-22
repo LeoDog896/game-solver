@@ -19,7 +19,7 @@ use std::{
     iter::FilterMap, str::FromStr,
 };
 
-use crate::util::cli::move_failable;
+use crate::util::move_failable;
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
 pub enum Square {
@@ -337,7 +337,7 @@ mod tests {
     use std::collections::HashMap;
 
     fn move_scores_unwrapped(game: &TicTacToe) -> Vec<(TicTacToeMove, isize)> {
-        move_scores(game, &mut HashMap::new(), None, &None)
+        move_scores(game, &mut HashMap::new(), None)
             .collect::<Result<Vec<_>, GameSolveError<TicTacToe>>>()
             .unwrap()
     }

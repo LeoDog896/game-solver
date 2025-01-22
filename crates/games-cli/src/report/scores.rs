@@ -4,8 +4,7 @@ use game_solver::{
     game::{score_to_outcome, Game, GameScoreOutcome},
     CollectedMoves, GameSolveError,
 };
-
-use crate::util::move_score::normalize_move_scores;
+use games::util::move_score::normalize_move_scores;
 
 pub fn show_scores<T: Game + Debug>(game: &T, move_scores: CollectedMoves<T>)
 where
@@ -13,9 +12,6 @@ where
 {
     let move_scores = normalize_move_scores::<T>(move_scores).unwrap_or_else(|err| {
         match err {
-            GameSolveError::CancellationTokenError => {
-                eprintln!("Search was cancelled.");
-            },
             GameSolveError::MoveError(err) => {
                 eprintln!("Error making move: {:?}", err);
             },

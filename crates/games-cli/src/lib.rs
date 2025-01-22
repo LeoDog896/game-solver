@@ -2,7 +2,6 @@ mod human;
 mod report;
 pub mod robot;
 
-use anyhow::{anyhow, Result};
 use game_solver::{
     game::{Game, GameState},
     player::{ImpartialPlayer, TwoPlayer},
@@ -15,7 +14,7 @@ use std::{
     hash::Hash,
 };
 
-pub fn play<
+pub async fn play<
     T: Game<Player = impl TwoPlayer + Debug + Sync + Send + 'static>
         + Eq
         + Hash
@@ -36,36 +35,16 @@ pub fn play<
             if plain {
                 robotic_output(game);
             } else {
-                human_output(game).unwrap();
+                human_output(game).await.unwrap();
             }
         }
-        GameState::Tie => println!("No moves left! Game tied!"),
+        GameState::Tie => println!("No moves left! Thus game is already tied!"),
         GameState::Win(player) => {
             if TypeId::of::<T::Player>() != TypeId::of::<ImpartialPlayer>() {
-                println!("The {player:?} player won!");
+                println!("The {player:?} player already won this game!");
             } else {
-                println!("Player {player:?} won!");
+                println!("Player {player:?} already won this game!");
             }
         }
     }
-}
-
-pub fn move_failable<T>(game: &mut T, m: &T::Move) -> Result<()>
-where
-    T: Game,
-    T::MoveError: Display,
-    T::Player: Debug,
-{
-    match game.state() {
-        GameState::Playable => (),
-        GameState::Tie => return Err(anyhow!("Can't continue - game is tied.")),
-        GameState::Win(player) => {
-            return Err(anyhow!(
-                "Can't continue game if player {player:?} already won."
-            ))
-        }
-    };
-
-    game.make_move(m)
-        .map_err(|err| anyhow!("Failed to move: {}", err))
 }

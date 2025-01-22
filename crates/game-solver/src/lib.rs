@@ -22,7 +22,6 @@ use std::sync::atomic::Ordering;
 use game::{upper_bound, GameState};
 use player::{ImpartialPlayer, TwoPlayer};
 use stats::Stats;
-use tokio_util::sync::CancellationToken;
 
 use crate::game::Game;
 use crate::transposition::{Score, TranspositionTable};
@@ -33,8 +32,6 @@ use thiserror::Error;
 pub enum GameSolveError<T: Game> {
     #[error("could not make a move")]
     MoveError(T::MoveError),
-    #[error("the game was cancelled by the token")]
-    CancellationTokenError,
 }
 
 /// Runs the two-player minimax variant on a zero-sum game.
@@ -45,14 +42,7 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
     mut alpha: isize,
     mut beta: isize,
     stats: Option<&Stats<T::Player>>,
-    cancellation_token: &Option<CancellationToken>,
 ) -> Result<isize, GameSolveError<T>> {
-    if let Some(token) = cancellation_token {
-        if token.is_cancelled() {
-            return Err(GameSolveError::CancellationTokenError);
-        }
-    }
-
     if let Some(stats) = stats {
         stats.states_explored.fetch_add(1, Ordering::Relaxed);
     }
@@ -194,8 +184,7 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
                 transposition_table,
                 -beta,
                 -alpha,
-                stats,
-                cancellation_token,
+                stats
             )?
         } else {
             let score = -negamax(
@@ -203,8 +192,7 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
                 transposition_table,
                 -alpha - 1,
                 -alpha,
-                stats,
-                cancellation_token,
+                stats
             )?;
             if score > alpha {
                 -negamax(
@@ -212,8 +200,7 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
                     transposition_table,
                     -beta,
                     -alpha,
-                    stats,
-                    cancellation_token,
+                    stats
                 )?
             } else {
                 score
@@ -250,20 +237,13 @@ fn negamax<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
 pub fn solve<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
     game: &T,
     transposition_table: &mut dyn TranspositionTable<T>,
-    stats: Option<&Stats<T::Player>>,
-    cancellation_token: &Option<CancellationToken>,
+    stats: Option<&Stats<T::Player>>
 ) -> Result<isize, GameSolveError<T>> {
     let mut alpha = -upper_bound(game);
     let mut beta = upper_bound(game) + 1;
 
     // we're trying to guess the score of the board via null windows
     while alpha < beta {
-        if let Some(token) = cancellation_token {
-            if token.is_cancelled() {
-                return Err(GameSolveError::CancellationTokenError);
-            }
-        }
-
         let med = alpha + (beta - alpha) / 2;
 
         // do a [null window search](https://www.chessprogramming.org/Null_Window)
@@ -272,8 +252,7 @@ pub fn solve<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
             transposition_table,
             med,
             med + 1,
-            stats,
-            cancellation_token,
+            stats
         )?;
 
         if evaluation <= med {
@@ -297,8 +276,7 @@ pub fn solve<T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
 pub fn move_scores<'a, T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
     game: &'a T,
     transposition_table: &'a mut dyn TranspositionTable<T>,
-    stats: Option<&'a Stats<T::Player>>,
-    cancellation_token: &'a Option<CancellationToken>,
+    stats: Option<&'a Stats<T::Player>>
 ) -> impl Iterator<Item = Result<(T::Move, isize), GameSolveError<T>>> + 'a {
     game.possible_moves().map(move |m| {
         let mut board = game.clone();
@@ -309,7 +287,7 @@ pub fn move_scores<'a, T: Game<Player = impl TwoPlayer + 'static> + Eq + Hash>(
         // perspective of the player playing the move, not the player whose turn it is.
         Ok((
             m,
-            -solve(&board, transposition_table, stats, cancellation_token)?,
+            -solve(&board, transposition_table, stats)?,
         ))
     })
 }
@@ -331,8 +309,7 @@ pub fn par_move_scores_with_hasher<
     S,
 >(
     game: &T,
-    stats: Option<&Stats<T::Player>>,
-    cancellation_token: &Option<CancellationToken>,
+    stats: Option<&Stats<T::Player>>
 ) -> CollectedMoves<T>
 where
     T::Move: Sync + Send,
@@ -359,7 +336,7 @@ where
             let mut map = Arc::clone(&hashmap);
             Ok((
                 (*m).clone(),
-                -solve(&board, &mut map, stats, cancellation_token)?,
+                -solve(&board, &mut map, stats)?,
             ))
         })
         .collect::<Vec<_>>()
@@ -380,8 +357,7 @@ pub fn par_move_scores<
     T: Game<Player = impl TwoPlayer + Sync + 'static> + Eq + Hash + Sync + Send + 'static,
 >(
     game: &T,
-    stats: Option<&Stats<T::Player>>,
-    cancellation_token: &Option<CancellationToken>,
+    stats: Option<&Stats<T::Player>>
 ) -> CollectedMoves<T>
 where
     T::Move: Sync + Send,
@@ -389,9 +365,9 @@ where
 {
     if cfg!(feature = "xxhash") {
         use twox_hash::RandomXxHashBuilder64;
-        par_move_scores_with_hasher::<T, RandomXxHashBuilder64>(game, stats, cancellation_token)
+        par_move_scores_with_hasher::<T, RandomXxHashBuilder64>(game, stats)
     } else {
         use std::collections::hash_map::RandomState;
-        par_move_scores_with_hasher::<T, RandomState>(game, stats, cancellation_token)
+        par_move_scores_with_hasher::<T, RandomState>(game, stats)
     }
 }

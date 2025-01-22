@@ -1,6 +1,5 @@
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::collections::HashSet;
 use std::marker::PhantomData;
 
 use fxhash::FxHashSet;
@@ -13,7 +12,7 @@ use fxhash::FxHashSet;
 /// 
 /// We say `T` is the primary type, and `S` is some representation of `T` without the `LoopyTracker`.
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct LoopyTracker<S: Eq + Hash, T: Eq + Hash> {
     visited: FxHashSet<T>,
     _phantom: PhantomData<S>,
@@ -56,6 +55,20 @@ impl<S: Eq + Hash, T: Eq + Hash> Default for LoopyTracker<S, T> {
         Self::new()
     }
 }
+
+impl<S: Eq + Hash, T: Eq + Hash + Loopy<S>> PartialEq for LoopyTracker<S, T> {
+    fn eq(&self, other: &Self) -> bool {
+        for item in self.visited.iter() {
+            if !other.visited.contains(item) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
+impl<S: Eq + Hash, T: Eq + Hash + Loopy<S>> Eq for LoopyTracker<S, T> {}
 
 impl<S: Eq + Hash, T: Eq + Hash + Loopy<S>> Hash for LoopyTracker<S, T> {
     fn hash<H: std::hash::Hasher>(&self, hasher: &mut H) {

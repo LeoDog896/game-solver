@@ -1,8 +1,9 @@
 use std::{fmt::{Debug, Display}, str::FromStr};
 
+use games::util::move_failable;
 use game_solver::{game::Game, player::TwoPlayer};
-use games::util::cli::{move_failable, robot::announce_player};
 
+use games_cli::robot::announce_player;
 use owo_colors::OwoColorize;
 
 use dialoguer::{theme::ColorfulTheme, Input};

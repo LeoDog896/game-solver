@@ -16,7 +16,7 @@ use std::{
 };
 use thiserror::Error;
 
-use crate::util::cli::move_failable;
+use crate::util::move_failable;
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
 pub enum CellType {
