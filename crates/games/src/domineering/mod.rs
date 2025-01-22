@@ -7,12 +7,12 @@ use array2d::Array2D;
 use clap::Args;
 use game_solver::{
     game::{Game, GameState, Normal},
-    player::{PartizanPlayer, Player},
+    player::PartizanPlayer,
 };
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Debug, Display, Formatter},
-    hash::Hash,
+    hash::Hash, str::FromStr,
 };
 use thiserror::Error;
 
@@ -225,6 +225,19 @@ pub struct DomineeringArgs {
     moves: Vec<String>,
 }
 
+impl FromStr for DomineeringMove {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let numbers: Vec<usize> = s
+            .split('-')
+            .map(|num| num.parse::<usize>().expect("Not a number!"))
+            .collect();
+
+        Ok(DomineeringMove(numbers[0], numbers[1]))
+    }
+}
+
 impl<const WIDTH: usize, const HEIGHT: usize> TryFrom<DomineeringArgs>
     for Domineering<WIDTH, HEIGHT>
 {
@@ -235,12 +248,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> TryFrom<DomineeringArgs>
 
         // parse every move in args, e.g. 0-0 1-1 in args
         for arg in args.moves {
-            let numbers: Vec<usize> = arg
-                .split('-')
-                .map(|num| num.parse::<usize>().expect("Not a number!"))
-                .collect();
-
-            move_failable(&mut game, &DomineeringMove(numbers[0], numbers[1]))?;
+            move_failable(&mut game, &DomineeringMove::from_str(&arg)?)?;
         }
 
         Ok(game)

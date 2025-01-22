@@ -21,7 +21,7 @@ thiserror = "1.0.63"
 petgraph = { version = "0.6.5", features = ["serde-1"] }
 castaway = "0.2.3"
 ratatui = "0.28.1"
-owo-colors = "4.1.0"
+owo-colors = { version = "4.1.0", features = ["supports-colors"] }
 
 [features]
 "egui" = ["dep:egui", "dep:egui_commonmark"]

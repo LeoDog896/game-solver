@@ -16,7 +16,7 @@ use thiserror::Error;
 use std::{
     fmt::{Debug, Display, Formatter},
     hash::Hash,
-    iter::FilterMap,
+    iter::FilterMap, str::FromStr,
 };
 
 use crate::util::cli::move_failable;
@@ -91,6 +91,19 @@ impl Default for TicTacToeArgs {
     }
 }
 
+impl FromStr for TicTacToeMove {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let numbers: Result<Vec<usize>, Self::Err> = s
+            .split('-')
+            .map(|num| num.parse::<usize>().map_err(|_| anyhow!("Not a number!")))
+            .collect();
+        
+        Ok(Self(numbers?.into_dimension()))
+    }
+}
+
 impl TryFrom<TicTacToeArgs> for TicTacToe {
     type Error = Error;
 
@@ -99,12 +112,7 @@ impl TryFrom<TicTacToeArgs> for TicTacToe {
 
         // parse every move in args, e.g. 0-0 1-1 in args
         for arg in value.moves {
-            let numbers: Result<Vec<usize>, Self::Error> = arg
-                .split('-')
-                .map(|num| num.parse::<usize>().map_err(|_| anyhow!("Not a number!")))
-                .collect();
-
-            move_failable(&mut game, &TicTacToeMove(numbers?.into_dimension()))?;
+            move_failable(&mut game, &TicTacToeMove::from_str(&arg)?)?;
         }
 
         Ok(game)

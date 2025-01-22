@@ -11,6 +11,15 @@ use std::{
 
 use crate::util::cli::report::scores::show_scores;
 
+pub fn announce_player<T: Game<Player = impl TwoPlayer + Debug + 'static>>(game: &T) {
+    if TypeId::of::<T::Player>() != TypeId::of::<ImpartialPlayer>() {
+        println!("Player {:?} to move", game.player());
+    } else {
+        // TODO: can we assert that game.player() is the next player?
+        println!("Impartial game; Next player is moving.");
+    }
+}
+
 pub fn robotic_output<
     T: Game<Player = impl TwoPlayer + Debug + Sync + 'static>
         + Eq
@@ -29,12 +38,7 @@ pub fn robotic_output<
     print!("{}", game);
     println!();
 
-    if TypeId::of::<T::Player>() != TypeId::of::<ImpartialPlayer>() {
-        println!("Player {:?} to move", game.player());
-    } else {
-        // TODO: can we assert that game.player() is the next player?
-        println!("Impartial game; Next player is moving.");
-    }
+    announce_player(&game);
 
     let move_scores = par_move_scores(&game, None, &None);
 
