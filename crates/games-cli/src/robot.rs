@@ -3,6 +3,7 @@ use game_solver::{
     par_move_scores,
     player::{ImpartialPlayer, TwoPlayer},
 };
+use tokio_util::sync::CancellationToken;
 use std::{
     any::TypeId,
     fmt::{Debug, Display},
@@ -20,8 +21,8 @@ pub fn announce_player<T: Game<Player = impl TwoPlayer + Debug + 'static>>(game:
     }
 }
 
-pub fn robotic_output<
-    T: Game<Player = impl TwoPlayer + Debug + Sync + 'static>
+pub async fn robotic_output<
+    T: Game<Player = impl TwoPlayer + Debug + Sync + Send + 'static>
         + Eq
         + Hash
         + Sync
@@ -40,7 +41,20 @@ pub fn robotic_output<
 
     announce_player(&game);
 
-    let move_scores = par_move_scores(&game, None);
+    let cancellation_token = CancellationToken::new();
+
+    // on CTRL+C, cancel the game solving thread
+    let exit = cancellation_token.clone();
+    let ctrl_c = tokio::signal::ctrl_c();
+    let handle = tokio::spawn(async move {
+        ctrl_c.await.expect("Failed to listen for Ctrl+C");
+        println!("Cancelling...");
+        exit.cancel();
+    });
+
+    let move_scores = par_move_scores(&game, None, Some(cancellation_token)).await;
 
     show_scores(&game, move_scores);
+
+    handle.abort();
 }

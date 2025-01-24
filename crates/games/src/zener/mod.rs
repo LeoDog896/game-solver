@@ -78,7 +78,7 @@ pub struct Zener {
     compulsory: Option<InnerCellType>,
     move_count: usize,
     gutter: Option<CellType>,
-    loopy: LoopyTracker<ZenerNoLoopTrack, Self>,
+    loopy: Box<LoopyTracker<ZenerNoLoopTrack, Self>>,
 }
 
 impl Loopy<ZenerNoLoopTrack> for Zener {
@@ -116,19 +116,15 @@ impl Default for Zener {
         board[(1, HEIGHT - 1)].push(CellType(InnerCellType::Cross, PartizanPlayer::Left));
         board[(0, HEIGHT - 1)].push(CellType(InnerCellType::Circle, PartizanPlayer::Left));
 
-        let x = Self {
+        Self {
             board,
             compulsory: None,
             move_count: 0,
 
             gutter: None,
 
-            loopy: LoopyTracker::new(),
-        };
-
-        println!("{}", x);
-
-        x
+            loopy: Box::new(LoopyTracker::new()),
+        }
     }
 }
 
@@ -156,8 +152,13 @@ impl Direction {
         }
     }
 
-    fn directions() -> Vec<Direction> {
-        vec![Self::Up, Self::Down, Self::Left, Self::Right]
+    fn biased_directions(player: PartizanPlayer) -> Vec<Direction> {
+        match player {
+            // prefer to move up if Left
+            PartizanPlayer::Left => vec![Self::Up, Self::Left, Self::Right, Self::Down],
+            // prefer to move down if Right
+            PartizanPlayer::Right => vec![Self::Down, Self::Left, Self::Right, Self::Up],
+        }
     }
 
     fn apply_to_position(&self, position: (usize, usize)) -> Result<ZenerPosition, anyhow::Error> {
@@ -182,7 +183,7 @@ impl Direction {
             return Err(anyhow::anyhow!("out of width bounds ({WIDTH} <= {new_x})"));
         }
 
-        return Ok(ZenerPosition::Position(new_x.try_into().unwrap(), new_x));
+        return Ok(ZenerPosition::Position(new_x.try_into().unwrap(), new_y.try_into().unwrap()));
     }
 }
 
@@ -281,8 +282,8 @@ impl Game for Zener {
         }
 
         if let ZenerPosition::Gutter = position {
-            if m.from.0 == 0 && player == PartizanPlayer::Right
-                || m.from.0 != 0 && player == PartizanPlayer::Left
+            if m.from.1 == 0 && player == PartizanPlayer::Right
+                || m.from.1 != 0 && player == PartizanPlayer::Left
             {
                 return Err(ZenerMoveError::WrongMoveGutter);
             }
@@ -338,7 +339,7 @@ impl Game for Zener {
                 continue;
             }
 
-            for direction in Direction::directions() {
+            for direction in Direction::biased_directions(self.player()) {
                 if let Ok(new_position) = direction.apply_to_position((x, y)) {
                     if let ZenerPosition::Gutter = new_position {
                         if y == 0 && self.player() == PartizanPlayer::Right

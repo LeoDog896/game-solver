@@ -1,13 +1,14 @@
 use std::{
-    fmt::Display, future::IntoFuture, sync::{
+    fmt::Display,
+    future::IntoFuture,
+    sync::{
         atomic::{AtomicU64, AtomicUsize, Ordering},
         Arc,
-    }, time::Duration
+    },
+    time::Duration,
 };
 
 use anyhow::Result;
-use tokio::select;
-use tokio_util::sync::CancellationToken;
 use core::hash::Hash;
 use game_solver::{
     game::Game,
@@ -29,6 +30,8 @@ use ratatui::{
     DefaultTerminal, Frame,
 };
 use std::fmt::Debug;
+use tokio::select;
+use tokio_util::sync::CancellationToken;
 
 use super::report::{scores::show_scores, stats::show_stats};
 
@@ -196,12 +199,8 @@ where
     let internal_stats = stats.clone();
 
     let game_thread = tokio::spawn(async move {
-        let game_solving_thread = tokio::spawn(async move {
-            par_move_scores(
-                &internal_game,
-                Some(internal_stats.as_ref()),
-            )
-        }).into_future();
+        let game_solving_thread =
+            par_move_scores(&internal_game, Some(internal_stats), Some(exit.clone()));
 
         select! {
             score = game_solving_thread => {
@@ -218,7 +217,7 @@ where
 
     show_stats::<T>(&stats);
     match move_scores {
-        Some(move_scores) => show_scores(&game, move_scores?),
+        Some(move_scores) => show_scores(&game, move_scores),
         None => eprintln!("Game solving was cancelled!"),
     }
 

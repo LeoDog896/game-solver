@@ -33,7 +33,7 @@ pub async fn play<
     match game.state() {
         GameState::Playable => {
             if plain {
-                robotic_output(game);
+                robotic_output(game).await;
             } else {
                 human_output(game).await.unwrap();
             }

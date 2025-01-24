@@ -13,5 +13,5 @@ dialoguer = "0.11.0"
 clearscreen = "4.0.1"
 owo-colors = "4.1.0"
 tokio-util = "0.7.13"
-tokio = { version = "1.43.0", features = ["rt", "macros", "rt-multi-thread"] }
+tokio = { version = "1.43.0", features = ["rt", "macros", "rt-multi-thread", "signal"] }
 ratatui = "0.29.0"

@@ -15,6 +15,9 @@ where
             GameSolveError::MoveError(err) => {
                 eprintln!("Error making move: {:?}", err);
             },
+            GameSolveError::Cancelled => {
+                eprintln!("Game solving was cancelled!");
+            },
         }
         vec![]
     });

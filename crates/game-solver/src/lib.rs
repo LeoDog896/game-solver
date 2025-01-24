@@ -16,7 +16,11 @@ pub mod transposition;
 
 use core::panic;
 #[cfg(feature = "rayon")]
+use tokio_util::sync::CancellationToken;
+#[cfg(feature = "rayon")]
 use std::hash::BuildHasher;
+#[cfg(feature = "rayon")]
+use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
 use game::{upper_bound, GameState};
@@ -32,6 +36,8 @@ use thiserror::Error;
 pub enum GameSolveError<T: Game> {
     #[error("could not make a move")]
     MoveError(T::MoveError),
+    #[error("solving was cancelled")]
+    Cancelled,
 }
 
 /// Runs the two-player minimax variant on a zero-sum game.
@@ -304,42 +310,61 @@ pub type CollectedMoves<T> = Vec<Result<(<T as Game>::Move, isize), GameSolveErr
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores_with_hasher<
-    T: Game<Player = impl TwoPlayer + Sync + 'static> + Eq + Hash + Sync + Send + 'static,
+pub async fn par_move_scores_with_hasher<
+    T: Game<Player = impl TwoPlayer + Sync + Send + 'static> + Eq + Hash + Sync + Send + 'static,
     S,
 >(
     game: &T,
-    stats: Option<&Stats<T::Player>>
+    stats: Option<Arc<Stats<T::Player>>>,
+    cancellation_token: Option<CancellationToken>
 ) -> CollectedMoves<T>
 where
     T::Move: Sync + Send,
     T::MoveError: Sync + Send,
     S: BuildHasher + Default + Sync + Send + Clone + 'static,
 {
+    use itertools::Itertools;
+
     use crate::transposition::TranspositionCache;
-    use rayon::prelude::*;
     use std::sync::Arc;
 
-    // we need to collect it first as we cant parallelize an already non-parallel iterator
-    let all_moves = game.possible_moves().collect::<Vec<_>>();
-    let hashmap = Arc::new(TranspositionCache::<T, S>::new());
-
-    all_moves
-        .par_iter()
-        .map(move |m| {
+    let result = game.possible_moves().map(|m| {
+        let m = m.clone();
+        let game = game.clone();
+        let cancellation_token = cancellation_token.clone();
+        let stats = stats.clone();
+        
+        tokio::spawn(async move {
+            let hashmap = Arc::new(TranspositionCache::<T, S>::new());
             let mut board = game.clone();
             board
-                .make_move(m)
+                .make_move(&m)
                 .map_err(|err| GameSolveError::MoveError::<T>(err))?;
             // We flip the sign of the score because we want the score from the
             // perspective of the player pla`ying the move, not the player whose turn it is.
             let mut map = Arc::clone(&hashmap);
-            Ok((
-                (*m).clone(),
-                -solve(&board, &mut map, stats)?,
-            ))
+
+            let handle = tokio::spawn(async move {
+                solve(&board, &mut map, stats.as_deref()).map(|score| -score)
+            });
+
+            if let Some(cancellation_token) = cancellation_token {
+                tokio::select! {
+                    _ = cancellation_token.cancelled() => {
+                        Err(GameSolveError::Cancelled)
+                    },
+                    result = handle => {
+                        result.unwrap().map(|result| (m, result))
+                    }
+                }
+            } else {
+                handle.await.unwrap().map(|x| (m, x))
+            }
         })
-        .collect::<Vec<_>>()
+    })
+    .collect::<Vec<_>>();
+
+    futures::future::join_all(result).await.into_iter().map(|result| result.unwrap()).collect_vec()
 }
 
 /// Parallelized version of `move_scores`. (faster by a large margin)
@@ -353,11 +378,12 @@ where
 ///
 /// A vector of tuples of the form `(move, score)`.
 #[cfg(feature = "rayon")]
-pub fn par_move_scores<
-    T: Game<Player = impl TwoPlayer + Sync + 'static> + Eq + Hash + Sync + Send + 'static,
+pub async fn par_move_scores<
+    T: Game<Player = impl TwoPlayer + Sync + Send + 'static> + Eq + Hash + Sync + Send + 'static,
 >(
     game: &T,
-    stats: Option<&Stats<T::Player>>
+    stats: Option<Arc<Stats<T::Player>>>,
+    cancellation_token: Option<CancellationToken>
 ) -> CollectedMoves<T>
 where
     T::Move: Sync + Send,
@@ -365,9 +391,9 @@ where
 {
     if cfg!(feature = "xxhash") {
         use twox_hash::RandomXxHashBuilder64;
-        par_move_scores_with_hasher::<T, RandomXxHashBuilder64>(game, stats)
+        par_move_scores_with_hasher::<T, RandomXxHashBuilder64>(game, stats, cancellation_token).await
     } else {
         use std::collections::hash_map::RandomState;
-        par_move_scores_with_hasher::<T, RandomState>(game, stats)
+        par_move_scores_with_hasher::<T, RandomState>(game, stats, cancellation_token).await
     }
 }
